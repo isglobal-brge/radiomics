@@ -1,0 +1,30 @@
+---
+title: "CT scans table"
+author: "Iker González Tirado"
+date: "23/7/2021"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{CT scans table}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+En la siguiente tabla, encontraremos algunos repositorios útiles para trabajar con
+CT scans.
+
+```{r}
+library(reactable)
+```
+
+```{r}
+tabla_databases <- read.csv(file = "C:/Iker/ISGlobal/DataSHIELD_utils/tools_and_databases/CT_scans_table.csv", header=TRUE, sep = "\t")
+```
+
+```{r, echo = TRUE}
+reactable(tabla_databases) 
+```
+

@@ -1,0 +1,23 @@
+Name	Organ	Images	Task	URL
+COVID-CT	lung	yes	COVID detection	https://github.com/UCSD-AI4H/COVID-CT
+COVID-CT-Code	lung	yes	COVID detection	https://github.com/mr7495/COVID-CT-Code
+COVID-Ctset	lung	yes	COVID Scans dataset	https://github.com/mr7495/COVID-CTset
+COVIDNet-CT	lung	yes	COVID-Net CT models 	https://github.com/haydengunraj/COVIDNet-CT
+Contrastive-COVIDNet	lung	no	COVID identification	https://github.com/med-air/Contrastive-COVIDNet
+yeap16-ai-3d-printing	bone	yes	Show the exact shape for bone prosthesis	https://github.com/NLeSC/yeap16-ai-3d-printing
+COVID-CT-MD	lung	yes	Compare COVID, CAP and healthy lungs	https://github.com/ShahinSHH/COVID-CT-MD
+Tcia-ct-scan-dataset	head and neck	no	Apply deep learning to radiotherapy	https://github.com/deepmind/tcia-ct-scan-dataset
+radio	all	yes	Framework for research of computed tomography	https://github.com/analysiscenter/radio
+COVID-19-CT-CXR	lung	yes	Database of COVID scans	https://github.com/ncbi-nlp/COVID-19-CT-CXR
+ichseg	all	no	Perform preprocessing on CT scans	https://github.com/muschellij2/ichseg
+COVID-FACT	lung	yes	COVID identification	https://github.com/ShahinSHH/COVID-FACT
+Blast-ct	brain	no	Provide deep learning image segmentation tool	https://github.com/biomedia-mira/blast-ct
+lungmask	lung	yes	Provide trained U-net models for lung segmentation	https://github.com/JoHof/lungmask
+lungct	lung	no	Develop an image 	https://github.com/muschellij2/lungct
+Inf-Net	lung	yes	Automatic COVID lung segmentation from CT images	https://github.com/DengPingFan/Inf-Net
+CT-GAN	all	no	Adding or removing evidence in 3D volumetric medical scans 	https://github.com/ymirsky/CT-GAN
+COVID_WEB	lung	yes	COVID detection	https://github.com/KiLJ4EdeN/COVID_WEB
+COVID-19-Detection-Flask-App-based-on-Chest-X-rays-and-CT-Scans	lung	no	COVID detection	https://github.com/kaushikjadhav01/COVID-19-Detection-Flask-App-based-on-Chest-X-rays-and-CT-Scans
+CT2CT	head	yes	Achieve a high number of slices of the encephalon 	https://github.com/sergiorivera50/CT2CT
+scancovia	all	no	Reproduce CT scan sources	https://github.com/owkin/scancovia
+COVID-19-CT-Seg-Benchmark	lung	no	Learn to segment COVID scans	https://github.com/JunMa11/COVID-19-CT-Seg-Benchmark

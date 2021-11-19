@@ -1,0 +1,62 @@
+---
+title: "Cancer imaging table"
+author: "Iker González Tirado"
+date: "14/7/2021"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Cancer imaging table}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval = TRUE)
+```
+
+Para comenzar el proceso, cargamos las librerías.
+
+```{r}
+library(rvest)
+library(tibble)
+library(reactable)
+```
+
+Descargamos la tabla con los datos de Cancer Imaging Archive.
+
+```{r}
+url.cancer <- "https://www.cancerimagingarchive.net/collections/"
+tmp <- read_html(url.cancer)
+tmp <- html_nodes(tmp, "table")
+```
+
+Recreamos la tabla de la página en R.
+
+```{r}
+cancer <- html_table(tmp[[1]])
+```
+
+Extraemos las URL de los tipos de cáncer.
+
+```{r}
+url.img <- tmp %>% html_nodes("tr") %>%
+  html_nodes("a") %>%
+  html_attr("href")
+```
+
+Creamos una nueva columna con las URL.
+
+```{r}
+img.cancer <- cancer %>% add_column(URL = url.img, .before = "Supporting Data")
+```
+
+Mostramos la tabla, agrupandolo por el tipo de cáncer y haciendo de estos un desplegable
+que muestre el resto de variables.
+
+```{r}
+reactable(img.cancer, groupBy = "Cancer Type")
+```
+
+
+
+
+
