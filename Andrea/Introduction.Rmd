@@ -1,0 +1,32 @@
+---
+title: "Introduction"
+author: "Andrea"
+date: "11/23/2021"
+output: html_document
+---
+
+# Introduction to radiomics
+Medical images are essential for studying diseases. For example, to examine how a patient's tumor evolves, we perform multiple scans over time. Interpreting how the tumor has changed by looking at the images is not an easy task, and different doctors may predict different outcomes. This is where computers become very useful. Thanks to artificial intelligence techniques, we can show computers different medical images over time of a patient with a tumor, and they can identify features of these images to make predictions. They can help decide whether a treatment for a tumor is working or not, decide which alternative treatment to use, and much more, without having to wait for the tumor to get worse. 
+
+Radiomics is a field of medical study whose purpose consists of extracting a large volume of features from medical images using data characterization algorithms. These features are known as radiomic features and can help to discover tumor patterns that are difficult for the human eye to analyze. 
+Radiomics is a relatively new scientific filed. The first radiomics studies appeared in PubMed as recently as 2011.
+
+It is believed that, in the end, radiomics will use specific treatments for each patient, will help doctors select the most appropriate treatment for each patient, and will be able to change treatments quickly if they do not work.
+
+In simple terms, the process of radiomics is the following. First, we obtain an image (obtained from a scanner), then we perform an image segmentation (dividing the image into multiple segments, in other words, delineating the areas of interest in the image in terms of pixels or voxels), then we extract the features and classify them, and finally, we use databases to share our data. 
+
+Some of the difficulties when performing radiomics research is that high quality images, with adequate size and complete datasets are needed. Different training and validation datasets are also necessary, to check if our algorithm works correctly. Another difficulty is class imbalance (classification problem where the number of observations per class is not equally distributed) and overfitting (when a statistical model exactly fits its training data). The main clinical applications of radiomics are radiogenomics and clinical outcome prediction.
+
+Radiomic techniques can be divided into four categories: intensity-based metrics, texture-based analysis, shape-based measures, and transform-based metrics. We will briefly discuss these techniques now.
+
+- Intensity-based metrics refers to statistics that are calculated from pixel values (or volumetric pixels called voxels). Additional information that can be obtained from analyzing the relationship between the voxels it is not considered. To compute the statistics, we select a region and extract the voxel values. They can be analyzed with histogram analysis. To quantify different aspects of the distribution we use average and variation, shape, and diversity.
+
+- Texture-based analysis refers to the analysis of image patterns, such as intensity, shape, or colors. Mathematical formulas based on the spatial relationship of voxels are used to quantify these concepts.
+
+- Shape-based measures refer to the study of different components of a structure. They can be divided into 1D metrics (measurement of the distance between two points. They are used to describe the magnitude of an abnormality), 2D metrics (calculated on cross-sectional planes and are used to calculate different parameters that are based on areas) and 3D metrics (attempt to enumerate different aspects of volumetric shape).
+
+- Transform-based metrics refers to the transformation of images from spatial coordinates to what is called a frequency domain, without losing any information.
+
+## Image display
+In this section we will display a few images.
+
