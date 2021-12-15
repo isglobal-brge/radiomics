@@ -15,9 +15,11 @@ It is believed that, in the end, radiomics will use specific treatments for each
 
 In simple terms, the process of radiomics is the following. First, we obtain an image (obtained from a scanner), then we perform an image segmentation (dividing the image into multiple segments, in other words, delineating the areas of interest in the image in terms of pixels or voxels), then we extract the features and classify them, and finally, we use databases to share our data. 
 
+The images we obtain from the scans are DICOM images. DICOM (Digital Imaging and Communications in Medicine) is the standard for medical images and related information. It defines the formats for medical images that can be exchanged with the data and quality necessary for clinical use. The most common applications of this standard are the display, storage, printing, and transmission of images.
+
 Some of the difficulties when performing radiomics research is that high quality images, with adequate size and complete datasets are needed. Different training and validation datasets are also necessary, to check if our algorithm works correctly. Another difficulty is class imbalance (classification problem where the number of observations per class is not equally distributed) and overfitting (when a statistical model exactly fits its training data). The main clinical applications of radiomics are radiogenomics and clinical outcome prediction.
 
-Radiomic techniques can be divided into four categories: intensity-based metrics, texture-based analysis, shape-based measures, and transform-based metrics. We will briefly discuss these techniques now.
+To obtain the features, we can use multiple techniques. Radiomic techniques can be divided into four categories: intensity-based metrics, texture-based analysis, shape-based measures, and transform-based metrics. We will briefly discuss these techniques now.
 
 - Intensity-based metrics refers to statistics that are calculated from pixel values (or volumetric pixels called voxels). Additional information that can be obtained from analyzing the relationship between the voxels it is not considered. To compute the statistics, we select a region and extract the voxel values. They can be analyzed with histogram analysis. To quantify different aspects of the distribution we use average and variation, shape, and diversity.
 
@@ -27,6 +29,53 @@ Radiomic techniques can be divided into four categories: intensity-based metrics
 
 - Transform-based metrics refers to the transformation of images from spatial coordinates to what is called a frequency domain, without losing any information.
 
+We can obtain multiple types of features from images. Qualitative features are used to describe lesions, and quantitative features are extracted from images using computer programs that apply mathematical algorithms. Now we will focus on quantitative features, which can be divided into different subgroups.
+
+- Shape features describe the shape of the traced region of interest and its geometric properties like volume, maximum diameter along different orthogonal directions, maximum surface, tumor compactness, etc. 
+
+- First-order statistics features describe the distribution of individual voxel values without taking into account spatial relationships. Some properties we obtain are the mean, median, maximum, minimum values of the voxel intensities on the image, skewness, kurtosis, etc.
+
+- Second-order statistics features include the textural features. They are obtained computing the statistical relationships between neighboring voxels.
+
+- Higher-order statistics features are obtained by statistical methods after applying filters or mathematical transforms to the images. Some examples are fractal analysis, Minkowski functionals or Laplacian transforms of Gaussian-filtered images.
+
+
 ## Image display
-In this section we will display a few images.
+In this section we will display a few images using R.
+
+First we load the libraries oro.dicom and RIA.
+
+```{r, message=FALSE}
+library(oro.dicom)
+library(RIA)
+```
+
+Now we will display three images.
+
+```{r, out.width = "300px"}
+image1 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/1.dcm")
+image(t(image1$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
+
+image2 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/2.dcm")
+image(t(image2$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
+
+image3 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/3.dcm")
+image(t(image3$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
+```
+
+### Radiomic features
+To compute the radiomic features of the images using RIA, we first need to comvert the dicom images to RIA_image class. To do this, we will use the function load_dicom. We will analyze 10 images.
+
+```{r, results = FALSE, message=FALSE}
+DICOM <- RIA::load_dicom(filename="/Users/andrealetaalfonso/Desktop/TFG/images/", skipFirst128=FALSE, DICM=FALSE, boffset = 128)
+```
+
+To compute the first-order statistics we use first_order.
+
+```{r, message=FALSE}
+DICOM = first_order(RIA_data_in = DICOM)
+first_order_data <- RIA:::list_to_df(DICOM$stat_fo$orig)
+first_order_data
+```
+
 
