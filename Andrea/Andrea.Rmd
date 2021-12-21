@@ -1,5 +1,5 @@
 ---
-title: "Introduction"
+title: "Andrea"
 author: "Andrea"
 date: "11/23/2021"
 output: html_document
@@ -50,32 +50,52 @@ library(oro.dicom)
 library(RIA)
 ```
 
-Now we will display three images.
+Now we will display 3 images (from the same patient).
 
-```{r, out.width = "300px"}
-image1 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/1.dcm")
+```{r, out.width = "300px", out.height = "400px"}
+image1 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/1/20.dcm")
 image(t(image1$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
 
-image2 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/2.dcm")
+image2 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/2/21.dcm")
 image(t(image2$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
 
-image3 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/3.dcm")
+image3 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/3/22.dcm")
 image(t(image3$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
 ```
 
 ### Radiomic features
-To compute the radiomic features of the images using RIA, we first need to comvert the dicom images to RIA_image class. To do this, we will use the function load_dicom. We will analyze 10 images.
+To compute the radiomic features of the images using RIA, we first need to convert the dicom images to RIA_image class. To do so, we will use the load_dicom function. 
+
+First we compute the radiomic features of 1 image. To compute the first-order statistics we use the first_order function.
 
 ```{r, results = FALSE, message=FALSE}
-DICOM <- RIA::load_dicom(filename="/Users/andrealetaalfonso/Desktop/TFG/images/", skipFirst128=FALSE, DICM=FALSE, boffset = 128)
+DICOM <- RIA::load_dicom(filename="/Users/andrealetaalfonso/Desktop/TFG/images/1/", skipFirst128=FALSE, DICM=FALSE, boffset = 128)
+DICOM = first_order(RIA_data_in = DICOM) # first order statistics
+first_order <- RIA:::list_to_df(DICOM$stat_fo$orig)
+name_characteristics <- rownames(first_order) # names of the first order statistics
 ```
 
-To compute the first-order statistics we use first_order.
+Now we will compute the first order characteristics of 10 images (from the same patient).
 
-```{r, message=FALSE}
-DICOM = first_order(RIA_data_in = DICOM)
-first_order_data <- RIA:::list_to_df(DICOM$stat_fo$orig)
-first_order_data
+```{r, results = FALSE, message=FALSE}
+first_order <- c()
+for (i in 1:10) { # for loop through all the images
+  path <- file.path("/Users", "andrealetaalfonso", "Desktop","TFG", "images", i, fsep="/") # path of every image
+  DICOM <- RIA::load_dicom(filename=path, skipFirst128=FALSE, DICM=FALSE, boffset = 128) # load dicom image
+  DICOM = first_order(RIA_data_in = DICOM, use_type = "single") # compute first order statistics
+  first_order[i] <- RIA:::list_to_df(DICOM$stat_fo$orig)
+}
 ```
+Finally, we combine all the results into a data.frame called 'results'.
+```{r}
+results <- cbind(data.frame(first_order[1]), data.frame(first_order[2]), data.frame(first_order[3]), data.frame(first_order[4]), data.frame(first_order[5]), data.frame(first_order[6]), data.frame(first_order[7]), data.frame(first_order[8]), data.frame(first_order[9]), data.frame(first_order[10]))
+colnames(results) <- seq(1, 10)
+rownames(results) <- name_characteristics
+results
+```
+
+#### Comparison of features between different weeks 
+In this section, we will study the images of one patient through different time periods to see if we detect changes in the radiomic features.
+
 
 
