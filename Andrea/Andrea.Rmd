@@ -50,49 +50,155 @@ library(oro.dicom)
 library(RIA)
 ```
 
-Now we will display 3 images (from the same patient).
+Now we will display 3 images from the same patient.
 
 ```{r, out.width = "300px", out.height = "400px"}
-image1 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/1/20.dcm")
+image1 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/img/All_images/10.dcm")
 image(t(image1$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
 
-image2 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/2/21.dcm")
+image2 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/img/All_images/11.dcm")
 image(t(image2$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
 
-image3 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/3/22.dcm")
+image3 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/img/All_images/12.dcm")
 image(t(image3$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
 ```
 
 ### Radiomic features
 To compute the radiomic features of the images using RIA, we first need to convert the dicom images to RIA_image class. To do so, we will use the load_dicom function. 
 
-First we compute the radiomic features of 1 image. To compute the first-order statistics we use the first_order function.
+First we compute the radiomic features of 1 image without a mask. To compute the first-order statistics we use the first_order function.
 
 ```{r, results = FALSE, message=FALSE}
-DICOM <- RIA::load_dicom(filename="/Users/andrealetaalfonso/Desktop/TFG/images/1/", skipFirst128=FALSE, DICM=FALSE, boffset = 128)
+DICOM <- RIA::load_dicom(filename="/Users/andrealetaalfonso/Desktop/TFG/images/img/Folder_images/10", skipFirst128=FALSE, DICM=FALSE, boffset = 128)
 DICOM = first_order(RIA_data_in = DICOM) # first order statistics
 first_order <- RIA:::list_to_df(DICOM$stat_fo$orig)
 name_characteristics <- rownames(first_order) # names of the first order statistics
 ```
 
-Now we will compute the first order characteristics of 10 images (from the same patient).
+Now we will compute the first order characteristics of 10 images from the same patient without a mask.
 
 ```{r, results = FALSE, message=FALSE}
 first_order <- c()
 for (i in 1:10) { # for loop through all the images
-  path <- file.path("/Users", "andrealetaalfonso", "Desktop","TFG", "images", i, fsep="/") # path of every image
+  path <- file.path("/Users", "andrealetaalfonso", "Desktop","TFG", "images", "img", "Folder_images", i, fsep="/") # path of every image
   DICOM <- RIA::load_dicom(filename=path, skipFirst128=FALSE, DICM=FALSE, boffset = 128) # load dicom image
   DICOM = first_order(RIA_data_in = DICOM, use_type = "single") # compute first order statistics
   first_order[i] <- RIA:::list_to_df(DICOM$stat_fo$orig)
 }
 ```
+
 Finally, we combine all the results into a data.frame called 'results'.
+
 ```{r}
-results <- cbind(data.frame(first_order[1]), data.frame(first_order[2]), data.frame(first_order[3]), data.frame(first_order[4]), data.frame(first_order[5]), data.frame(first_order[6]), data.frame(first_order[7]), data.frame(first_order[8]), data.frame(first_order[9]), data.frame(first_order[10]))
+results <- do.call(cbind.data.frame, first_order)
 colnames(results) <- seq(1, 10)
 rownames(results) <- name_characteristics
-results
+results # results in a data.frame
 ```
+
+### Segmentation with lungct
+Now we will perform segmentation of the images using the library in R lungct. Recall that segmentation refers to delineating the areas of interest in the image in terms of pixels or voxels, in our case, the lung.
+
+First, we load the libraries needed to do the segmentation.
+
+```{r, message=FALSE}
+library(lungct)
+library(dcm2niir)
+library(ANTsRCore)
+```
+
+Now we have to convert the data from DCM to NII.
+
+```{r, message=FALSE}
+res <- dcm2niir::dcm2nii(basedir="/Users/andrealetaalfonso/Desktop/TFG/images/img/All_images")
+# Manipulating the output
+checked <- check_dcm2nii(res)
+```
+
+Next we plot some images.
+
+```{r, out.width = "700px", out.height = "400px"}
+image <- antsImageRead(checked)
+plot(image)
+```
+
+And finally, we create a mask.
+
+```{r, message=FALSE}
+mask <- segment_lung(image)
+mask
+```
+
+### Radiomic features with masks
+In this section we will compute the radiomic features of 10 images with a mask.
+
+```{r, results = FALSE, message=FALSE}
+first_order <- c()
+for (i in 1:10) { # for loop through all the images
+  path <- file.path("/Users", "andrealetaalfonso", "Desktop","TFG", "images", "img", "Folder_images", i, fsep="/") # path of every image
+  DICOM <- RIA::load_dicom(filename=path, mask_filename=path, skipFirst128=FALSE, DICM=FALSE, boffset = 128) # load dicom image + mask
+  DICOM = first_order(RIA_data_in = DICOM, use_type = "single") # compute first order characteristics
+  first_order[i] <- RIA:::list_to_df(DICOM$stat_fo$orig)
+} 
+```
+
+```{r, message=FALSE}
+results2 <- do.call(cbind.data.frame, first_order)
+colnames(results2) <- seq(1, 10)
+rownames(results2) <- name_characteristics
+results2 # results in a data.frame
+```
+With a mask we obtain different results, because now we are computing the radiomic features of the lung only, not the whole images
+
+Let's compare the radiomic features of the first image without a mask and with a mask.
+
+```{r}
+data.frame(results[1], results2[1])
+```
+
+As we can see, we obtain different results.
+
+##### Radiomic features with masks with multiple patients
+Now we will create multiple .txt files with the results of the radiomic features of different patients, using a mask.
+
+The IDs of the patients are the following.
+
+```{r}
+patient1 <- "ID00007637202177411956430"
+patient2 <- "ID00009637202177434476278"
+patient3 <- "ID00010637202177584971671"
+patient4 <- "ID00011637202177653955184"
+patient5 <- "ID00012637202177665765362"
+patient6 <- "ID00014637202177757139317"
+patient7 <- "ID00015637202177877247924"
+patient8 <- "ID00019637202178323708467"
+patient9 <- "ID00020637202178344345685"
+patient10 <- "ID00023637202179104603099"
+vector_patients <- c(patient1) # list of patients ID
+```
+
+```{r, results = FALSE, message=FALSE}
+for(patient in vector_patients){
+  first_order <- c()
+  path <- file.path("/Users", "andrealetaalfonso", "Desktop","TFG", "images", "Kaggle", patient, fsep="/") # path of every image
+  number_files <- length(list.files(path)) # number of folders (ie. images) in each patient
+  for (i in 1:number_files) { # for loop through all the images
+    path <- file.path("/Users", "andrealetaalfonso", "Desktop","TFG", "images", "Kaggle", patient, i, fsep="/") # path of every image
+    res <- dcm2niir::dcm2nii(basedir=path) # Convert the data from dcm to nii
+    checked <- check_dcm2nii(res) # Manipulating the output
+    image <- antsImageRead(checked)
+    mask <- segment_lung(image) # Lung segmentation
+    DICOM <- RIA::load_dicom(filename=path, mask_filename=path, skipFirst128=FALSE, DICM=FALSE, boffset = 128) # load dicom image + mask
+    DICOM = first_order(RIA_data_in = DICOM, use_type = "single") # compute first order characteristics
+    first_order[i] <- RIA:::list_to_df(DICOM$stat_fo$orig)
+  } 
+  results <- do.call(cbind.data.frame, first_order)
+  colnames(results) <- seq(1, number_files)
+  rownames(results) <- name_characteristics
+  write.table(results, row.names = TRUE, col.names=NA, file=paste0(patient,".txt"), sep="\t") # table with the results
+}
+```
+
 
 #### Comparison of features between different weeks 
 In this section, we will study the images of one patient through different time periods to see if we detect changes in the radiomic features.
