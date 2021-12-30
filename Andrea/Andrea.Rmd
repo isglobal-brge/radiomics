@@ -122,11 +122,16 @@ image <- antsImageRead(checked)
 plot(image)
 ```
 
-And finally, we create a mask.
+We create a mask.
 
 ```{r, message=FALSE}
 mask <- segment_lung(image)
 mask
+```
+And finally, we plot the mask.
+
+```{r, message=FALSE, out.width = "700px", out.height = "400px"}
+plot(mask$lung_mask)
 ```
 
 ### Radiomic features with masks
