@@ -24,6 +24,6 @@ La segmentación debe cumplir unas condiciones:
 
 - Los vóxeles de cada región ha de cumplir una propiedad en común con las de su misma
 región y no puede hacerlo con ninguna de las demás regiones.
- 
+
 ## 3D slicer
-3D sclicer es un software de uso libre que se utiliza para estudiar imágenes 
+3D sclicer es un software de uso libre que se utiliza para estudiar imágenes de computación
