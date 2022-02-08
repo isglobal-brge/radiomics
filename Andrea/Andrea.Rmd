@@ -108,11 +108,13 @@ for (i in first_image:last_image) { # for loop through all the images
 
 Finally, we combine all the results into a data.frame called 'results'.
 
-```{r}
+```{r, layout="l-body-outset"}
+library(rmarkdown)
 results <- do.call(cbind.data.frame, res)
 colnames(results) <- seq(1, last_image-first_image+1) 
 rownames(results) <- name_characteristics
-results # results in a data.frame
+#results:  results in a data.frame
+paged_table(results, options = list(rows.print = 44, cols.print = 5))
 ```
 
 ### Segmentation with lungct
