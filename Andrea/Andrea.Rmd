@@ -394,7 +394,7 @@ Mask of the image
 ```{python, message=FALSE, results = FALSE}
 get_segmented_lungs2(ct_scan[20], True)
 ```
-```{python, out.width = "45º0px"}
+```{python, out.width = "450px"}
 plt.show()
 ```
 
