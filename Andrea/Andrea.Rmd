@@ -53,7 +53,9 @@ We can obtain multiple types of features from images. Qualitative features are u
 - Higher-order statistics features are obtained by statistical methods after applying filters or mathematical transforms to the images. Some examples are fractal analysis, Minkowski functionals or Laplacian transforms of Gaussian-filtered images.
 
 
-## Image display
+
+
+## Image display (oro.dicom)
 In this section we will display a few images using R.
 
 The R package *oro.dicom* is a collection of input/output functions for medical imaging data that conform to the Digital Imaging and Communications in Medicine (DICOM) standard. The R package *RIA* is another package that was developed to facilitate radiomic analysis of medical images. 
@@ -78,9 +80,10 @@ image3 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00
 image(t(image3$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
 ```
 
-### Radiomic features without masks
+### Radiomic features without masks (RIA)
 To compute the radiomic features of the images using RIA, we first need to convert the DICOM images to RIA_image class. To do so, we will use the *load_dicom()* function. 
 
+##### 1 image
 First, we compute the radiomic features of 1 image without a mask (we will do it for the first image displayed earlier). To compute the first-order statistics we use the *first_order* function.
 
 ```{r, results = FALSE, message=FALSE}
@@ -89,7 +92,12 @@ DICOM = first_order(RIA_data_in = DICOM) # first order statistics
 first_order <- RIA:::list_to_df(DICOM$stat_fo$orig) # list of first order statistics
 name_characteristics <- rownames(first_order) # names of the first order statistics
 ```
+```{r, message=FALSE}
+library(rmarkdown)
+paged_table(first_order)
+```
 
+##### 10 images
 Now we will compute the first order characteristics of 10 images (images 10 through 19) from the same patient (ID00007637202177411956430) without a mask.
 
 ```{r, results = FALSE, message=FALSE}
@@ -114,10 +122,12 @@ results <- do.call(cbind.data.frame, res)
 colnames(results) <- seq(1, last_image-first_image+1) 
 rownames(results) <- name_characteristics
 #results:  results in a data.frame
-paged_table(results, options = list(rows.print = 44, cols.print = 5))
+paged_table(results, options = list(rows.print = 10, cols.print = 5))
 ```
 
-### Segmentation with lungct
+
+
+### Segmentation (lungct)
 Now we will perform segmentation of the images. Recall that segmentation refers to delineating the areas of interest in the image in terms of pixels or voxels, in our case, the lung. We will use the patient ID00184637202242062969203.
 
 We will use the library in R *lungct*. The lungct R package develops an image processing pipeline for computed tomography (CT) scans of the lungs.
@@ -155,10 +165,29 @@ And finally, we plot the mask.
 plot(mask$lung_mask)
 ```
 
-#### Radiomic features with masks
+<span style="color:red">Plot 1 image</span>
+```{r, message=FALSE, out.width = "700px", out.height = "400px"}
+res2 <- dcm2niir::dcm2nii(basedir="/Users/andrealetaalfonso/Desktop/TFG/images/img/Folder_images/15")
+checked2 <- check_dcm2nii(res2) 
+image2 <- antsImageRead(checked2)
+plot(image2)
+```
+
+<span style="color:red">Mask of 1 image</span>
+```{r, results = FALSE, message=FALSE}
+mask2 <- segment_lung(image2)
+```
+```{r, message=FALSE, out.width = "700px", out.height = "400px", eval = FALSE}
+plot(mask2$lung_mask)
+```
+<span style="color:red">Error</span>
+
+
+
+#### Radiomic features with masks (lungct)
 In this section we will compute the radiomic features of 10 images with a mask.
 
-```{r, results = FALSE, message=FALSE}
+```{r eval = FALSE, results = FALSE, message=FALSE}
 first_order <- c()
 for (i in 1:10) { # for loop through all the images
   path <- file.path("/Users", "andrealetaalfonso", "Desktop","TFG", "images", "img", "Folder_images", i, fsep="/") # path of every image
@@ -168,7 +197,7 @@ for (i in 1:10) { # for loop through all the images
 } 
 ```
 
-```{r, message=FALSE}
+```{r eval = FALSE, message=FALSE}
 results2 <- do.call(cbind.data.frame, first_order)
 colnames(results2) <- seq(1, 10)
 rownames(results2) <- name_characteristics
@@ -178,13 +207,15 @@ With a mask we obtain different results, because now we are computing the radiom
 
 Let's compare the radiomic features of the first image without a mask and with a mask.
 
-```{r}
+```{r eval = FALSE}
 data.frame(results[1], results2[1])
 ```
 
 As we can see, we obtain different results.
 
-##### Radiomic features with masks with multiple patients
+
+
+##### Radiomic features with masks with multiple patients (RIA, lungct)
 Now we will create multiple .txt files with the results of the radiomic features of different patients, using a mask.
 
 The IDs of the patients are the following.
@@ -200,10 +231,10 @@ patient7 <- "ID00015637202177877247924"
 patient8 <- "ID00019637202178323708467"
 patient9 <- "ID00020637202178344345685"
 patient10 <- "ID00023637202179104603099"
-vector_patients <- c(patient1) # list of patients ID
+vector_patients <- c(patient1, patient2, patient3, patient4, patient5, patient6, patient7, patient8, patient9, patient10) # list of patients ID
 ```
 
-```{r, results = FALSE, message=FALSE}
+```{r eval = FALSE, results = FALSE, message=FALSE}
 for(patient in vector_patients){
   first_order <- c()
   path <- file.path("/Users", "andrealetaalfonso", "Desktop","TFG", "images", "Kaggle", patient, fsep="/") # path of every image
@@ -226,8 +257,144 @@ for(patient in vector_patients){
 ```
 
 
-#### Comparison of features between different weeks 
-In this section, we will study the images of one patient through different time periods to see if we detect changes in the radiomic features.
 
+#### Using Python for segmentation
 
+Import Python libraries.
+```{python, results = FALSE, message=FALSE}
+import numpy as np # pip3 install numpy
+import pandas as pd # pip3 install pandas
+# pip3 install matplotlib
+# pip3 install scipy
+import skimage # pip3 install scikit-image
+import os 
+from skimage.morphology import ball, disk, dilation, binary_erosion, remove_small_objects, erosion, closing, reconstruction, binary_closing
+from skimage.measure import label,regionprops, perimeter
+from skimage.morphology import binary_dilation, binary_opening
+from skimage.filters import roberts, sobel
+from skimage import measure, feature
+from skimage.segmentation import clear_border
+from skimage import data
+from scipy import ndimage as ndi
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+import dicom # pip3 install dicom
+import scipy.misc
+import pydicom # pip3 install pydicom
+import matplotlib.pyplot as plt
+```
+
+Print list of images from a folder
+```{python, results = FALSE, message=FALSE}
+from subprocess import check_output
+path_images = "/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00184637202242062969203/"
+print(check_output(["ls", path_images]).decode("utf8"))
+```
+
+Plot 1 image
+```{python, out.width = "350"}
+# pip3 install nltk==3.6.2
+lung = pydicom.read_file("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00184637202242062969203/20.dcm")
+slice = lung.pixel_array
+slice[slice == -2000] = 0
+plt.imshow(slice, cmap=plt.cm.gray)
+plt.show()
+```
+
+```{python, results = FALSE, message=FALSE, echo = FALSE}
+if os.name == 'nt':
+    import win32api, win32con
+def file_is_hidden(p):
+    if os.name== 'nt':
+        attribute = win32api.GetFileAttributes(p)
+        return attribute & (win32con.FILE_ATTRIBUTE_HIDDEN | win32con.FILE_ATTRIBUTE_SYSTEM)
+    else:
+        return p.startswith('.') #linux-osx
+file_list = [f for f in os.listdir(path_images) if not file_is_hidden(f)]
+print(file_list)
+```
+
+Read all the images from a folder
+```{python, results = FALSE, message=FALSE}
+def read_ct_scan(folder_name):
+  # Read the slices from the dicom file
+  slices = [pydicom.read_file(folder_name + filename) for filename in os.listdir(folder_name) if not file_is_hidden(filename)]
+  # Sort the dicom slices in their respective order
+  slices.sort(key=lambda x: int(x.InstanceNumber))
+  # Get the pixel values for all the slices
+  slices = np.stack([s.pixel_array for s in slices])
+  slices[slices == -2000] = 0
+  return slices
+  
+ct_scan = read_ct_scan(path_images) 
+```
+
+Plot some of the images from a folder
+```{python, out.width = "700px"}
+def plot_ct_scan(scan):
+    f, plots = plt.subplots(int(scan.shape[0] / 20) + 1, 4, figsize=(25, 25))
+    for i in range(0, scan.shape[0], 5):
+        plots[int(i / 20), int((i % 20) / 5)].axis('off')
+        plots[int(i / 20), int((i % 20) / 5)].imshow(scan[i], cmap=plt.cm.bone) 
+
+plot_ct_scan(ct_scan)
+plt.show()
+```
+
+Lung segmentation of 1 image
+```{python, results = FALSE, message=FALSE}
+def get_segmented_lungs2(im, plot=False):
+    # This funtion segments the lungs from the given 2D slice.
+    if plot == True:
+        f, plots = plt.subplots()
+    # Step 1: Convert into a binary image. 
+    binary = im < 604
+    # Step 2: Remove the blobs connected to the border of the image.
+    cleared = clear_border(binary)
+    # Step 3: Label the image.
+    label_image = label(cleared)
+    # Step 4: Keep the labels with 2 largest areas.
+    areas = [r.area for r in regionprops(label_image)]
+    areas.sort()
+    if len(areas) > 2:
+        for region in regionprops(label_image):
+            if region.area < areas[-2]:
+                for coordinates in region.coords:                
+                       label_image[coordinates[0], coordinates[1]] = 0
+    binary = label_image > 0
+    # Step 5: Erosion operation with a disk of radius 2. This operation is seperate the lung nodules attached to the blood vessels.
+    selem = disk(2)
+    binary = binary_erosion(binary, selem)
+    # Step 6: Closure operation with a disk of radius 10. This operation is to keep nodules attached to the lung wall.
+    selem = disk(10)
+    binary = binary_closing(binary, selem)
+    # Step 7: Fill in the small holes inside the binary mask of lungs.
+    edges = roberts(binary)
+    binary = ndi.binary_fill_holes(edges)
+    if plot == True:
+        plots.axis('off')
+        plots.imshow(binary, cmap=plt.cm.bone) 
+    # Step 8: Superimpose the binary mask on the input image.
+    get_high_vals = binary == 0
+    im[get_high_vals] = 0
+    return im
+```
+
+Image
+```{python,  echo=FALSE, out.width = "350px"}
+# pip3 install nltk==3.6.2
+lung = pydicom.read_file("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00184637202242062969203/20.dcm")
+slice = lung.pixel_array
+slice[slice == -2000] = 0
+plt.imshow(slice, cmap=plt.cm.gray)
+plt.show()
+```
+
+Mask of the image
+```{python, message=FALSE, results = FALSE}
+get_segmented_lungs2(ct_scan[20], True)
+```
+```{python, out.width = "45º0px"}
+plt.show()
+```
 
