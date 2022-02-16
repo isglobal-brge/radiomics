@@ -22,7 +22,7 @@ knitr::opts_chunk$set(echo = TRUE)
 Many distinct segmentation methods and algorithms have been discussed in the literature, and there are several ways to classify them. For instance, they can be classified into those: **semantic segmentation**, which performs pixel-level labeling with a set of object categories (*e.g.*, car, human) for all image pixels, and **instance segmentation**, which extends semantic segmentation scope further by detecting and delineating each object of interest in the image. Also, there is another type called **panoptic segmentation** which is the unified version of the two basic segmentation processes.
 
 ```{r, echo=FALSE, fig.cap = "An example of diferent types of image segmentation.", label="SemInsPan", out.width="50%", out.height=="50%", fig.align="center"}
-knitr::include_graphics("C:/Users/joanc/OneDrive/Documents/Matemàtiques/Curs 2021-2022/TFG/Imatges/SemanticInstancePanoptic.png")
+knitr::include_graphics("./Images/SemanticInstancePanoptic.png")
 ```
 
 They can also be split into three categories: **manual**, **semiautomatic**, and **automatic**. While an advantage of manual segmentation method is that we can use expert knowledge (as it is usually performed by an expert), its drawbacks are that it is very time consuming and prone to intra and interobserver variability, which can result in a large difference in the extracted features.
