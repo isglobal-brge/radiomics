@@ -1,11 +1,25 @@
 ---
-title: "Andrea"
+title: "Radiomic analysis of lung images"
 author: "Andrea"
 date: "11/23/2021"
 output: html_document
 ---
 
-# Introduction to radiomics
+# Index
+1. Introduction
+2. Image display (oro.dicom)
+3. Radiomic features (RIA)
+4. Segmentation
+
+    4.1. Segmentation with lungct
+    
+    4.2. Segmentation with Phyton
+    
+    4.3. Segmentation with lungmask
+
+
+
+## 1. Introduction to radiomics
 Medical images are essential for studying diseases. For example, to examine how a patient's tumor evolves, we perform multiple scans over time. Interpreting how the tumor has changed by looking at the images is not an easy task, and different doctors may predict different outcomes. This is where computers become very useful. Thanks to artificial intelligence techniques, we can show computers different medical images over time of a patient with a tumor, and they can identify features of these images to make predictions. They can help decide whether a treatment for a tumor is working or not, decide which alternative treatment to use, and much more, without having to wait for the tumor to get worse. 
 
 In the last decades, several areas of human activities have experienced an increase in digitization. In the case of medicine, a significant amount of information generated during clinical routine has been digitized. With this digital increase, new and better software has been developed to analyze the data. Thanks to research in Artificial Intelligence, these methods have become very powerful and available to any user, allowing doctors to use them on a daily basis. 
@@ -19,7 +33,7 @@ It is believed that, in the end, radiomics will use specific treatments for each
 
 Some of the difficulties when performing radiomics research is that high quality images, with adequate size and complete datasets are needed. Different training and validation datasets are also necessary, to check if our algorithm works correctly. Another difficulty is class imbalance (classification problem where the number of observations per class is not equally distributed) and overfitting (when a statistical model exactly fits its training data). The main clinical applications of radiomics are radiogenomics and clinical outcome prediction.
 
-##### Process of radiomics
+##### **Process of radiomics**
 Now we will briefly explain the process of radiomics.
 
 1. Obtain image: first, we obtain a medical image from a scanner (it can be obtained from multiple modalities: magnetic resonance imaging (MRI), computed tomography (CT), positron-emission-tomography (PET)...).
@@ -27,10 +41,10 @@ Now we will briefly explain the process of radiomics.
 3. Feature extraction: after image segmentation, we can extract the features and classify them.
 4. Finally, we use databases to share our data. 
 
-##### DICOM images
+##### **DICOM images**
 In this project, we will study images obtained from scans of the lungs. The images we will obtain from the scans are DICOM images. DICOM (Digital Imaging and Communications in Medicine) is the standard for the communication and management of medical imaging information and related data. It is used worldwide to store, exchange, and transmit medical images. It defines the formats for medical images that can be exchanged with the data and quality necessary for clinical use. DICOM incorporates standards for imaging modalities such as radiography, ultrasonography, computed tomography (CT), magnetic resonance imaging (MRI), and radiation therapy. The most common applications of this standard are the display, storage, printing, and transmission of images.
 
-##### Radiomic techniques
+##### **Radiomic techniques**
 To obtain the features, we can use multiple techniques. Radiomic techniques can be divided into four categories: intensity-based metrics, texture-based analysis, shape-based measures, and transform-based metrics. We will briefly discuss these techniques now.
 
 - Intensity-based metrics refers to statistics that are calculated from pixel values (or volumetric pixels called voxels). Additional information that can be obtained from analyzing the relationship between the voxels it is not considered. To compute the statistics, we select a region and extract the voxel values. They can be analyzed with histogram analysis. To quantify different aspects of the distribution we use average and variation, shape, and diversity.
@@ -41,7 +55,7 @@ To obtain the features, we can use multiple techniques. Radiomic techniques can 
 
 - Transform-based metrics refers to the transformation of images from spatial coordinates to what is called a frequency domain, without losing any information.
 
-##### Radiomic features
+##### **Radiomic features**
 We can obtain multiple types of features from images. Qualitative features are used to describe lesions, and quantitative features are extracted from images using computer programs that apply mathematical algorithms. Now, we will focus on quantitative features, which can be divided into different subgroups.
 
 - Shape features describe the shape of the traced region of interest and its geometric properties like volume, maximum diameter along different orthogonal directions, maximum surface, tumor compactness, etc. 
@@ -55,7 +69,7 @@ We can obtain multiple types of features from images. Qualitative features are u
 
 
 
-## Image display (oro.dicom)
+## 2. Image display (oro.dicom)
 In this section we will display a few images using R.
 
 The R package *oro.dicom* is a collection of input/output functions for medical imaging data that conform to the Digital Imaging and Communications in Medicine (DICOM) standard. The R package *RIA* is another package that was developed to facilitate radiomic analysis of medical images. 
@@ -67,7 +81,7 @@ library(oro.dicom)
 library(RIA)
 ```
 
-Now we will display 3 images from the same patient (ID00007637202177411956430). To read the images we use *readDICOMFile()*.
+Now we will display 3 images from the same patient (ID00007637202177411956430). To read the images we use the function *readDICOMFile(path_of_the_image)*.
 
 ```{r, out.width = "250px", out.height = "350px"}
 image1 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00007637202177411956430/11/11.dcm")
@@ -80,11 +94,19 @@ image3 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00
 image(t(image3$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
 ```
 
-### Radiomic features without masks (RIA)
-To compute the radiomic features of the images using RIA, we first need to convert the DICOM images to RIA_image class. To do so, we will use the *load_dicom()* function. 
+## 3. Radiomic features (RIA)
 
-##### 1 image
-First, we compute the radiomic features of 1 image without a mask (we will do it for the first image displayed earlier). To compute the first-order statistics we use the *first_order* function.
+### Radiomic features without masks (RIA)
+First we will compute the radiomic features of the images without masks.
+
+To compute the radiomic features of the images using the library RIA, we first need to convert the DICOM images to RIA_image class. To do so, we will use the *load_dicom(path_of_the_file)* function. 
+
+If we have other image formats, there exist functions such as *load_nifti()*, *load_nrrd()* and *load_npy()* in RIA to read the images.
+
+##### **1 image**
+First, we compute the radiomic features of 1 image without a mask (we will do it for the first image displayed earlier). To compute the first-order statistics we use the *first_order()* function.
+
+Some of the metrics computed are the mean, median, energy, entropy, and so on.
 
 ```{r, results = FALSE, message=FALSE}
 DICOM <- RIA::load_dicom(filename="/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00007637202177411956430/11", skipFirst128=FALSE, DICM=FALSE, boffset = 128)
@@ -97,7 +119,7 @@ library(rmarkdown)
 paged_table(first_order)
 ```
 
-##### 10 images
+##### **10 images**
 Now we will compute the first order characteristics of 10 images (images 10 through 19) from the same patient (ID00007637202177411956430) without a mask.
 
 ```{r, results = FALSE, message=FALSE}
@@ -125,9 +147,11 @@ rownames(results) <- name_characteristics
 paged_table(results, options = list(rows.print = 10, cols.print = 5))
 ```
 
+## 4. Segmentation
 
+As we explained in the introduction, segmentation is...............................
 
-### Segmentation (lungct)
+#### 4.1 Segmentation with lungct
 Now we will perform segmentation of the images. Recall that segmentation refers to delineating the areas of interest in the image in terms of pixels or voxels, in our case, the lung. We will use the patient ID00184637202242062969203.
 
 We will use the library in R *lungct*. The lungct R package develops an image processing pipeline for computed tomography (CT) scans of the lungs.
@@ -256,7 +280,7 @@ for(patient in vector_patients){
 }
 ```
 
-
+#### 4.2. Segmentation with Phyton
 
 #### Using Python for segmentation
 
@@ -397,4 +421,4 @@ get_segmented_lungs2(ct_scan[20], True)
 ```{python, out.width = "450px"}
 plt.show()
 ```
-
+#### 4.3. Segmentation with lungmask
