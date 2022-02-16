@@ -149,18 +149,26 @@ paged_table(results, options = list(rows.print = 10, cols.print = 5))
 
 ## 4. Segmentation
 
-As we explained in the introduction, segmentation is...............................
+As we explained in the introduction, ssegmentation refers to delineating the areas of interest in the image in terms of pixels or voxels, in our case, the lung. Lung segmentation refers to the computer-based process of identifying the boundaries of lungs from surrounding thoracic tissue on the scan images. Once we have the segmented images, we can start our analysis.
+
+For example, we have this image xxxxxxx.
+
+We are not interested in the whole image, we only want to study the lung. So we can perform a segmentation of the image to obtain only the lungs.
+
+xxxxxxx
+
+
+Now we will discuss different software to do lung segmentation
 
 #### 4.1 Segmentation with lungct
-Now we will perform segmentation of the images. Recall that segmentation refers to delineating the areas of interest in the image in terms of pixels or voxels, in our case, the lung. We will use the patient ID00184637202242062969203.
 
 We will use the library in R *lungct*. The lungct R package develops an image processing pipeline for computed tomography (CT) scans of the lungs.
 
-First, we load the libraries needed to do the segmentation.
+First, we load the libraries needed to do the segmentation. We will use the library *dcm2niir* to convert DCM files to NIFTI.
 
 ```{r, message=FALSE}
-library(lungct) # to perform segmentation
-library(dcm2niir) # to convert DCM to NIFTI
+library(lungct) 
+library(dcm2niir) 
 library(ANTsRCore)
 ```
 
@@ -421,4 +429,11 @@ get_segmented_lungs2(ct_scan[20], True)
 ```{python, out.width = "450px"}
 plt.show()
 ```
+
 #### 4.3. Segmentation with lungmask
+
+We can also do segmentation with lungmask.
+
+
+
+
