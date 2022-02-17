@@ -288,7 +288,7 @@ for(patient in vector_patients){
  
 ### 4.2. Segmentation with Phyton (I)
 
-Code adapted from https://www.kaggle.com/arnavkj95/candidate-generation-and-luna16-preprocessing
+Code adapted from: https://www.kaggle.com/arnavkj95/candidate-generation-and-luna16-preprocessing
 
 Now we will do the segmentation but instead of using R, we will be using Python.
 
@@ -323,16 +323,16 @@ Each scan consist in multiple slices. We have all the DICOM images from the scan
 ```{python, results = FALSE, message=FALSE}
 from subprocess import check_output
 path_images = "/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00184637202242062969203/"
-# You can check that everything is loading correctly
-# print(check_output(["ls", path_images]).decode("utf8"))
+# You can check that everything is loading correctly with: print(check_output(["ls", path_images]).decode("utf8"))
 ```
 
 To read the images, we will use the function *pydicom.read_file()*. Then we will update the intensity values of -2000 with 0. These pixels are the ones that are located outside the scanner bounds.
 
-```{python, out.width = "350"}
+```{python, out.width = "400", results = FALSE}
 # pip3 install nltk==3.6.2
 lung = pydicom.read_file("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00184637202242062969203/20.dcm")
 slice = lung.pixel_array
+plt.axis('off')
 slice[slice == -2000] = 0
 plt.imshow(slice, cmap=plt.cm.gray)
 plt.show()
@@ -367,20 +367,18 @@ ct_scan = read_ct_scan(path_images)
 ```
 
 Plot some of the images from a folder.
-```{python, out.width = "700px"}
+```{python, out.width = "650px"}
 def plot_ct_scan(scan):
     f, plots = plt.subplots(int(scan.shape[0] / 20) + 1, 4, figsize=(25, 25))
     for i in range(0, scan.shape[0], 5):
         plots[int(i / 20), int((i % 20) / 5)].axis('off')
-        plots[int(i / 20), int((i % 20) / 5)].imshow(scan[i], cmap=plt.cm.bone) 
+        plots[int(i / 20), int((i % 20) / 5)].imshow(scan[i], cmap=plt.cm.gray) 
 
 plot_ct_scan(ct_scan)
 plt.show()
 ```
 
 Now we will do the lung segmentation of 1 image.
-
-EXPLAIN IT --------
 
 ```{python, results = FALSE, message=FALSE}
 def get_segmented_lungs2(im, plot=False):
@@ -437,16 +435,129 @@ get_segmented_lungs2(ct_scan[20], True)
 plt.show()
 ```
 
+The steps to obtain the segmentation are the following.
+
+Now we will briefly explain the process of radiomics.
+
+1. First we convert de image into a binary image. This means that every pixel of the image has only one of two possible values. One black and one white.
+2. We remove the spots connected to the edge of the image.
+3. Create a label.
+4. Keep the labels with two largest areas.
+5. Seperate the lung nodules attached to the blood vessels.
+6. Keep nodules attached to the lung wall.
+7. Fill in the small holes inside the binary mask of lungs.
+8. Superimpose the binary mask on the input image.
+
+
+```{r, echo=FALSE, out.width="50%", out.height=="50%", fig.align="center"}
+knitr::include_graphics("./img/steps_segmentation.png")
+```
+
+
+We can do the segmentation of all the slices of the scan.
+```{python, out.width = "500px"}
+def segment_lung_from_ct_scan(ct_scan):
+    return np.asarray([get_segmented_lungs2(slice) for slice in ct_scan])
+segmented_ct_scan2 = segment_lung_from_ct_scan(ct_scan)
+plot_ct_scan(segmented_ct_scan2)
+plt.show()
+```
+
 
 <br>
 
 
 ### 4.3. Segmentation with Phyton (II)
  
+Code adapted from: https://www.raddq.com/dicom-processing-segmentation-visualization-in-python/
+
+We will study another way to perform segmentation of lung scans using Python.
+
+As before, first we need to import some Python libraries.
+
+```{python, results = FALSE, message=FALSE}
+import numpy as np
+import dicom
+import os
+import matplotlib.pyplot as plt
+from glob import glob
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+import scipy.ndimage
+from skimage import morphology
+from skimage import measure
+from skimage.transform import resize
+# pip3 install scikit-learn
+from sklearn.cluster import KMeans
+# pip3 install plotly
+from plotly import __version__
+from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
+from plotly.tools import FigureFactory as FF
+from plotly.graph_objs import *
+import pydicom
+```
+
+Specify the path where the folder with all the images is, and the path where we want our mask images saved.
+
+```{python}
+data_path = "/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00184637202242062969203/"
+output_path = working_path = "/Users/andrealetaalfonso/Desktop/TFG/"
+```
+
+Read all the DICOM files. To do so, we use glob, which is used to return all file paths that match a specific pattern.
+```{python}
+g = glob(data_path + '/*.dcm')
+```
+
+Print out the first 5 file names to verify we are in the right folder.
+```{python}
+print("Total of %d DICOM images.\nFirst 5 filenames:" % len(g))
+print('\n'.join(g[:5]))
+```
+
+Now we loop over the image files and store everything into a list.
+```{python}
+def load_scan(path):
+    slices = [pydicom.read_file(path + '/' + s) for s in os.listdir(path)]
+    slices.sort(key = lambda x: int(x.InstanceNumber))
+    try:
+        slice_thickness = np.abs(slices[0].ImagePositionPatient[2] - slices[1].ImagePositionPatient[2])
+    except:
+        slice_thickness = np.abs(slices[0].SliceLocation - slices[1].SliceLocation)
+    for s in slices:
+        s.SliceThickness = slice_thickness
+    return slices
+```
+
+The voxel values in the images are raw. This function converts raw values into Houndsfeld units (a quantitative scale for describing radiodensity).
+```{python}
+def get_pixels_hu(scans):
+    image = np.stack([s.pixel_array for s in scans])
+    # Convert to int16 (from sometimes int16), should be possible as values should always be low enough (<32k)
+    image = image.astype(np.int16)
+    # Set outside-of-scan pixels to 1. The intercept is usually -1024, so air is approximately 0
+    image[image == -2000] = 0
+    # Convert to Hounsfield units (HU)
+    intercept = scans[0].RescaleIntercept
+    slope = scans[0].RescaleSlope
+    if slope != 1:
+        image = slope * image.astype(np.float64)
+        image = image.astype(np.int16)
+    image += np.int16(intercept)
+    return np.array(image, dtype=np.int16)
+
+id = 0
+patient = load_scan(data_path) 
+imgs = get_pixels_hu(patient) 
+
+# To save the images in .npy format use:
+np.save(output_path + "fullimages_%d.npy" % (id), imgs)
+```
 
 
 
 <br>
+
+
 ### 4.4. Segmentation with lungmask
 
 We can also do segmentation with lungmask.
