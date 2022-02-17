@@ -3,6 +3,8 @@ title: "Radiomic analysis of lung images"
 author: "Andrea"
 date: "11/23/2021"
 output: html_document
+bibliography: Andrea.bib
+csl: apa.csl
 ---
 
 # Index
@@ -18,7 +20,9 @@ output: html_document
     4.3. Segmentation with lungmask
 
 
-
+<br>
+ 
+ 
 ## 1. Introduction to radiomics
 Medical images are essential for studying diseases. For example, to examine how a patient's tumor evolves, we perform multiple scans over time. Interpreting how the tumor has changed by looking at the images is not an easy task, and different doctors may predict different outcomes. This is where computers become very useful. Thanks to artificial intelligence techniques, we can show computers different medical images over time of a patient with a tumor, and they can identify features of these images to make predictions. They can help decide whether a treatment for a tumor is working or not, decide which alternative treatment to use, and much more, without having to wait for the tumor to get worse. 
 
@@ -67,8 +71,9 @@ We can obtain multiple types of features from images. Qualitative features are u
 - Higher-order statistics features are obtained by statistical methods after applying filters or mathematical transforms to the images. Some examples are fractal analysis, Minkowski functionals or Laplacian transforms of Gaussian-filtered images.
 
 
-
-
+<br>
+ 
+ 
 ## 2. Image display (oro.dicom)
 In this section we will display a few images using R.
 
@@ -94,6 +99,10 @@ image3 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00
 image(t(image3$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
 ```
 
+
+<br>
+ 
+ 
 ## 3. Radiomic features (RIA)
 
 ### Radiomic features without masks (RIA)
@@ -147,20 +156,21 @@ rownames(results) <- name_characteristics
 paged_table(results, options = list(rows.print = 10, cols.print = 5))
 ```
 
+
+<br>
+ 
+ 
 ## 4. Segmentation
 
-As we explained in the introduction, ssegmentation refers to delineating the areas of interest in the image in terms of pixels or voxels, in our case, the lung. Lung segmentation refers to the computer-based process of identifying the boundaries of lungs from surrounding thoracic tissue on the scan images. Once we have the segmented images, we can start our analysis.
+As we explained in the introduction, segmentation refers to delineating the areas of interest in the image in terms of pixels or voxels, in our case, the lung. Lung segmentation refers to the computer-based process of identifying the boundaries of lungs from surrounding thoracic tissue on the scan images. Once we have the segmented images, we can start our analysis.
 
-For example, we have this image xxxxxxx.
-
-We are not interested in the whole image, we only want to study the lung. So we can perform a segmentation of the image to obtain only the lungs.
-
-xxxxxxx
+Now we will discuss different software to do lung segmentation.
 
 
-Now we will discuss different software to do lung segmentation
-
-#### 4.1 Segmentation with lungct
+<br>
+ 
+ 
+### 4.1 Segmentation with lungct
 
 We will use the library in R *lungct*. The lungct R package develops an image processing pipeline for computed tomography (CT) scans of the lungs.
 
@@ -186,68 +196,50 @@ image <- antsImageRead(checked)
 plot(image)
 ```
 
-We create a mask.
+We create the masks.
 
 ```{r, results = FALSE, message=FALSE}
 mask <- segment_lung(image)
 ```
-And finally, we plot the mask.
+And finally, we plot some of the masks.
 
 ```{r, message=FALSE, out.width = "700px", out.height = "400px"}
 plot(mask$lung_mask)
 ```
 
-<span style="color:red">Plot 1 image</span>
-```{r, message=FALSE, out.width = "700px", out.height = "400px"}
-res2 <- dcm2niir::dcm2nii(basedir="/Users/andrealetaalfonso/Desktop/TFG/images/img/Folder_images/15")
-checked2 <- check_dcm2nii(res2) 
+Now, we will do the same for another set of images.
+```{r, message=FALSE}
+res2 <- dcm2niir::dcm2nii(basedir="/Users/andrealetaalfonso/Desktop/TFG/images/eclipse/id_1")
+checked2 <- check_dcm2nii(res2) # Manipulating the output
+```
+```{r, out.width = "700px", out.height = "400px"}
 image2 <- antsImageRead(checked2)
 plot(image2)
 ```
-
-<span style="color:red">Mask of 1 image</span>
 ```{r, results = FALSE, message=FALSE}
 mask2 <- segment_lung(image2)
 ```
-```{r, message=FALSE, out.width = "700px", out.height = "400px", eval = FALSE}
+```{r, message=FALSE, out.width = "700px", out.height = "400px"}
 plot(mask2$lung_mask)
 ```
-<span style="color:red">Error</span>
 
 
 
-#### Radiomic features with masks (lungct)
-In this section we will compute the radiomic features of 10 images with a mask.
+#### **Radiomic features with masks (lungct)**
+In this section we will compute the radiomic features of the images with masks, obtained with lungct.
 
 ```{r eval = FALSE, results = FALSE, message=FALSE}
-first_order <- c()
-for (i in 1:10) { # for loop through all the images
-  path <- file.path("/Users", "andrealetaalfonso", "Desktop","TFG", "images", "img", "Folder_images", i, fsep="/") # path of every image
-  DICOM <- RIA::load_dicom(filename=path, mask_filename=path, skipFirst128=FALSE, DICM=FALSE, boffset = 128) # load dicom image + mask
-  DICOM = first_order(RIA_data_in = DICOM, use_type = "single") # compute first order characteristics
-  first_order[i] <- RIA:::list_to_df(DICOM$stat_fo$orig)
-} 
+RIA_lung(
+  image, mask$lung_mask, 
+  sides = c("right", "left"), 
+  features = c("fo"), 
+  bins_in = 16, equal_prob = FALSE, distance = 1, 
+  statistic = "mean(X, na.rm = TRUE)")
 ```
 
-```{r eval = FALSE, message=FALSE}
-results2 <- do.call(cbind.data.frame, first_order)
-colnames(results2) <- seq(1, 10)
-rownames(results2) <- name_characteristics
-results2 # results in a data.frame
-```
-With a mask we obtain different results, because now we are computing the radiomic features of the lung only, not the whole images
+<span style="color:red">ERROR, IT DOES NOT WORK</span>
 
-Let's compare the radiomic features of the first image without a mask and with a mask.
-
-```{r eval = FALSE}
-data.frame(results[1], results2[1])
-```
-
-As we can see, we obtain different results.
-
-
-
-##### Radiomic features with masks with multiple patients (RIA, lungct)
+##### **Radiomic features with masks with multiple patients (RIA, lungct)**
 Now we will create multiple .txt files with the results of the radiomic features of different patients, using a mask.
 
 The IDs of the patients are the following.
@@ -288,7 +280,11 @@ for(patient in vector_patients){
 }
 ```
 
-#### 4.2. Segmentation with Phyton
+
+<br>
+ 
+ 
+### 4.2. Segmentation with Phyton
 
 #### Using Python for segmentation
 
@@ -430,10 +426,30 @@ get_segmented_lungs2(ct_scan[20], True)
 plt.show()
 ```
 
-#### 4.3. Segmentation with lungmask
+
+<br>
+ 
+ 
+### 4.3. Segmentation with lungmask
 
 We can also do segmentation with lungmask.
 
 
+<br>
+ 
+ 
 
+# Bibliography
+
+@KUMAR20121234
+
+@mackin2015measuring
+
+@kolossvary2018cardiac
+
+@mayerhoefer2020introduction
+
+@van2020radiomics
+
+@rizzo2018radiomics
 
