@@ -15,8 +15,10 @@ csl: apa.csl
 
     4.1. Segmentation with lungct
     
-    4.2. Segmentation with Phyton
+    4.2. Segmentation with Phyton (I)
     
+    4.3. Segmentation with Phyton (II)
+
     4.3. Segmentation with lungmask
 
 
@@ -284,11 +286,15 @@ for(patient in vector_patients){
 <br>
  
  
-### 4.2. Segmentation with Phyton
+### 4.2. Segmentation with Phyton (I)
 
-#### Using Python for segmentation
+Code adapted from https://www.kaggle.com/arnavkj95/candidate-generation-and-luna16-preprocessing
 
-Import Python libraries.
+Now we will do the segmentation but instead of using R, we will be using Python.
+
+
+First we need to import some Python libraries.
+
 ```{python, results = FALSE, message=FALSE}
 import numpy as np # pip3 install numpy
 import pandas as pd # pip3 install pandas
@@ -312,14 +318,17 @@ import pydicom # pip3 install pydicom
 import matplotlib.pyplot as plt
 ```
 
-Print list of images from a folder
+Each scan consist in multiple slices. We have all the DICOM images from the scan in one folder. In *path_images* we indicate the path of the folder.
+
 ```{python, results = FALSE, message=FALSE}
 from subprocess import check_output
 path_images = "/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00184637202242062969203/"
-print(check_output(["ls", path_images]).decode("utf8"))
+# You can check that everything is loading correctly
+# print(check_output(["ls", path_images]).decode("utf8"))
 ```
 
-Plot 1 image
+To read the images, we will use the function *pydicom.read_file()*. Then we will update the intensity values of -2000 with 0. These pixels are the ones that are located outside the scanner bounds.
+
 ```{python, out.width = "350"}
 # pip3 install nltk==3.6.2
 lung = pydicom.read_file("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00184637202242062969203/20.dcm")
@@ -329,7 +338,8 @@ plt.imshow(slice, cmap=plt.cm.gray)
 plt.show()
 ```
 
-```{python, results = FALSE, message=FALSE, echo = FALSE}
+We create a function *file_is_hidden()* to read only .dcm files and not hidden files in the folder that we cannot see in our computers.
+```{python, results = FALSE, message=FALSE}
 if os.name == 'nt':
     import win32api, win32con
 def file_is_hidden(p):
@@ -338,11 +348,10 @@ def file_is_hidden(p):
         return attribute & (win32con.FILE_ATTRIBUTE_HIDDEN | win32con.FILE_ATTRIBUTE_SYSTEM)
     else:
         return p.startswith('.') #linux-osx
-file_list = [f for f in os.listdir(path_images) if not file_is_hidden(f)]
-print(file_list)
+file_list = [f for f in os.listdir(path_images) if not file_is_hidden(f)] 
 ```
 
-Read all the images from a folder
+Now we will read all the images from a folder with a function named *read_ct_scan(folder_name)*.
 ```{python, results = FALSE, message=FALSE}
 def read_ct_scan(folder_name):
   # Read the slices from the dicom file
@@ -357,7 +366,7 @@ def read_ct_scan(folder_name):
 ct_scan = read_ct_scan(path_images) 
 ```
 
-Plot some of the images from a folder
+Plot some of the images from a folder.
 ```{python, out.width = "700px"}
 def plot_ct_scan(scan):
     f, plots = plt.subplots(int(scan.shape[0] / 20) + 1, 4, figsize=(25, 25))
@@ -369,10 +378,12 @@ plot_ct_scan(ct_scan)
 plt.show()
 ```
 
-Lung segmentation of 1 image
+Now we will do the lung segmentation of 1 image.
+
+EXPLAIN IT --------
+
 ```{python, results = FALSE, message=FALSE}
 def get_segmented_lungs2(im, plot=False):
-    # This funtion segments the lungs from the given 2D slice.
     if plot == True:
         f, plots = plt.subplots()
     # Step 1: Convert into a binary image. 
@@ -428,9 +439,15 @@ plt.show()
 
 
 <br>
+
+
+### 4.3. Segmentation with Phyton (II)
  
- 
-### 4.3. Segmentation with lungmask
+
+
+
+<br>
+### 4.4. Segmentation with lungmask
 
 We can also do segmentation with lungmask.
 
