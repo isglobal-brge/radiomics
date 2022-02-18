@@ -179,7 +179,7 @@ We will use the library in R *lungct*. The lungct R package develops an image pr
 
 First, we load the libraries needed to do the segmentation. We will use the library *dcm2niir* to convert DCM files to NIFTI.
 
-```{r, message=FALSE}
+```{r eval = FALSE, results = FALSE, message=FALSE}
 library(lungct) 
 library(dcm2niir) 
 library(ANTsRCore)
@@ -187,43 +187,55 @@ library(ANTsRCore)
 
 Now we have to convert the data from DCM to NII. NIFTI (Neuroimaging Informatics Technology Initiative) is a data format for the storage of Functional Magnetic Resonance Imaging (fMRI) and other medical images.
 
-```{r, message=FALSE}
+```{r eval = FALSE, results = FALSE, message=FALSE}
 res <- dcm2niir::dcm2nii(basedir="/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00184637202242062969203")
 checked <- check_dcm2nii(res) # Manipulating the output
 ```
 
 Next we plot some images.
 
-```{r, out.width = "700px", out.height = "400px"}
+```{r eval = FALSE, results = FALSE, message=FALSE}
 image <- antsImageRead(checked)
 plot(image)
+```
+```{r, echo=FALSE, fig.align="center"}
+knitr::include_graphics("./img/lungct1.png")
 ```
 
 We create the masks.
 
-```{r, results = FALSE, message=FALSE}
+```{r eval = FALSE, results = FALSE, message=FALSE}
 mask <- segment_lung(image)
 ```
 And finally, we plot some of the masks.
 
-```{r, message=FALSE, out.width = "700px", out.height = "400px"}
+```{r eval = FALSE, results = FALSE, message=FALSE}
 plot(mask$lung_mask)
+```
+```{r, echo=FALSE, fig.align="center"}
+knitr::include_graphics("./img/lungct2.png")
 ```
 
 Now, we will do the same for another set of images.
-```{r, message=FALSE}
+```{r eval = FALSE, results = FALSE, message=FALSE}
 res2 <- dcm2niir::dcm2nii(basedir="/Users/andrealetaalfonso/Desktop/TFG/images/eclipse/id_1")
 checked2 <- check_dcm2nii(res2) # Manipulating the output
 ```
-```{r, out.width = "700px", out.height = "400px"}
+```{r eval = FALSE, results = FALSE, message=FALSE}
 image2 <- antsImageRead(checked2)
 plot(image2)
 ```
-```{r, results = FALSE, message=FALSE}
+```{r, echo=FALSE, fig.align="center"}
+knitr::include_graphics("./img/lungct3.png")
+```
+```{r eval = FALSE, results = FALSE, message=FALSE}
 mask2 <- segment_lung(image2)
 ```
-```{r, message=FALSE, out.width = "700px", out.height = "400px"}
+```{r eval = FALSE, results = FALSE, message=FALSE}
 plot(mask2$lung_mask)
+```
+```{r, echo=FALSE, fig.align="center"}
+knitr::include_graphics("./img/lungct4.png")
 ```
 
 
@@ -518,7 +530,7 @@ print('\n'.join(g[:5]))
 Now we loop over the image files and store everything into a list.
 ```{python}
 def load_scan(path):
-    slices = [pydicom.read_file(path + '/' + s) for s in os.listdir(path) if not file_is_hidden(s)]]
+    slices = [pydicom.read_file(path + '/' + s) for s in os.listdir(path) if not file_is_hidden(s)]
     slices.sort(key = lambda x: int(x.InstanceNumber))
     try:
         slice_thickness = np.abs(slices[0].ImagePositionPatient[2] - slices[1].ImagePositionPatient[2])
@@ -941,7 +953,7 @@ We will be using lungmask.
 
 Load the images and the masks with the funcion *load_dicom()*.
 
-```{r, message=FALSE}
+```{r, message=FALSE, results = FALSE, warnings = FALSE,  echo = T, results = 'hide'}
 images = load_dicom(filename = "/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1", 
                     mask_filename = "/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1_mask")
  
@@ -954,7 +966,7 @@ results <- RIA:::list_to_df(images$stat_fo$orig)
 ```
 ```{r, message=FALSE}
 library(rmarkdown)
-paged_table(first_order)
+paged_table(results)
 ```
 
 
