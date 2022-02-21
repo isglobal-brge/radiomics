@@ -15,9 +15,9 @@ csl: apa.csl
 
     4.1. Segmentation with lungct
     
-    4.2. Segmentation with Phyton (I)
+    4.2. Segmentation with Python (I)
     
-    4.3. Segmentation with Phyton (II)
+    4.3. Segmentation with Python (II)
 
     4.4. Segmentation with lungmask
 
@@ -288,7 +288,7 @@ for(patient in vector_patients){
 <br>
  
  
-### 4.2. Segmentation with Phyton (I)
+### 4.2. Segmentation with Python (I)
 
 Code adapted from: https://www.kaggle.com/arnavkj95/candidate-generation-and-luna16-preprocessing
 
@@ -469,7 +469,7 @@ plt.show()
 <br>
 
 
-### 4.3. Segmentation with Phyton (II)
+### 4.3. Segmentation with Python (II)
  
 Code adapted from: https://www.raddq.com/dicom-processing-segmentation-visualization-in-python/
 
@@ -759,14 +759,17 @@ And finally, we can also do segmentation with *lungmask*.
 
 First we import the necessary Python libraries.
 ```{python}
-from lungmask import mask
-import SimpleITK as sitk
+# pip3 install --pre torch -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
+from lungmask import mask # pip install git+https://github.com/JoHof/lungmask
+# pip install scikit-build
+# pip install cmake
+import SimpleITK as sitk # pip3 install SimpleITK
 import os
 import pydicom
 from pydicom.data import get_testdata_files
 import numpy as np
 import matplotlib.pyplot as plt
-import cv2
+import cv2 # pip install opencv-python
 import time
 ```
 
