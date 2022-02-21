@@ -179,7 +179,7 @@ We will use the library in R *lungct*. The lungct R package develops an image pr
 
 First, we load the libraries needed to do the segmentation. We will use the library *dcm2niir* to convert DCM files to NIFTI.
 
-```{r eval = FALSE, results = FALSE, message=FALSE}
+```{r, message=FALSE}
 library(lungct) 
 library(dcm2niir) 
 library(ANTsRCore)
@@ -187,55 +187,44 @@ library(ANTsRCore)
 
 Now we have to convert the data from DCM to NII. NIFTI (Neuroimaging Informatics Technology Initiative) is a data format for the storage of Functional Magnetic Resonance Imaging (fMRI) and other medical images.
 
-```{r eval = FALSE, results = FALSE, message=FALSE}
+```{r, message=FALSE}
 res <- dcm2niir::dcm2nii(basedir="/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00184637202242062969203")
 checked <- check_dcm2nii(res) # Manipulating the output
 ```
 
 Next we plot some images.
 
-```{r eval = FALSE, results = FALSE, message=FALSE}
+```{r, out.width = "700px", out.height = "400px"}
 image <- antsImageRead(checked)
 plot(image)
-```
-```{r, echo=FALSE, fig.align="center"}
-knitr::include_graphics("./img/lungct1.png")
 ```
 
 We create the masks.
 
-```{r eval = FALSE, results = FALSE, message=FALSE}
+```{r, results = FALSE, message=FALSE}
 mask <- segment_lung(image)
 ```
 And finally, we plot some of the masks.
 
-```{r eval = FALSE, results = FALSE, message=FALSE}
+```{r, message=FALSE, out.width = "700px", out.height = "400px"}
 plot(mask$lung_mask)
-```
-```{r, echo=FALSE, fig.align="center"}
-knitr::include_graphics("./img/lungct2.png")
 ```
 
 Now, we will do the same for another set of images.
-```{r eval = FALSE, results = FALSE, message=FALSE}
+```{r, message=FALSE}
 res2 <- dcm2niir::dcm2nii(basedir="/Users/andrealetaalfonso/Desktop/TFG/images/eclipse/id_1")
 checked2 <- check_dcm2nii(res2) # Manipulating the output
 ```
-```{r eval = FALSE, results = FALSE, message=FALSE}
+```{r, out.width = "700px", out.height = "400px"}
 image2 <- antsImageRead(checked2)
 plot(image2)
 ```
-```{r, echo=FALSE, fig.align="center"}
-knitr::include_graphics("./img/lungct3.png")
-```
-```{r eval = FALSE, results = FALSE, message=FALSE}
+
+```{r, results = FALSE, message=FALSE}
 mask2 <- segment_lung(image2)
 ```
-```{r eval = FALSE, results = FALSE, message=FALSE}
+```{r, message=FALSE, out.width = "700px", out.height = "400px"}
 plot(mask2$lung_mask)
-```
-```{r, echo=FALSE, fig.align="center"}
-knitr::include_graphics("./img/lungct4.png")
 ```
 
 
