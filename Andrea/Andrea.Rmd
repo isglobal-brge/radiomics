@@ -1,11 +1,32 @@
 ---
-title: "Andrea"
+title: "Radiomic features analysis of lung images in longitudinal studies"
 author: "Andrea"
 date: "11/23/2021"
 output: html_document
+bibliography: Andrea.bib
+csl: apa.csl
 ---
 
-# Introduction to radiomics
+# Index
+1. Introduction
+2. Image display (oro.dicom)
+3. Radiomic features (RIA)
+4. Segmentation
+
+    4.1. Segmentation with lungct
+    
+    4.2. Segmentation with Python (I)
+    
+    4.3. Segmentation with Python (II)
+
+    4.4. Segmentation with lungmask
+
+5. Radiomic features with masks
+
+<br>
+ 
+ 
+## 1. Introduction to radiomics
 Medical images are essential for studying diseases. For example, to examine how a patient's tumor evolves, we perform multiple scans over time. Interpreting how the tumor has changed by looking at the images is not an easy task, and different doctors may predict different outcomes. This is where computers become very useful. Thanks to artificial intelligence techniques, we can show computers different medical images over time of a patient with a tumor, and they can identify features of these images to make predictions. They can help decide whether a treatment for a tumor is working or not, decide which alternative treatment to use, and much more, without having to wait for the tumor to get worse. 
 
 In the last decades, several areas of human activities have experienced an increase in digitization. In the case of medicine, a significant amount of information generated during clinical routine has been digitized. With this digital increase, new and better software has been developed to analyze the data. Thanks to research in Artificial Intelligence, these methods have become very powerful and available to any user, allowing doctors to use them on a daily basis. 
@@ -19,7 +40,7 @@ It is believed that, in the end, radiomics will use specific treatments for each
 
 Some of the difficulties when performing radiomics research is that high quality images, with adequate size and complete datasets are needed. Different training and validation datasets are also necessary, to check if our algorithm works correctly. Another difficulty is class imbalance (classification problem where the number of observations per class is not equally distributed) and overfitting (when a statistical model exactly fits its training data). The main clinical applications of radiomics are radiogenomics and clinical outcome prediction.
 
-##### Process of radiomics
+##### **Process of radiomics**
 Now we will briefly explain the process of radiomics.
 
 1. Obtain image: first, we obtain a medical image from a scanner (it can be obtained from multiple modalities: magnetic resonance imaging (MRI), computed tomography (CT), positron-emission-tomography (PET)...).
@@ -27,10 +48,10 @@ Now we will briefly explain the process of radiomics.
 3. Feature extraction: after image segmentation, we can extract the features and classify them.
 4. Finally, we use databases to share our data. 
 
-##### DICOM images
+##### **DICOM images**
 In this project, we will study images obtained from scans of the lungs. The images we will obtain from the scans are DICOM images. DICOM (Digital Imaging and Communications in Medicine) is the standard for the communication and management of medical imaging information and related data. It is used worldwide to store, exchange, and transmit medical images. It defines the formats for medical images that can be exchanged with the data and quality necessary for clinical use. DICOM incorporates standards for imaging modalities such as radiography, ultrasonography, computed tomography (CT), magnetic resonance imaging (MRI), and radiation therapy. The most common applications of this standard are the display, storage, printing, and transmission of images.
 
-##### Radiomic techniques
+##### **Radiomic techniques**
 To obtain the features, we can use multiple techniques. Radiomic techniques can be divided into four categories: intensity-based metrics, texture-based analysis, shape-based measures, and transform-based metrics. We will briefly discuss these techniques now.
 
 - Intensity-based metrics refers to statistics that are calculated from pixel values (or volumetric pixels called voxels). Additional information that can be obtained from analyzing the relationship between the voxels it is not considered. To compute the statistics, we select a region and extract the voxel values. They can be analyzed with histogram analysis. To quantify different aspects of the distribution we use average and variation, shape, and diversity.
@@ -41,7 +62,7 @@ To obtain the features, we can use multiple techniques. Radiomic techniques can 
 
 - Transform-based metrics refers to the transformation of images from spatial coordinates to what is called a frequency domain, without losing any information.
 
-##### Radiomic features
+##### **Radiomic features**
 We can obtain multiple types of features from images. Qualitative features are used to describe lesions, and quantitative features are extracted from images using computer programs that apply mathematical algorithms. Now, we will focus on quantitative features, which can be divided into different subgroups.
 
 - Shape features describe the shape of the traced region of interest and its geometric properties like volume, maximum diameter along different orthogonal directions, maximum surface, tumor compactness, etc. 
@@ -53,9 +74,10 @@ We can obtain multiple types of features from images. Qualitative features are u
 - Higher-order statistics features are obtained by statistical methods after applying filters or mathematical transforms to the images. Some examples are fractal analysis, Minkowski functionals or Laplacian transforms of Gaussian-filtered images.
 
 
-
-
-## Image display (oro.dicom)
+<br>
+ 
+ 
+## 2. Image display (oro.dicom)
 In this section we will display a few images using R.
 
 The R package *oro.dicom* is a collection of input/output functions for medical imaging data that conform to the Digital Imaging and Communications in Medicine (DICOM) standard. The R package *RIA* is another package that was developed to facilitate radiomic analysis of medical images. 
@@ -67,7 +89,7 @@ library(oro.dicom)
 library(RIA)
 ```
 
-Now we will display 3 images from the same patient (ID00007637202177411956430). To read the images we use *readDICOMFile()*.
+Now we will display 3 images from the same patient (ID00007637202177411956430). To read the images we use the function *readDICOMFile(path_of_the_image)*.
 
 ```{r, out.width = "250px", out.height = "350px"}
 image1 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00007637202177411956430/11/11.dcm")
@@ -80,11 +102,23 @@ image3 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00
 image(t(image3$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
 ```
 
-### Radiomic features without masks (RIA)
-To compute the radiomic features of the images using RIA, we first need to convert the DICOM images to RIA_image class. To do so, we will use the *load_dicom()* function. 
 
-##### 1 image
-First, we compute the radiomic features of 1 image without a mask (we will do it for the first image displayed earlier). To compute the first-order statistics we use the *first_order* function.
+<br>
+ 
+ 
+## 3. Radiomic features (RIA)
+
+### Radiomic features without masks (RIA)
+First we will compute the radiomic features of the images without masks.
+
+To compute the radiomic features of the images using the library RIA, we first need to convert the DICOM images to RIA_image class. To do so, we will use the *load_dicom(path_of_the_file)* function. 
+
+If we have other image formats, there exist functions such as *load_nifti()*, *load_nrrd()* and *load_npy()* in RIA to read the images.
+
+##### **1 image**
+First, we compute the radiomic features of 1 image without a mask (we will do it for the first image displayed earlier). To compute the first-order statistics we use the *first_order()* function.
+
+Some of the metrics computed are the mean, median, energy, entropy, and so on.
 
 ```{r, results = FALSE, message=FALSE}
 DICOM <- RIA::load_dicom(filename="/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00007637202177411956430/11", skipFirst128=FALSE, DICM=FALSE, boffset = 128)
@@ -97,7 +131,7 @@ library(rmarkdown)
 paged_table(first_order)
 ```
 
-##### 10 images
+##### **10 images**
 Now we will compute the first order characteristics of 10 images (images 10 through 19) from the same patient (ID00007637202177411956430) without a mask.
 
 ```{r, results = FALSE, message=FALSE}
@@ -126,17 +160,28 @@ paged_table(results, options = list(rows.print = 10, cols.print = 5))
 ```
 
 
+<br>
+ 
+ 
+## 4. Segmentation
 
-### Segmentation (lungct)
-Now we will perform segmentation of the images. Recall that segmentation refers to delineating the areas of interest in the image in terms of pixels or voxels, in our case, the lung. We will use the patient ID00184637202242062969203.
+As we explained in the introduction, segmentation refers to delineating the areas of interest in the image in terms of pixels or voxels, in our case, the lung. Lung segmentation refers to the computer-based process of identifying the boundaries of lungs from surrounding thoracic tissue on the scan images. Once we have the segmented images, we can start our analysis.
+
+Now we will discuss different software to do lung segmentation.
+
+
+<br>
+ 
+ 
+### 4.1 Segmentation with lungct
 
 We will use the library in R *lungct*. The lungct R package develops an image processing pipeline for computed tomography (CT) scans of the lungs.
 
-First, we load the libraries needed to do the segmentation.
+First, we load the libraries needed to do the segmentation. We will use the library *dcm2niir* to convert DCM files to NIFTI.
 
 ```{r, message=FALSE}
-library(lungct) # to perform segmentation
-library(dcm2niir) # to convert DCM to NIFTI
+library(lungct) 
+library(dcm2niir) 
 library(ANTsRCore)
 ```
 
@@ -154,68 +199,51 @@ image <- antsImageRead(checked)
 plot(image)
 ```
 
-We create a mask.
+We create the masks.
 
 ```{r, results = FALSE, message=FALSE}
 mask <- segment_lung(image)
 ```
-And finally, we plot the mask.
+And finally, we plot some of the masks.
 
 ```{r, message=FALSE, out.width = "700px", out.height = "400px"}
 plot(mask$lung_mask)
 ```
 
-<span style="color:red">Plot 1 image</span>
-```{r, message=FALSE, out.width = "700px", out.height = "400px"}
-res2 <- dcm2niir::dcm2nii(basedir="/Users/andrealetaalfonso/Desktop/TFG/images/img/Folder_images/15")
-checked2 <- check_dcm2nii(res2) 
+Now, we will do the same for another set of images.
+```{r, message=FALSE}
+res2 <- dcm2niir::dcm2nii(basedir="/Users/andrealetaalfonso/Desktop/TFG/images/eclipse/id_1")
+checked2 <- check_dcm2nii(res2) # Manipulating the output
+```
+```{r, out.width = "700px", out.height = "400px"}
 image2 <- antsImageRead(checked2)
 plot(image2)
 ```
 
-<span style="color:red">Mask of 1 image</span>
 ```{r, results = FALSE, message=FALSE}
 mask2 <- segment_lung(image2)
 ```
-```{r, message=FALSE, out.width = "700px", out.height = "400px", eval = FALSE}
+```{r, message=FALSE, out.width = "700px", out.height = "400px"}
 plot(mask2$lung_mask)
 ```
-<span style="color:red">Error</span>
 
 
 
-#### Radiomic features with masks (lungct)
-In this section we will compute the radiomic features of 10 images with a mask.
+#### **Radiomic features with masks (lungct)**
+In this section we will compute the radiomic features of the images with masks, obtained with lungct.
 
 ```{r eval = FALSE, results = FALSE, message=FALSE}
-first_order <- c()
-for (i in 1:10) { # for loop through all the images
-  path <- file.path("/Users", "andrealetaalfonso", "Desktop","TFG", "images", "img", "Folder_images", i, fsep="/") # path of every image
-  DICOM <- RIA::load_dicom(filename=path, mask_filename=path, skipFirst128=FALSE, DICM=FALSE, boffset = 128) # load dicom image + mask
-  DICOM = first_order(RIA_data_in = DICOM, use_type = "single") # compute first order characteristics
-  first_order[i] <- RIA:::list_to_df(DICOM$stat_fo$orig)
-} 
+RIA_lung(
+  image, mask$lung_mask, 
+  sides = c("right", "left"), 
+  features = c("fo"), 
+  bins_in = 16, equal_prob = FALSE, distance = 1, 
+  statistic = "mean(X, na.rm = TRUE)")
 ```
 
-```{r eval = FALSE, message=FALSE}
-results2 <- do.call(cbind.data.frame, first_order)
-colnames(results2) <- seq(1, 10)
-rownames(results2) <- name_characteristics
-results2 # results in a data.frame
-```
-With a mask we obtain different results, because now we are computing the radiomic features of the lung only, not the whole images
+<span style="color:red">ERROR, IT DOES NOT WORK</span>
 
-Let's compare the radiomic features of the first image without a mask and with a mask.
-
-```{r eval = FALSE}
-data.frame(results[1], results2[1])
-```
-
-As we can see, we obtain different results.
-
-
-
-##### Radiomic features with masks with multiple patients (RIA, lungct)
+##### **Radiomic features with masks with multiple patients (RIA, lungct)**
 Now we will create multiple .txt files with the results of the radiomic features of different patients, using a mask.
 
 The IDs of the patients are the following.
@@ -257,10 +285,18 @@ for(patient in vector_patients){
 ```
 
 
+<br>
+ 
+ 
+### 4.2. Segmentation with Python (I)
 
-#### Using Python for segmentation
+Code adapted from: https://www.kaggle.com/arnavkj95/candidate-generation-and-luna16-preprocessing
 
-Import Python libraries.
+Now we will do the segmentation but instead of using R, we will be using Python.
+
+
+First we need to import some Python libraries.
+
 ```{python, results = FALSE, message=FALSE}
 import numpy as np # pip3 install numpy
 import pandas as pd # pip3 install pandas
@@ -284,24 +320,28 @@ import pydicom # pip3 install pydicom
 import matplotlib.pyplot as plt
 ```
 
-Print list of images from a folder
+Each scan consist in multiple slices. We have all the DICOM images from the scan in one folder. In *path_images* we indicate the path of the folder.
+
 ```{python, results = FALSE, message=FALSE}
 from subprocess import check_output
 path_images = "/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00184637202242062969203/"
-print(check_output(["ls", path_images]).decode("utf8"))
+# You can check that everything is loading correctly with: print(check_output(["ls", path_images]).decode("utf8"))
 ```
 
-Plot 1 image
-```{python, out.width = "350"}
+To read the images, we will use the function *pydicom.read_file()*. Then we will update the intensity values of -2000 with 0. These pixels are the ones that are located outside the scanner bounds.
+
+```{python, out.width = "400", results = FALSE}
 # pip3 install nltk==3.6.2
 lung = pydicom.read_file("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00184637202242062969203/20.dcm")
 slice = lung.pixel_array
+plt.axis('off')
 slice[slice == -2000] = 0
 plt.imshow(slice, cmap=plt.cm.gray)
 plt.show()
 ```
 
-```{python, results = FALSE, message=FALSE, echo = FALSE}
+We create a function *file_is_hidden()* to read only .dcm files and not hidden files in the folder that we cannot see in our computers.
+```{python, results = FALSE, message=FALSE}
 if os.name == 'nt':
     import win32api, win32con
 def file_is_hidden(p):
@@ -310,11 +350,10 @@ def file_is_hidden(p):
         return attribute & (win32con.FILE_ATTRIBUTE_HIDDEN | win32con.FILE_ATTRIBUTE_SYSTEM)
     else:
         return p.startswith('.') #linux-osx
-file_list = [f for f in os.listdir(path_images) if not file_is_hidden(f)]
-print(file_list)
+file_list = [f for f in os.listdir(path_images) if not file_is_hidden(f)] 
 ```
 
-Read all the images from a folder
+Now we will read all the images from a folder with a function named *read_ct_scan(folder_name)*.
 ```{python, results = FALSE, message=FALSE}
 def read_ct_scan(folder_name):
   # Read the slices from the dicom file
@@ -329,22 +368,22 @@ def read_ct_scan(folder_name):
 ct_scan = read_ct_scan(path_images) 
 ```
 
-Plot some of the images from a folder
-```{python, out.width = "700px"}
+Plot some of the images from a folder.
+```{python, out.width = "650px"}
 def plot_ct_scan(scan):
     f, plots = plt.subplots(int(scan.shape[0] / 20) + 1, 4, figsize=(25, 25))
     for i in range(0, scan.shape[0], 5):
         plots[int(i / 20), int((i % 20) / 5)].axis('off')
-        plots[int(i / 20), int((i % 20) / 5)].imshow(scan[i], cmap=plt.cm.bone) 
+        plots[int(i / 20), int((i % 20) / 5)].imshow(scan[i], cmap=plt.cm.gray) 
 
 plot_ct_scan(ct_scan)
 plt.show()
 ```
 
-Lung segmentation of 1 image
+Now we will do the lung segmentation of 1 image.
+
 ```{python, results = FALSE, message=FALSE}
 def get_segmented_lungs2(im, plot=False):
-    # This funtion segments the lungs from the given 2D slice.
     if plot == True:
         f, plots = plt.subplots()
     # Step 1: Convert into a binary image. 
@@ -397,4 +436,550 @@ get_segmented_lungs2(ct_scan[20], True)
 ```{python, out.width = "450px"}
 plt.show()
 ```
+
+The steps to obtain the segmentation are the following.
+
+Now we will briefly explain the process of radiomics.
+
+1. First we convert de image into a binary image. This means that every pixel of the image has only one of two possible values. One black and one white.
+2. We remove the spots connected to the edge of the image.
+3. Create a label.
+4. Keep the labels with two largest areas.
+5. Seperate the lung nodules attached to the blood vessels.
+6. Keep nodules attached to the lung wall.
+7. Fill in the small holes inside the binary mask of lungs.
+8. Superimpose the binary mask on the input image.
+
+
+```{r, echo=FALSE, out.width="50%", out.height=="50%", fig.align="center"}
+knitr::include_graphics("./img/steps_segmentation.png")
+```
+
+
+We can do the segmentation of all the slices of the scan.
+```{python, out.width = "500px"}
+def segment_lung_from_ct_scan(ct_scan):
+    return np.asarray([get_segmented_lungs2(slice) for slice in ct_scan])
+segmented_ct_scan2 = segment_lung_from_ct_scan(ct_scan)
+plot_ct_scan(segmented_ct_scan2)
+plt.show()
+```
+
+
+<br>
+
+
+### 4.3. Segmentation with Python (II)
+ 
+Code adapted from: https://www.raddq.com/dicom-processing-segmentation-visualization-in-python/
+
+We will study another way to perform segmentation of lung scans using Python.
+
+As before, first we need to import some Python libraries.
+
+```{python, results = FALSE, message=FALSE}
+import numpy as np
+import dicom
+import os
+import matplotlib.pyplot as plt
+from glob import glob
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+import scipy.ndimage
+from skimage import morphology
+from skimage import measure
+from skimage.transform import resize
+# pip3 install scikit-learn
+from sklearn.cluster import KMeans
+# pip3 install plotly
+from plotly import __version__
+from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
+from plotly.tools import FigureFactory as FF
+from plotly.graph_objs import *
+import pydicom
+```
+
+Specify the path where the folder with all the images is, and the path where we want our mask images saved.
+
+```{python}
+data_path = "/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00184637202242062969203/"
+output_path = working_path = "/Users/andrealetaalfonso/Desktop/TFG/"
+```
+
+Read all the DICOM files. To do so, we use glob, which is used to return all file paths that match a specific pattern.
+```{python}
+g = glob(data_path + '/*.dcm')
+```
+
+Print out the first 5 file names to verify we are in the right folder.
+```{python}
+print("Total of %d DICOM images.\nFirst 5 filenames:" % len(g))
+print('\n'.join(g[:5]))
+```
+
+Now we loop over the image files and store everything into a list.
+```{python}
+def load_scan(path):
+    slices = [pydicom.read_file(path + '/' + s) for s in os.listdir(path) if not file_is_hidden(s)]
+    slices.sort(key = lambda x: int(x.InstanceNumber))
+    try:
+        slice_thickness = np.abs(slices[0].ImagePositionPatient[2] - slices[1].ImagePositionPatient[2])
+    except:
+        slice_thickness = np.abs(slices[0].SliceLocation - slices[1].SliceLocation)
+    for s in slices:
+        s.SliceThickness = slice_thickness
+    return slices
+```
+
+The voxel values in the images are raw. This function converts raw values into Houndsfeld units (a quantitative scale for describing radiodensity).
+
+
+
+```{python}
+def get_pixels_hu(scans):
+    image = np.stack([s.pixel_array for s in scans])
+    # Convert to int16 (from sometimes int16), should be possible as values should always be low enough (<32k)
+    image = image.astype(np.int16)
+    # Set outside-of-scan pixels to 1. The intercept is usually -1024, so air is approximately 0
+    image[image == -2000] = 0
+    # Convert to Hounsfield units (HU)
+    intercept = scans[0].RescaleIntercept
+    slope = scans[0].RescaleSlope
+    if slope != 1:
+        image = slope * image.astype(np.float64)
+        image = image.astype(np.int16)
+    image += np.int16(intercept)
+    return np.array(image, dtype=np.int16)
+```
+
+```{python}
+id = 0
+patient = load_scan(data_path) 
+imgs = get_pixels_hu(patient) 
+```
+
+Save in .npy format
+```{python}
+np.save(output_path + "fullimages_%d.npy" % (id), imgs)
+```
+
+Now we will check if the Houndsfeld Units (HU) are properly scaled and represented. HU are very important because they are standardized across all CT scans. To give a few examples, air is −1000, lung −500, fat −100 to −50, water 0, blood +30 to +70, muscle +10 to +40 and so on.
+
+Let's display an histogram to check HU.
+
+```{python, results = FALSE,  out.width = "500"}
+file_used=output_path+"fullimages_%d.npy" % id
+imgs_to_process = np.load(file_used).astype(np.float64) 
+plt.hist(imgs_to_process.flatten(), bins=50, color='c')
+plt.xlabel("Hounsfield Units (HU)")
+plt.ylabel("Frequency")
+plt.show()
+```
+
+With the histogram, we can see that there is a lot of air and water. An abundance of lung, fat, bood and muscle.
+
+We obtain the conclusions that we will need to do preprocessing to study well the lungs only, because there is a lot of air and water. 
+
+Now we display some of the images, we will be skipping every two slices.
+
+```{python, out.width = "500"}
+id = 0
+imgs_to_process = np.load(output_path+'fullimages_{}.npy'.format(id))
+
+def sample_stack(stack, rows=4, cols=4, start_with=5, show_every=2):
+    fig,ax = plt.subplots(rows,cols,figsize=[12,12])
+    for i in range(rows*cols):
+        ind = start_with + i*show_every
+        ax[int(i/rows),int(i % rows)].set_title('slice %d' % ind)
+        ax[int(i/rows),int(i % rows)].imshow(stack[ind],cmap='gray')
+        ax[int(i/rows),int(i % rows)].axis('off')
+    plt.show()
+
+sample_stack(imgs_to_process)
+```
+
+
+We can see a lot of gray that represents air.
+
+Let's see how thick each slice is.
+```{python}
+print("Slice Thickness: %f" % patient[0].SliceThickness)
+print("Pixel Spacing (row, col): (%f, %f) " % (patient[0].PixelSpacing[0], patient[0].PixelSpacing[1]))
+```
+
+Now we do resampling. We want that each slice is resampled in 1x1x1 mm pixels and slices, because it will be useful to obtain the 3d image.
+```{python, warnings = FALSE}
+id = 0
+imgs_to_process = np.load(output_path+'fullimages_{}.npy'.format(id))
+def resample(image, scan, new_spacing=[1,1,1]):
+    # Determine current pixel spacing
+    spacing = map(float, ([scan[0].SliceThickness] + list(scan[0].PixelSpacing)))
+    spacing = np.array(list(spacing))
+    resize_factor = spacing / new_spacing
+    new_real_shape = image.shape * resize_factor
+    new_shape = np.round(new_real_shape)
+    real_resize_factor = new_shape / image.shape
+    new_spacing = spacing / real_resize_factor
+    image = scipy.ndimage.interpolation.zoom(image, real_resize_factor)
+    return image, new_spacing
+```
+
+```{python}
+print ("Shape before resampling\t", imgs_to_process.shape)
+imgs_after_resamp, spacing = resample(imgs_to_process, patient, [1,1,1])
+print ("Shape after resampling\t", imgs_after_resamp.shape)
+```
+
+
+**3D Plotting**
+
+```{python}
+def make_mesh(image, threshold=-300, step_size=1):
+    p = image.transpose(2,1,0)
+    verts, faces, norm, val = measure.marching_cubes(p, threshold, step_size=step_size, allow_degenerate=True) 
+    return verts, faces
+```
+
+```{python}
+def plt_3d(verts, faces):
+    x,y,z = zip(*verts) 
+    fig = plt.figure(figsize=(10, 10))
+    ax = fig.add_subplot(111, projection='3d')
+    # Fancy indexing: `verts[faces]` to generate a collection of triangles
+    mesh = Poly3DCollection(verts[faces], linewidths=0.05, alpha=1)
+    face_color = [1, 1, 0.9]
+    mesh.set_facecolor(face_color)
+    ax.add_collection3d(mesh)
+    ax.set_xlim(0, max(x))
+    ax.set_ylim(0, max(y))
+    ax.set_zlim(0, max(z))
+    ax.set_facecolor((0.7, 0.7, 0.7)) # canvio depricated version!
+    plt.show()
+```
+
+```{python, out.width = "450"}
+v, f = make_mesh(imgs_after_resamp, 350)
+plt_3d(v, f)
+```
+
+**Segmentation**
+
+Now we will do the segmentation of the lungs.
+
+```{python, results = FALSE}
+# Standardize the pixel values
+def make_lungmask(img, display=False):
+    row_size= img.shape[0]
+    col_size = img.shape[1]
+    mean = np.mean(img)
+    std = np.std(img)
+    img = img-mean
+    img = img/std
+    # Find the average pixel value near the lungs to renormalize washed out images
+    middle = img[int(col_size/5):int(col_size/5*4),int(row_size/5):int(row_size/5*4)] 
+    mean = np.mean(middle)  
+    max = np.max(img)
+    min = np.min(img)
+    # To improve threshold finding, I'm moving the underflow and overflow on the pixel spectrum
+    img[img==max]=mean
+    img[img==min]=mean
+    # Using Kmeans to separate foreground (soft tissue / bone) and background (lung/air)
+    kmeans = KMeans(n_clusters=2).fit(np.reshape(middle,[np.prod(middle.shape),1]))
+    centers = sorted(kmeans.cluster_centers_.flatten())
+    threshold = np.mean(centers)
+    thresh_img = np.where(img<threshold,1.0,0.0)  # threshold the image
+    # First erode away the finer elements, then dilate to include some of the pixels surrounding the lung.  
+    # We don't want to accidentally clip the lung.
+    eroded = morphology.erosion(thresh_img,np.ones([3,3]))
+    dilation = morphology.dilation(eroded,np.ones([8,8]))
+    labels = measure.label(dilation) # Different labels are displayed in different colors
+    label_vals = np.unique(labels)
+    regions = measure.regionprops(labels)
+    good_labels = []
+    for prop in regions:
+        B = prop.bbox
+        if B[2]-B[0]<row_size/10*9 and B[3]-B[1]<col_size/10*9 and B[0]>row_size/5 and B[2]<col_size/5*4:
+            good_labels.append(prop.label)
+    mask = np.ndarray([row_size,col_size],dtype=np.int8)
+    mask[:] = 0
+    # After just the lungs are left, we do another large dilation in order to fill in and out the lung mask 
+    for N in good_labels:
+        mask = mask + np.where(labels==N,1,0)
+    mask = morphology.dilation(mask,np.ones([10,10])) # one last dilation
+    if (display):
+        fig, ax = plt.subplots(3, 2, figsize=[12, 12])
+        ax[0, 0].set_title("Original")
+        ax[0, 0].imshow(img, cmap='gray')
+        ax[0, 0].axis('off')
+        ax[0, 1].set_title("Threshold")
+        ax[0, 1].imshow(thresh_img, cmap='gray')
+        ax[0, 1].axis('off')
+        ax[1, 0].set_title("After Erosion and Dilation")
+        ax[1, 0].imshow(dilation, cmap='gray')
+        ax[1, 0].axis('off')
+        ax[1, 1].set_title("Color Labels")
+        ax[1, 1].imshow(labels)
+        ax[1, 1].axis('off')
+        ax[2, 0].set_title("Final Mask")
+        ax[2, 0].imshow(mask, cmap='gray')
+        ax[2, 0].axis('off')
+        ax[2, 1].set_title("Apply Mask on Original")
+        ax[2, 1].imshow(mask*img, cmap='gray')
+        ax[2, 1].axis('off')
+        plt.show()
+    return mask*img
+```
+
+We know obtain the segmentation to only one image.
+```{python, out.width = "450", results = FALSE}
+img = imgs_after_resamp[63]
+make_lungmask(img, display=True)
+```
+
+Anf finally we apply it to all the slices.
+
+```{python, out.width = "500"}
+masked_lung = []
+for img in imgs_after_resamp:
+    masked_lung.append(make_lungmask(img))
+sample_stack(masked_lung, show_every=10)
+```
+
+Save masks in .npy format.
+```{python}
+np.save(output_path + "maskedimages_%d.npy" % (id), imgs)
+```
+
+
+<br>
+
+
+### 4.4. Segmentation with lungmask
+
+And finally, we can also do segmentation with *lungmask*.
+
+First we import the necessary Python libraries.
+```{python}
+# pip3 install --pre torch -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
+from lungmask import mask # pip install git+https://github.com/JoHof/lungmask
+# pip install scikit-build
+# pip install cmake
+# python -m pip install --pre SimpleITK --find-links https://github.com/SimpleITK/SimpleITK/releases/tag/v2.2rc2
+import SimpleITK as sitk # pip3 install SimpleITK
+import os
+import pydicom
+from pydicom.data import get_testdata_files
+import numpy as np
+import matplotlib.pyplot as plt
+import cv2 # pip install opencv-python
+import time
+```
+
+Function to read one image from a specified path.
+```{python}
+def get_img_sitk(path):
+    return sitk.ReadImage(path)
+```
+
+Function to read multiple images from a specified path.
+```{python}
+def get_series_sitk(path):
+    reader = sitk.ImageSeriesReader()
+    # Configure the reader to load all of the DICOM tags (public+private)
+    reader.MetaDataDictionaryArrayUpdateOn()
+    reader.LoadPrivateTagsOn()
+    dicom_names = reader.GetGDCMSeriesFileNames(path)
+    reader.SetFileNames(dicom_names)
+    return reader.Execute(), reader
+```
+
+Function to generate a mask.
+```{python}
+def generate_mask(img):
+  
+  segmentation = mask.apply(img)
+  segmentation[segmentation > 0] = 1
+    
+  if img.GetSize()[2] > 1:
+    masked_img = np.zeros((img.GetSize()[2], img.GetSize()[0], img.GetSize()[1]))
+    for i in range(1, segmentation.__len__()):
+      masked_img[i,:,:] = np.where(segmentation[i,:,:] == 1, sitk.GetArrayFromImage(img)[i,:,:], 0)
+    else:
+      masked_img = np.where(segmentation == 1, sitk.GetArrayFromImage(img)[0,:,:], 0)
+      masked_img = masked_img[0,:,:]
+      segmentation = segmentation[0,:,:]
+  return segmentation, masked_img
+```
+
+
+To save the images.
+```{python}
+def create_writer(series_reader):
+    # Write the 3D image as a series
+    writer = sitk.ImageFileWriter()
+    # Use the study/series/frame of reference information given in the meta-data
+    # dictionary and not the automatically generated information from the file IO
+    writer.KeepOriginalImageUIDOn()
+    # Copy relevant tags from the original meta-data dictionary (private tags are also accessible).
+    tags_to_copy = ["0010|0010",  # Patient Name
+                    "0010|0020",  # Patient ID
+                    "0010|0030",  # Patient Birth Date
+                    "0020|000D",  # Study Instance UID, for machine consumption
+                    "0020|0010",  # Study ID, for human consumption
+                    "0008|0020",  # Study Date
+                    "0008|0030",  # Study Time
+                    "0008|0050",  # Accession Number
+                    "0008|0060"  # Modality
+                    ]
+    modification_time = time.strftime("%H%M%S")
+    modification_date = time.strftime("%Y%m%d")
+    
+    # Copy some of the tags and add the relevant tags indicating the change.
+    series_tag_values = [
+                            (k, series_reader.GetMetaData(0, k))
+                            for k in tags_to_copy
+                            if series_reader.HasMetaDataKey(0, k)] + \
+                        [("0008|0031", modification_time),  # Series Time
+                         ("0008|0021", modification_date),  # Series Date
+                         ("0008|0008", "DERIVED\\SECONDARY"),  # Image Type
+                         ("0020|000e", "1.2.826.0.1.3680043.2.1125." +
+                          modification_date + ".1" + modification_time),
+                         ("0008|103e",
+                          series_reader.GetMetaData(0, "0008|103e")
+                          + " Processed-SimpleITK")]  # Series Description
+    return writer, series_tag_values
+```
+
+To obtain and save the masks in DICOM format.
+```{python}
+def get_and_save_masks(series_path):
+    # Get series of dicom images
+    series, series_reader = get_series_sitk(series_path)
+    
+    # Get masked lungs and mask filters
+    mask_filter, masked_lung = generate_mask(series)
+    
+    # Save masks
+    writer, series_tag_values = create_writer(series_reader)
+    
+    for id in range(len(mask_filter)):
+        image_slice = sitk.GetImageFromArray(mask_filter[id,:,:])
+        # Tags shared by the series.
+        for tag, value in series_tag_values:
+            image_slice.SetMetaData(tag, value)
+        # Slice specific tags.
+        # Instance Creation Date
+        image_slice.SetMetaData("0008|0012", time.strftime("%Y%m%d"))
+        # Instance Creation Time
+        image_slice.SetMetaData("0008|0013", time.strftime("%H%M%S"))
+        # Instace Number
+        image_slice.SetMetaData("0020|0013", str(id))
+        # Check if new directory exists
+        if not os.path.exists(series_path + "_mask/"):
+          os.makedirs(series_path + "_mask/")
+        # Write to the output directory and add the extension dcm, to force writing
+        # in DICOM format.
+        writer.SetFileName(series_path + "_mask/" + str(id) + ".dcm")
+        writer.Execute(image_slice)
+```
+
+Plot one image.
+```{python, out.width = "400"}
+ds = pydicom.dcmread("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1/std_38.dcm")
+plt.imshow(ds.pixel_array, cmap='gray')
+plt.show()
+```
+
+Now we create a mask for the image above.
+```{python, results = FALSE, warnings = FALSE}
+image1 = get_img_sitk("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1/std_38.dcm")
+mask_filter_single, masked_lung_single = generate_mask(image1)
+```
+
+```{python, out.width = "400"}
+plt.imshow(mask_filter_single, cmap='gray')
+plt.show()
+```
+
+```{python, out.width = "400"}
+plt.imshow(masked_lung_single, cmap='gray')
+plt.show()
+```
+
+We can visualize it all in one panel.
+```{python, results = FALSE, out.width = "600"}
+fig, ax = plt.subplots(1,3)
+ax[0].set_title("Original", fontsize='small')
+ax[0].imshow(ds.pixel_array, cmap='gray')
+ax[0].axis('off')
+
+ax[1].set_title("Segmented", fontsize='small')
+ax[1].imshow(mask_filter_single, cmap='gray')
+ax[1].axis('off')
+
+ax[2].set_title("Masked", fontsize='small')
+ax[2].imshow(masked_lung_single, cmap='gray')
+ax[2].axis('off')
+
+plt.show()
+```
+
+Now, we can do the same for all of the images in the folder.
+
+We generate the masks and save them in the path + _mask.
+
+```{python, results = FALSE}
+get_and_save_masks("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1")
+```
+
+
+
+
+<br>
+
+
+## 5. Radiomic features with masks
+
+Now that we have in one folder all the images, and in another one all the masks, we can start computing the radiomic features of the images with the masks.
+
+We will be using lungmask.
+
+Load the images and the masks with the funcion *load_dicom()*.
+
+```{r, message=FALSE, results = FALSE, warnings = FALSE,  echo = T, results = 'hide'}
+images = load_dicom(filename = "/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1", 
+                    mask_filename = "/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1_mask")
+ 
+```
+
+Compute the radiomic features of the images.
+```{r, message=FALSE}
+images = first_order(RIA_data_in = images)
+results <- RIA:::list_to_df(images$stat_fo$orig)
+```
+```{r, message=FALSE}
+library(rmarkdown)
+paged_table(results)
+```
+
+
+ 
+<br>
+
+
+# Bibliography
+
+
+@KUMAR20121234
+
+@mackin2015measuring
+
+@kolossvary2018cardiac
+
+@mayerhoefer2020introduction
+
+@van2020radiomics
+
+@rizzo2018radiomics
+
+@hofmanninger2020automatic
 
