@@ -796,19 +796,18 @@ Function to generate a mask.
 ```{python}
 def generate_mask(img):
   
-    segmentation = mask.apply(img)
-    segmentation[segmentation > 0] = 1
+  segmentation = mask.apply(img)
+  segmentation[segmentation > 0] = 1
     
-    if img.GetSize()[2] > 1:
-        masked_img = np.zeros((img.GetSize()[2], img.GetSize()[0], img.GetSize()[1]))
-        for i in range(1, segmentation.__len__()):
-            masked_img[i,:,:] = np.where(segmentation[i,:,:] == 1, sitk.GetArrayFromImage(img)[i,:,:], 0)
+  if img.GetSize()[2] > 1:
+    masked_img = np.zeros((img.GetSize()[2], img.GetSize()[0], img.GetSize()[1]))
+    for i in range(1, segmentation.__len__()):
+      masked_img[i,:,:] = np.where(segmentation[i,:,:] == 1, sitk.GetArrayFromImage(img)[i,:,:], 0)
     else:
-        masked_img = np.where(segmentation == 1, sitk.GetArrayFromImage(img)[0,:,:], 0)
-        masked_img = masked_img[0,:,:]
-        segmentation = segmentation[0,:,:]
-
-    return segmentation, masked_img
+      masked_img = np.where(segmentation == 1, sitk.GetArrayFromImage(img)[0,:,:], 0)
+      masked_img = masked_img[0,:,:]
+      segmentation = segmentation[0,:,:]
+  return segmentation, masked_img
 ```
 
 
