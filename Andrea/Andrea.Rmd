@@ -763,6 +763,7 @@ First we import the necessary Python libraries.
 from lungmask import mask # pip install git+https://github.com/JoHof/lungmask
 # pip install scikit-build
 # pip install cmake
+# python -m pip install --pre SimpleITK --find-links https://github.com/SimpleITK/SimpleITK/releases/tag/v2.2rc2
 import SimpleITK as sitk # pip3 install SimpleITK
 import os
 import pydicom
