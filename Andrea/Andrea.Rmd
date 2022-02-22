@@ -1,5 +1,5 @@
 ---
-title: "Radiomic analysis of lung images"
+title: "Radiomic features analysis of lung images in longitudinal studies"
 author: "Andrea"
 date: "11/23/2021"
 output: html_document
