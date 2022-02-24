@@ -759,18 +759,14 @@ And finally, we can also do segmentation with *lungmask*.
 
 First we import the necessary Python libraries.
 ```{python}
-# pip3 install --pre torch -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
-from lungmask import mask # pip install git+https://github.com/JoHof/lungmask
-# pip install scikit-build
-# pip install cmake
-# python -m pip install --pre SimpleITK --find-links https://github.com/SimpleITK/SimpleITK/releases/tag/v2.2rc2
-import SimpleITK as sitk # pip3 install SimpleITK
+from lungmask import mask
+import SimpleITK as sitk
 import os
 import pydicom
 from pydicom.data import get_testdata_files
 import numpy as np
 import matplotlib.pyplot as plt
-import cv2 # pip install opencv-python
+import cv2
 import time
 ```
 
@@ -784,7 +780,6 @@ Function to read multiple images from a specified path.
 ```{python}
 def get_series_sitk(path):
     reader = sitk.ImageSeriesReader()
-    # Configure the reader to load all of the DICOM tags (public+private)
     reader.MetaDataDictionaryArrayUpdateOn()
     reader.LoadPrivateTagsOn()
     dicom_names = reader.GetGDCMSeriesFileNames(path)
@@ -795,18 +790,16 @@ def get_series_sitk(path):
 Function to generate a mask.
 ```{python}
 def generate_mask(img):
-  
   segmentation = mask.apply(img)
   segmentation[segmentation > 0] = 1
-    
   if img.GetSize()[2] > 1:
     masked_img = np.zeros((img.GetSize()[2], img.GetSize()[0], img.GetSize()[1]))
     for i in range(1, segmentation.__len__()):
       masked_img[i,:,:] = np.where(segmentation[i,:,:] == 1, sitk.GetArrayFromImage(img)[i,:,:], 0)
-    else:
-      masked_img = np.where(segmentation == 1, sitk.GetArrayFromImage(img)[0,:,:], 0)
-      masked_img = masked_img[0,:,:]
-      segmentation = segmentation[0,:,:]
+  else:
+    masked_img = np.where(segmentation == 1, sitk.GetArrayFromImage(img)[0,:,:], 0)
+    masked_img = masked_img[0,:,:]
+    segmentation = segmentation[0,:,:]
   return segmentation, masked_img
 ```
 
@@ -814,12 +807,8 @@ def generate_mask(img):
 To save the images.
 ```{python}
 def create_writer(series_reader):
-    # Write the 3D image as a series
     writer = sitk.ImageFileWriter()
-    # Use the study/series/frame of reference information given in the meta-data
-    # dictionary and not the automatically generated information from the file IO
     writer.KeepOriginalImageUIDOn()
-    # Copy relevant tags from the original meta-data dictionary (private tags are also accessible).
     tags_to_copy = ["0010|0010",  # Patient Name
                     "0010|0020",  # Patient ID
                     "0010|0030",  # Patient Birth Date
@@ -833,7 +822,6 @@ def create_writer(series_reader):
     modification_time = time.strftime("%H%M%S")
     modification_date = time.strftime("%Y%m%d")
     
-    # Copy some of the tags and add the relevant tags indicating the change.
     series_tag_values = [
                         (k, series_reader.GetMetaData(0, k))
                         for k in tags_to_copy
@@ -865,11 +853,11 @@ def get_and_save_masks(series_path):
         for tag, value in series_tag_values:
             image_slice.SetMetaData(tag, value)
         # Slice specific tags.
-        # Instance Creation Date
+        #   Instance Creation Date
         image_slice.SetMetaData("0008|0012", time.strftime("%Y%m%d"))
-        # Instance Creation Time
+        #   Instance Creation Time
         image_slice.SetMetaData("0008|0013", time.strftime("%H%M%S"))
-        # Instace Number
+        #   Instace Number
         image_slice.SetMetaData("0020|0013", str(id))
         # Check if new directory exists
         if not os.path.exists(series_path + "_mask/"):
@@ -881,30 +869,30 @@ def get_and_save_masks(series_path):
 ```
 
 Plot one image.
-```{python, out.width = "400"}
+```{python, out.width = "400", eval = FALSE}
 ds = pydicom.dcmread("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1/std_38.dcm")
 plt.imshow(ds.pixel_array, cmap='gray')
 plt.show()
 ```
 
 Now we create a mask for the image above.
-```{python, results = FALSE, warnings = FALSE, eval = FALSE}
-image1 = get_img_sitk("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1/std_38.dcm")
+```{python, results = FALSE, warnings = FALSE, eval= FALSE}
+image1 <- get_img_sitk("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1/std_38.dcm")
 mask_filter_single, masked_lung_single = generate_mask(image1)
 ```
 
-```{python, out.width = "400", eval = FALSE}
+```{python, out.width = "400", eval= FALSE}
 plt.imshow(mask_filter_single, cmap='gray')
 plt.show()
 ```
 
-```{python, out.width = "400", eval = FALSE}
+```{python, out.width = "400", eval= FALSE}
 plt.imshow(masked_lung_single, cmap='gray')
 plt.show()
 ```
 
 We can visualize it all in one panel.
-```{python, results = FALSE, out.width = "600", eval = FALSE}
+```{python, results = FALSE, out.width = "600", eval= FALSE}
 fig, ax = plt.subplots(1,3)
 ax[0].set_title("Original", fontsize='small')
 ax[0].imshow(ds.pixel_array, cmap='gray')
@@ -941,7 +929,9 @@ We will be using lungmask.
 
 Load the images and the masks with the funcion *load_dicom()*.
 
+
 ```{r, message=FALSE, results = FALSE, warnings = FALSE,  echo = T, results = 'hide'}
+library(RIA)
 images = load_dicom(filename = "/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1", 
                     mask_filename = "/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1_mask")
  
@@ -951,12 +941,13 @@ Compute the radiomic features of the images.
 ```{r, message=FALSE}
 images = first_order(RIA_data_in = images)
 results <- RIA:::list_to_df(images$stat_fo$orig)
-name_characteristics <- rownames(results) 
+name_characteristics <- rownames(results)
 ```
 ```{r, message=FALSE}
 library(rmarkdown)
 paged_table(results)
 ```
+
 
 
 **Multiple patients at the same time**
@@ -965,7 +956,7 @@ Now we will do the same but for 5 patients (in our case) at the same time.
 
 First obtain and save the mask of the images.
 
-```{python, results = FALSE}
+```{python, results = FALSE, warnings = FALSE}
 # List of all the patient folders
 patients = [f for f in os.listdir("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle") if not f.startswith('.')]
 
@@ -974,9 +965,10 @@ for i in patients: # for loop through all the patients
     get_and_save_masks(path) # obtain and save masks
 ```
 
+
 Now we compute the radiomic features.
 
-```{r, message=FALSE, results = FALSE, warnings = FALSE,  echo = T, results = 'hide'}
+```{r, message=FALSE, warnings = FALSE, results = FALSE}
 library(RIA)
 library(rmarkdown)
 
@@ -999,6 +991,17 @@ rownames(results) <- name_characteristics
 paged_table(results)
 
 ```
+
+```{r, message=FALSE, warnings = FALSE}
+results <- do.call(cbind.data.frame, res)
+colnames(results) <- seq(1, length(images_folder_names))
+rownames(results) <- name_characteristics
+paged_table(results)
+
+```
+
+
+
 
  
 <br>
