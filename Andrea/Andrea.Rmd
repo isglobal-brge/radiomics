@@ -92,13 +92,13 @@ library(RIA)
 Now we will display 3 images from the same patient (ID00007637202177411956430). To read the images we use the function *readDICOMFile(path_of_the_image)*.
 
 ```{r, out.width = "250px", out.height = "350px"}
-image1 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00007637202177411956430/11/11.dcm")
+image1 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00007637202177411956430/11.dcm")
 image(t(image1$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
 
-image2 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00007637202177411956430/12/12.dcm")
+image2 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00007637202177411956430/12.dcm")
 image(t(image2$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
 
-image3 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00007637202177411956430/13/13.dcm")
+image3 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00007637202177411956430/13.dcm")
 image(t(image3$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
 ```
 
@@ -121,7 +121,7 @@ First, we compute the radiomic features of 1 image without a mask (we will do it
 Some of the metrics computed are the mean, median, energy, entropy, and so on.
 
 ```{r, results = FALSE, message=FALSE}
-DICOM <- RIA::load_dicom(filename="/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00007637202177411956430/11", skipFirst128=FALSE, DICM=FALSE, boffset = 128)
+DICOM <- RIA::load_dicom(filename="/Users/andrealetaalfonso/Desktop/TFG/images/img/Folder_images/13", skipFirst128=FALSE, DICM=FALSE, boffset = 128)
 DICOM = first_order(RIA_data_in = DICOM) # first order statistics
 first_order <- RIA:::list_to_df(DICOM$stat_fo$orig) # list of first order statistics
 name_characteristics <- rownames(first_order) # names of the first order statistics
@@ -140,7 +140,7 @@ res <- c()
 first_image <- 10 # first image to study
 last_image <- 19 # last image to study
 for (i in first_image:last_image) { # for loop through all the images
-  path <- file.path("/Users", "andrealetaalfonso", "Desktop","TFG", "images", "Kaggle", "ID00007637202177411956430", i, fsep="/") # path of every image
+  path <- file.path("/Users", "andrealetaalfonso", "Desktop","TFG", "images", "img", "Folder_images", i, fsep="/") # path of every image
   DICOM <- RIA::load_dicom(filename=path, skipFirst128=FALSE, DICM=FALSE, boffset = 128) # load dicom image
   DICOM = first_order(RIA_data_in = DICOM, use_type = "single") # compute first order characteristics
   first_order[i] <- RIA:::list_to_df(DICOM$stat_fo$orig)
@@ -835,17 +835,15 @@ def create_writer(series_reader):
     
     # Copy some of the tags and add the relevant tags indicating the change.
     series_tag_values = [
-                            (k, series_reader.GetMetaData(0, k))
-                            for k in tags_to_copy
-                            if series_reader.HasMetaDataKey(0, k)] + \
-                        [("0008|0031", modification_time),  # Series Time
-                         ("0008|0021", modification_date),  # Series Date
-                         ("0008|0008", "DERIVED\\SECONDARY"),  # Image Type
-                         ("0020|000e", "1.2.826.0.1.3680043.2.1125." +
-                          modification_date + ".1" + modification_time),
-                         ("0008|103e",
-                          series_reader.GetMetaData(0, "0008|103e")
-                          + " Processed-SimpleITK")]  # Series Description
+                        (k, series_reader.GetMetaData(0, k))
+                        for k in tags_to_copy
+                        if series_reader.HasMetaDataKey(0, k)] + \
+                    [("0008|0031", modification_time),  # Series Time
+                     ("0008|0021", modification_date),  # Series Date
+                     ("0008|0008", "DERIVED\\SECONDARY"),  # Image Type
+                     ("0020|000e", "1.2.826.0.1.3680043.2.1125." +
+                      modification_date + ".1" + modification_time),
+                     ("0008|103e","Processed-SimpleITK")]  # Series Description
     return writer, series_tag_values
 ```
 
@@ -932,8 +930,6 @@ get_and_save_masks("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1")
 ```
 
 
-
-
 <br>
 
 
@@ -955,6 +951,7 @@ Compute the radiomic features of the images.
 ```{r, message=FALSE}
 images = first_order(RIA_data_in = images)
 results <- RIA:::list_to_df(images$stat_fo$orig)
+name_characteristics <- rownames(results) 
 ```
 ```{r, message=FALSE}
 library(rmarkdown)
@@ -962,8 +959,92 @@ paged_table(results)
 ```
 
 
+**Multiple patients at the same time**
+
+Now we will do the same but for 5 patients (in our case) at the same time.
+
+First obtain and save the mask of the images.
+
+```{python, results = FALSE}
+# List of all the patient folders
+patients = [f for f in os.listdir("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle") if not f.startswith('.')]
+
+for i in patients: # for loop through all the patients
+    path = os.path.join("/Users", "andrealetaalfonso", "Desktop","TFG", "images", "Kaggle", i)
+    get_and_save_masks(path) # obtain and save masks
+```
+
+Now we compute the radiomic features.
+
+```{r, message=FALSE, results = FALSE, warnings = FALSE,  echo = T, results = 'hide'}
+library(RIA)
+library(rmarkdown)
+
+res <- c()
+
+images_folder_names <- grep(list.files(path="/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle"), pattern='mask', invert=TRUE, value=TRUE)
+mask_folder_names <- list.files("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle", pattern="mask")
+
+for(patient in 1:length(images_folder_names)){
+  images_folder_path <- file.path("/Users", "andrealetaalfonso", "Desktop","TFG", "images", "Kaggle", images_folder_names[patient], fsep="/")
+  mask_folder_path <- file.path("/Users", "andrealetaalfonso", "Desktop","TFG", "images", "Kaggle", mask_folder_names[patient], fsep="/")
+  
+  images = load_dicom(filename = images_folder_path, mask_filename = mask_folder_path)
+  images = first_order(RIA_data_in = images)
+  res[patient] <- RIA:::list_to_df(images$stat_fo$orig)
+}
+results <- do.call(cbind.data.frame, res)
+colnames(results) <- seq(1, length(images_folder_names))
+rownames(results) <- name_characteristics
+paged_table(results)
+
+```
+
  
 <br>
+
+## Information about the patients
+
+We have a *.csv* file with information about the patients.
+
+Let's open the file and view some of the rows.
+
+```{r}
+data_patients <- read.csv('/Users/andrealetaalfonso/Desktop/TFG/images/train.csv')
+data_patients <- as.data.frame(data_patients)
+head(data_patients)
+```
+
+The data we are provided with means the following:
+
+- Patient: a unique Id for each patient (also the name of the patient's DICOM folder)
+
+- Weeks: the relative number of weeks pre/post the baseline CT (may be negative)
+
+- FVC: the recorded lung capacity in ml
+
+- Percent: a computed field which approximates the patient's FVC as a percent of the typical FVC for a person of similar characteristics
+
+- Age
+
+- Sex
+
+- SmokingStatus
+
+
+
+
+We will only select the information about the patients that we have.
+
+```{r}
+data_patients[data_patients$Patient %in% images_folder_names,]
+```
+
+
+ 
+<br>
+
+
 
 
 # Bibliography
