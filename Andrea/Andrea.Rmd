@@ -888,23 +888,23 @@ plt.show()
 ```
 
 Now we create a mask for the image above.
-```{python, results = FALSE, warnings = FALSE}
+```{python, results = FALSE, warnings = FALSE, eval = FALSE}
 image1 = get_img_sitk("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1/std_38.dcm")
 mask_filter_single, masked_lung_single = generate_mask(image1)
 ```
 
-```{python, out.width = "400"}
+```{python, out.width = "400", eval = FALSE}
 plt.imshow(mask_filter_single, cmap='gray')
 plt.show()
 ```
 
-```{python, out.width = "400"}
+```{python, out.width = "400", eval = FALSE}
 plt.imshow(masked_lung_single, cmap='gray')
 plt.show()
 ```
 
 We can visualize it all in one panel.
-```{python, results = FALSE, out.width = "600"}
+```{python, results = FALSE, out.width = "600", eval = FALSE}
 fig, ax = plt.subplots(1,3)
 ax[0].set_title("Original", fontsize='small')
 ax[0].imshow(ds.pixel_array, cmap='gray')
