@@ -15,7 +15,7 @@ nocite: '@*'
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## An Introduction to Image Segmentation
+# An Introduction to Image Segmentation
 
 **Image segmentation** is the process of partitioning an image into several coherent sub-regions according to some extracted features (*e.g.*, color, brightness, texture attributes). It plays an important role in a broad range of applications, including video surveillance, augmented reality, recognition tasks (face, fingerprints, iris, etc.), autonomous vehicles (navigable surface, object detection, etc.) or **medical image analyse**, just to name a few. Segmentation aims to extract meaningful information for easier and enhanced analysis; as an illustrative example, a diagnosis based on a set of features extracted from a segmented CT scan of a lung will most probably provide more accurate results than another one where the lung is not isolated.
 
@@ -46,8 +46,186 @@ According to its architecture, image segmentation algorithms can be grouped into
 
 * **Model-based Segmentation**. In [@MBS] is defined as the assignment of labels to pixels or voxels by matching the a priori known object model to the image data. Model-based approaches have been set up as probably the best strategies for picture analysis, and include Markov Random Field models, Atlas-based models, Graph cut models or Artificial Neural Networks, among others. 
 
+# DICOM Processing and Segmentation in Python
 
-## Bibliography
+**DICOM** (Digital Imaging and Communications in Medicine) is a standard protocol for the management and transmission of medical images and related data and is used in many healthcare facilities. This section is dedicated to visualizing Achilles tendon CT images (DICOM files) in 1D (by histogram), 2D, and 3D. Finally, we will create segmentation masks that remove all voxels except for the Achilles tendon. In order to achieve this, we'll run a Python code based on the one from [@DICOMProcSegm] in RStudio using the library `reticulate`. 
+
+## Getting Ready
+
+The `reticulate` package provides a comprehensive set of tools for interoperability between Python and R. Thus, we'll start by installing and loading it (see [@reticulate] and [@reticulate2]). Now we are almost ready to run Python code in RStudio. Before doing this, we must install some Python modules (if they have not been installed yet) by running the following command lines (in Terminal):
+
+`pip install pydicom`
+
+`conda install plotly`
+
+`conda install scikit-image` (make sure you are using scikit-image 0.13 or above)
+
+`pip install sklearn`
+
+`pip install matplotlib`
+
+## Import packages
+
+Once we are working in a Python environment, let us begin by importing the following packages:
+
+```{python, echo=TRUE, results='hide'}
+import numpy as np
+import pydicom
+import os
+import matplotlib.pyplot as plt
+from glob import glob
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+import scipy.ndimage
+from skimage import morphology
+from skimage import measure
+from skimage.transform import resize
+from sklearn.cluster import KMeans
+from plotly import __version__
+from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
+from plotly.tools import FigureFactory as FF
+from plotly.graph_objs import *
+from pydicom.pixel_data_handlers.util import apply_modality_lut
+import plotly.figure_factory
+import matplotlib
+```
+
+To specify the input and output data folders path:
+
+```{python, results='hide', collapse=TRUE}
+data_path = "./Images/DICOM/AX DP 1RA68062501 (id=0)/FILESET"
+output_path = working_path = "./Images/DICOM/AX DP 1RA68062501 (id=0)"
+g = glob(data_path + '/*')
+
+# Print out the first 5 file names to verify we are in the right folder
+print ("Total of %d DICOM images.\nFirst 5 filenames:" % len(g))
+print ('\n'.join(g[:5]))
+```
+
+## Helper Functions
+
+* `load_scan`: loads all DICOM images from a folder into a list for manipulation.
+* `get_pixels_hu`: converts raw voxel and pixel values into [Houndsfield Units](https://www.ncbi.nlm.nih.gov/books/NBK547721/), which are a relative quantitative measurement of radiodensity used by radiologists in the interpretation of computed tomography (CT) images.
+
+```{python, echo=FALSE, results='hide', warnings=FALSE, message=FALSE}
+def load_scan(path):
+    slices = [pydicom.read_file(path + '/' + s) for s in os.listdir(path)]
+    slices.sort(key = lambda x: int(x.InstanceNumber))
+    try:
+        slice_thickness = np.abs(slices[0].ImagePositionPatient[2] - slices[1].ImagePositionPatient[2])
+    except:
+        slice_thickness = np.abs(slices[0].SliceLocation - slices[1].SliceLocation)
+        
+    for s in slices:
+        s.SliceThickness = slice_thickness
+        
+    return slices
+
+id=0
+patient = load_scan(data_path)
+```
+
+## Dispaying an Image Stack
+
+```{python}
+id = 0
+imgs_to_process = np.load(output_path+'/fullimages_{}.npy'.format(id))
+
+def sample_stack(stack, rows=4, cols=5, start_with=0, show_every=2):
+    fig,ax = matplotlib.pyplot.subplots(rows,cols,figsize=[12,12])
+    #matplotlib.pyplot.subplots_adjust(hspace=0.25)
+    for i in range(rows*cols):
+        ind = start_with + i*show_every
+        ax[int(i/cols),int(i % cols)].set_title('slice %d' % ind)
+        ax[int(i/cols),int(i % cols)].imshow(stack[ind],cmap='gray')
+        ax[int(i/cols),int(i % cols)].axis('off')
+    plt.show()
+
+sample_stack(imgs_to_process)
+```
+
+## Resampling
+
+```{python}
+print ("Slice Thickness: %f" % patient[0].SliceThickness)
+print ("Pixel Spacing (row, col): (%f, %f) " % (patient[0].PixelSpacing[0], patient[0].PixelSpacing[1]))
+
+id = 0
+imgs_to_process = np.load(output_path+'/fullimages_{}.npy'.format(id))
+def resample(image, scan, new_spacing=[1,1,1]):
+    # Determine current pixel spacing
+    spacing = map(float, ([scan[0].SliceThickness] + list(scan[0].PixelSpacing)))
+    spacing = np.array(list(spacing))
+
+    resize_factor = spacing / new_spacing
+    new_real_shape = image.shape * resize_factor
+    new_shape = np.round(new_real_shape)
+    real_resize_factor = new_shape / image.shape
+    new_spacing = spacing / real_resize_factor
+    
+    image = scipy.ndimage.interpolation.zoom(image, real_resize_factor)
+    
+    return image, new_spacing
+
+print ("Shape before resampling\t", imgs_to_process.shape)
+imgs_after_resamp, spacing = resample(imgs_to_process, patient, [1,1,1])
+print ("Shape after resampling\t", imgs_after_resamp.shape)
+```
+
+## 3D Plotting
+
+```{python, warnings=FALSE}
+def make_mesh(image, threshold=-300, step_size=1):
+
+    print ("Transposing surface")
+    p = image.transpose(2,1,0)
+    
+    print ("Calculating surface")
+    verts, faces, norm, val = measure.marching_cubes(p, threshold, step_size=step_size, allow_degenerate=True) 
+    return verts, faces
+
+def plotly_3d(verts, faces):
+    x,y,z = zip(*verts) 
+    
+    print ("Drawing")
+    
+    # Make the colormap single color since the axes are positional not intensity. 
+#    colormap=['rgb(255,105,180)','rgb(255,255,51)','rgb(0,191,255)']
+    colormap=['rgb(236, 236, 212)','rgb(236, 236, 212)']
+    
+    fig = plotly.figure_factory.create_trisurf(x=x,
+                        y=y, 
+                        z=z, 
+                        plot_edges=False,
+                        colormap=colormap,
+                        simplices=faces,
+                        backgroundcolor='rgb(64, 64, 64)',
+                        title="Interactive Visualization")
+    iplot(fig)
+
+def plt_3d(verts, faces):
+    print ("Drawing")
+    x,y,z = zip(*verts) 
+    fig = plt.figure(figsize=(10, 10))
+    ax = fig.add_subplot(111, projection='3d')
+
+    # Fancy indexing: `verts[faces]` to generate a collection of triangles
+    mesh = Poly3DCollection(verts[faces], linewidths=0.05, alpha=1)
+    face_color = [1, 1, 0.9]
+    mesh.set_facecolor(face_color)
+    ax.add_collection3d(mesh)
+
+    ax.set_xlim(0, max(x))
+    ax.set_ylim(0, max(y))
+    ax.set_zlim(0, max(z))
+    ax.set_facecolor((0.7, 0.7, 0.7))
+    plt.show()
+    
+v, f = make_mesh(imgs_after_resamp[::-1], 350)
+plt_3d(v, f)
+v, f = make_mesh(imgs_after_resamp[::-1], 350, 2)
+plotly_3d(v, f)
+```
+# Bibliography
 
 
 
