@@ -7,6 +7,10 @@ bibliography: Andrea.bib
 csl: apa.csl
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
 # Index
 1. Introduction
 2. Image display (oro.dicom)
@@ -22,6 +26,9 @@ csl: apa.csl
     4.4. Segmentation with lungmask
 
 5. Radiomic features with masks
+
+    5.1. Analysis with RaDAr
+
 
 <br>
  
@@ -1006,7 +1013,7 @@ paged_table(results)
  
 <br>
 
-## Information about the patients
+##### **Information about the patients**
 
 We have a *.csv* file with information about the patients.
 
@@ -1040,11 +1047,26 @@ The data we are provided with means the following:
 We will only select the information about the patients that we have.
 
 ```{r}
-data_patients[data_patients$Patient %in% images_folder_names,]
+data_patients <- data_patients[data_patients$Patient %in% images_folder_names,]
+head(data_patients)
 ```
 
 
  
+<br>
+
+
+ 
+### 5.1. Analysis with RaDAr
+
+Now we will study multiple radiomic features with multiple patients. We will use the *RaDAr* to manipulate the results.
+
+
+
+
+
+
+
 <br>
 
 
