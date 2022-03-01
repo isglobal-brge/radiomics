@@ -1204,7 +1204,7 @@ library(RadAR)
 With *RadAR* we can import the radiomic features that we extracted before with the *RIA* library.
 
 ```{r}
-rdr <- import_radiomic_table("/Users/andrealetaalfonso/Desktop/TFG/radiomic_features.txt")
+rdr <- import_radiomic_table("/Users/andrealetaalfonso/Desktop/TFG/A_Project/radiomic_features.txt")
 rdr
 ```
 
