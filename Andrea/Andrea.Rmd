@@ -1167,16 +1167,28 @@ rownames(results2) <- name_characteristics
 
 We will also export these results to another *.txt* file.
 ```{r}
+write.table(results2, file="geometry.txt", sep="\t")
+```
+
+```{r}
 library(rmarkdown)
 table2 <- read.delim("geometry.txt")
 paged_table(table2)
 ```
 
-
-Or, if we want, we can combine both results into one *.txt* file.
+We can combine both files.
 ```{r}
-all_results <- rbind.data.frame(results, results2)
-all_results_table <- write.table(results2, file="radiomic_features.txt", sep="\t")
+table1 <- as.data.frame(table1)
+table2 <- as.data.frame(table2)
+radiomic_features <- rbind(table1, table2)
+```
+
+And export the results into one *.txt* file.
+```{r}
+library(rmarkdown)
+all_results_table <- write.table(radiomic_features, file="radiomic_features.txt", sep="\t")
+read_table <- read.delim("radiomic_features.txt")
+paged_table(read_table)
 ```
 
 ##### **RaDAr**
