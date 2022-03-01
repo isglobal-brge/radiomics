@@ -1121,7 +1121,6 @@ library(rmarkdown)
 results <- do.call(cbind.data.frame, res) # results
 colnames(results) <- patients_list
 rownames(results) <- name_characteristics
-paged_table(results)
 ```
 
 We will export these results to a *.txt* file.
@@ -1130,7 +1129,13 @@ We will export these results to a *.txt* file.
 write.table(results, file="first_order.txt", sep="\t")
 ```
 
-We can check that we exported the file correclty with: *read.delim("radiomic_features.txt")*.
+We can check that we exported the file correclty with: *read.delim("file.txt")*.
+
+```{r}
+library(rmarkdown)
+table1 <- read.delim("first_order.txt")
+paged_table(table1)
+```
 
 We can also compute the Geometry-based statistics.
 
@@ -1158,19 +1163,20 @@ for(i in patients_list){ # for every patient
 results2 <- do.call(cbind.data.frame, res2) # results
 colnames(results2) <- patients_list
 rownames(results2) <- name_characteristics
-paged_table(results2)
 ```
 
 We will also export these results to another *.txt* file.
 ```{r}
-write.table(results2, file="geometry.txt", sep="\t")
+library(rmarkdown)
+table2 <- read.delim("geometry.txt")
+paged_table(table2)
 ```
 
 
 Or, if we want, we can combine both results into one *.txt* file.
 ```{r}
 all_results <- rbind.data.frame(results, results2)
-write.table(results2, file="radiomic_features.txt", sep="\t")
+all_results_table <- write.table(results2, file="radiomic_features.txt", sep="\t")
 ```
 
 ##### **RaDAr**
