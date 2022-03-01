@@ -81,8 +81,8 @@ read_table <- read.delim("radiomic_features.txt")
 
 library(RadAR)
 
-rdr <- import_radiomic_table("/Users/andrealetaalfonso/Desktop/TFG/A_Project/radiomic_features.txt")
-rdr
+rdr.ria <- import_radiomic_table("/Users/andrealetaalfonso/Desktop/TFG/A_Project/radiomic_features.txt")
+rdr.ria
 
 
 
