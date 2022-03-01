@@ -219,7 +219,7 @@ plot(mask$lung_mask)
 
 Now, we will do the same for another set of images.
 ```{r, message=FALSE}
-res2 <- dcm2niir::dcm2nii(basedir="/Users/andrealetaalfonso/Desktop/TFG/images/eclipse/id_1")
+res2 <- dcm2niir::dcm2nii(basedir="/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1")
 checked2 <- check_dcm2nii(res2) # Manipulating the output
 ```
 ```{r, out.width = "700px", out.height = "400px"}
