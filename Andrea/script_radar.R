@@ -87,4 +87,40 @@ rdr.ria
 
 
 
+## ---------- purrr:::map instead of for loop ---------- ##
+
+path_folders <- "/Users/andrealetaalfonso/Desktop/TFG/DICOMS/rstudio-export" # path where all the folders are at
+patients_list <- list.files(path_folders) # list of the name of the folders of every patient
+
+# Compute first_order to patient i
+fun <- function(i){
+  
+  res <- c() # vector for the results
+  
+  patient_path <- file.path(path_folders, i, fsep="/") # path to folder of every patient
+  images_folder_names <- grep(list.files(path = patient_path), pattern='mask.nii.gz', invert=TRUE, value=TRUE) # name of nii files
+  mask_folder_names <- list.files(patient_path, pattern="mask.nii.gz") # name of mask files
+  images_path <- file.path(patient_path, images_folder_names, fsep="/") # path to images files
+  mask_path <- file.path(patient_path, mask_folder_names, fsep="/") # path to masks files
+  
+  images = RIA::load_nifti(filename = images_path, mask_filename = mask_path) # load images and masks
+  images = RIA::first_order(images) # compute first order
+  radiomic_list <- RIA:::list_to_df(images$stat_fo$orig)
+  name_characteristics <- rownames(radiomic_list)
+  res <- RIA:::list_to_df(images$stat_fo$orig)
+  res
+}
+
+get_radiomic_features <- function(list_patients){
+  results_map <- purrr:::map(list_patients, fun) # Apply fun function to all the patients
+  results <- do.call(cbind.data.frame, results_map) # results
+  colnames(results) <- list_patients
+  rownames(results) <- name_characteristics
+  results
+}
+
+# Obtain radiomic features
+get_radiomic_features(patients_list)
+
+
 
