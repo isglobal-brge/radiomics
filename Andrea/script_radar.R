@@ -116,11 +116,12 @@ get_radiomic_features <- function(list_patients){
   results <- do.call(cbind.data.frame, results_map) # results
   colnames(results) <- list_patients
   rownames(results) <- name_characteristics
+  write.table(results, file="radiomic_features.txt", sep="\t")
   results
 }
 
 # Obtain radiomic features
-get_radiomic_features(patients_list)
+radiomic_features <- get_radiomic_features(patients_list)
 
 
 
