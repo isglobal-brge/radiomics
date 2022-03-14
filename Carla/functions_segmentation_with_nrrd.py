@@ -38,7 +38,6 @@ def  get_and_save_masks(path_nrrd_file):
     print("The type of data of my mask is: %s" % type_data)
     
     # Change data to a different data type in a new object if needed
-    # Data type int8 stores each value as a byte ranging from 0 to 255 and is used for data without negative values
     if type_data != "int8":
         print("Changing data type to int8")
         mask_corrected = mask_filter.astype(np.int8, copy=True)
