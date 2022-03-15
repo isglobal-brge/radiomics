@@ -21,7 +21,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Many distinct segmentation methods and algorithms have been discussed in the literature, and there are several ways to classify them. For instance, they can be classified into those: **semantic segmentation**, which performs pixel-level labeling with a set of object categories (*e.g.*, car, human) for all image pixels, and **instance segmentation**, which extends semantic segmentation scope further by detecting and delineating each object of interest in the image. Also, there is another type called **panoptic segmentation** which is the unified version of the two basic segmentation processes.
 
-```{r, echo=FALSE, fig.cap = "An example of diferent types of image segmentation.", label="SemInsPan", out.width="50%", out.height=="50%", fig.align="center"}
+```{r, echo=FALSE, fig.cap = "An example of diferent types of image segmentation.", label="SemInsPan", out.width="50%", out.height=="50%", fig.align="center", cache=TRUE}
 knitr::include_graphics("./Images/SemanticInstancePanoptic.png")
 ```
 
@@ -92,10 +92,9 @@ import matplotlib
 To specify the input and output data folders path:
 
 ```{python, results='hide', collapse=TRUE}
-data_path = "./Images/DICOM/AX DP 1RA68062501 (id=0)/FILESET"
-output_path = working_path = "./Images/DICOM/AX DP 1RA68062501 (id=0)"
+data_path = "./Images/DICOM/AX DP 1RA68062501 (id=1)/FILESET"
+output_path = working_path = "./Images/DICOM/AX DP 1RA68062501 (id=1)"
 g = glob(data_path + '/*')
-
 # Print out the first 5 file names to verify we are in the right folder
 print ("Total of %d DICOM images.\nFirst 5 filenames:" % len(g))
 print ('\n'.join(g[:5]))
@@ -120,16 +119,51 @@ def load_scan(path):
         
     return slices
 
-id=0
+def get_pixels_hu(scans):
+    image = np.stack([s.pixel_array for s in scans])
+    # Convert to int16 (from sometimes int16), 
+    # should be possible as values should always be low enough (<32k)
+    image = image.astype(np.int16)
+
+    # Set outside-of-scan pixels to 1
+    # The intercept is usually -1024, so air is approximately 0
+    image[image == -2000] = 0
+    
+    # Convert to Hounsfield units (HU)
+    intercept = scans[0].RescaleIntercept if 'RescaleIntercept' in scans[0] else -1024
+    slope = scans[0].RescaleSlope if 'RescaleSlope' in scans[0] else 1
+    
+    image = slope * image.astype(np.float64)
+    image = image.astype(np.int16)
+    image += np.int16(intercept)
+    
+    return np.array(image, dtype=np.int16)
+
+id=1
 patient = load_scan(data_path)
+patient_pixels = get_pixels_hu(patient)
+
+#Save the new data to disk
+np.save(output_path + "/fullimages_%d.npy" % (id), patient_pixels)
+
+#1D-Visualisation
+
+file_used=output_path+"/fullimages_%d.npy" % id
+patient_pixels = np.load(file_used).astype(np.float64)
+
+plt.hist(patient_pixels.flatten(), bins=50, color='c')
+plt.xlabel("Hounsfield Units (HU)")
+plt.ylabel("Frequency")
+plt.show()
 ```
 
 ## Dispaying an Image Stack
 
-```{python}
-id = 0
-imgs_to_process = np.load(output_path+'/fullimages_{}.npy'.format(id))
+We'll be skipping every 2 slices to get a representative look at the study.
 
+```{python}
+id = 1
+imgs_to_process = np.load(output_path+'/fullimages_{}.npy'.format(id))
 def sample_stack(stack, rows=4, cols=5, start_with=0, show_every=2):
     fig,ax = matplotlib.pyplot.subplots(rows,cols,figsize=[12,12])
     #matplotlib.pyplot.subplots_adjust(hspace=0.25)
@@ -139,7 +173,6 @@ def sample_stack(stack, rows=4, cols=5, start_with=0, show_every=2):
         ax[int(i/cols),int(i % cols)].imshow(stack[ind],cmap='gray')
         ax[int(i/cols),int(i % cols)].axis('off')
     plt.show()
-
 sample_stack(imgs_to_process)
 ```
 
@@ -148,14 +181,12 @@ sample_stack(imgs_to_process)
 ```{python}
 print ("Slice Thickness: %f" % patient[0].SliceThickness)
 print ("Pixel Spacing (row, col): (%f, %f) " % (patient[0].PixelSpacing[0], patient[0].PixelSpacing[1]))
-
-id = 0
+id = 1
 imgs_to_process = np.load(output_path+'/fullimages_{}.npy'.format(id))
 def resample(image, scan, new_spacing=[1,1,1]):
     # Determine current pixel spacing
     spacing = map(float, ([scan[0].SliceThickness] + list(scan[0].PixelSpacing)))
     spacing = np.array(list(spacing))
-
     resize_factor = spacing / new_spacing
     new_real_shape = image.shape * resize_factor
     new_shape = np.round(new_real_shape)
@@ -165,7 +196,6 @@ def resample(image, scan, new_spacing=[1,1,1]):
     image = scipy.ndimage.interpolation.zoom(image, real_resize_factor)
     
     return image, new_spacing
-
 print ("Shape before resampling\t", imgs_to_process.shape)
 imgs_after_resamp, spacing = resample(imgs_to_process, patient, [1,1,1])
 print ("Shape after resampling\t", imgs_after_resamp.shape)
@@ -173,16 +203,14 @@ print ("Shape after resampling\t", imgs_after_resamp.shape)
 
 ## 3D Plotting
 
-```{python, warnings=FALSE}
+```{python, warnings=FALSE, cache=TRUE}
 def make_mesh(image, threshold=-300, step_size=1):
-
     print ("Transposing surface")
     p = image.transpose(2,1,0)
     
     print ("Calculating surface")
     verts, faces, norm, val = measure.marching_cubes(p, threshold, step_size=step_size, allow_degenerate=True) 
     return verts, faces
-
 def plotly_3d(verts, faces):
     x,y,z = zip(*verts) 
     
@@ -201,19 +229,16 @@ def plotly_3d(verts, faces):
                         backgroundcolor='rgb(64, 64, 64)',
                         title="Interactive Visualization")
     iplot(fig)
-
 def plt_3d(verts, faces):
     print ("Drawing")
     x,y,z = zip(*verts) 
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(111, projection='3d')
-
     # Fancy indexing: `verts[faces]` to generate a collection of triangles
     mesh = Poly3DCollection(verts[faces], linewidths=0.05, alpha=1)
     face_color = [1, 1, 0.9]
     mesh.set_facecolor(face_color)
     ax.add_collection3d(mesh)
-
     ax.set_xlim(0, max(x))
     ax.set_ylim(0, max(y))
     ax.set_zlim(0, max(z))
@@ -225,7 +250,40 @@ plt_3d(v, f)
 v, f = make_mesh(imgs_after_resamp[::-1], 350, 2)
 plotly_3d(v, f)
 ```
+
+# Semi-Automatic Achilles Tendon Segmentation Using 3DSlicer
+
+In order to train an automatic model based on a convolutional neural network we need a set of images already segmented. In this section there is a description of how to segmentate the Achilles tendon from an ankle CT using "a free, open source and multi-platform software package widely used for medical, biomedical, and related imaging research" called **3DSlicer**. The following explanation is not aiming to serve as a manual, but to illustrate how semi-automatic segmentation can be performed. Therefore all the issues concerning the specific software way of using will not be specified. 
+
+First of all we need to load the data to 3DSlicer. In our case it is a set of 35 DICOM images pertaining to different axial DP slices of the ankle. Once they've been loaded, four different windows are displayed. The top-left one shows axial sections (horizontal slices, the images just as they are); the bottom-left one shows coronal sections (divides into ventral and dorsal); the bottom-right shows sagittal sections (divides into right and left), and the top-right builds a 3D volume of the ankle (enabling it at "Volume Rendering" module). At "Segment Editor" module we create three segments: one for the **air** (clay), one for the **Achilles tendon** (yellow) and another one for the rest of the **ankle** (green).
+
+```{r, echo=FALSE, fig.cap = "Threshold range coloured in clay", label="3DS_Threshold", out.width="100%", out.height=="100%", fig.align="center", cache=TRUE}
+knitr::include_graphics("./Images/3DSlicer/Threshold.png")
+```
+
+Using the "Paint" tool we plant some **seeds** for each segment on some slices for each section (4-5 images for each segment and section). Before that, we set a **threshold range** (from 2 to 1000, for example) to make the task easier since the out-of-range pixels won't be considered. It'd be advisable to thoughtfully colour the "boundary slices" where the Achilles tendon joins the calcaneus bone. 
+
+```{r, echo=FALSE, fig.cap = "Planting some seeds", label="3DS_Seeds", out.width="100%", out.height=="100%", fig.align="center", cache=TRUE}
+knitr::include_graphics("./Images/3DSlicer/Seeds.png")
+```
+
+After that, we use the "Grow from seeds" tool to classify every single pixel of every single slice in the threshold range into one of the three segments. We check the results and apply some modifications if necessary. We can view a provisional 3D construction of the tendon based on the segmentation so far by clicking on "Show 3D" and hiding the air and ankle segments.
+
+```{r, echo=FALSE, fig.cap = "Grown from seeds", label="3DS_Grown", out.width="100%", out.height=="100%", fig.align="center", cache=TRUE}
+knitr::include_graphics("./Images/3DSlicer/GrownFromSeeds.png")
+```
+
+As you can see, there are some pixels not belonging to the Achilles tendon coloured in yellow and some other belonging that are not coloured (little holes on the axial section yellow area). To correct this we remove the threshold range by disabling "Editable intensity range" and we use the "Erase" and "Smoothing" tools (besides "Paint") on every axial section image. We choose the "Closing" smoothing method to fill the holes and the "Mean" smoothing method to smooth the edges. We can lower the segment's colour opacity at the "Segmentations" module to help us hone the results.
+
+```{r, echo=FALSE, fig.cap = "Achilles tendon segmentation", label="3DS_Final", out.width="100%", out.height=="100%", fig.align="center", cache=TRUE}
+knitr::include_graphics("./Images/3DSlicer/Final.png")
+```
+
+We have finally segmented the Achilles tendon. Now we can remove the air and ankle segments and export the segmentation to a labelmap at the "Segmentations" module. 3D-Slicer also allows us to get the images' radiomic features; to do it we switch to "Radiomics" module and generate the table using the labelmap.
+
+```{r, echo=FALSE, fig.cap = "Getting the radiomic features", label="3DS_Radiomics", out.width="100%", out.height=="100%", fig.align="center", cache=TRUE}
+knitr::include_graphics("./Images/3DSlicer/Radiomics.png")
+```
+
 # Bibliography
-
-
 
