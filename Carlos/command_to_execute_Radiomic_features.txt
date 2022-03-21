@@ -1,0 +1,1 @@
+python -c "import PyRad_feature_extraction as PyRad; PyRad.Radiomic_features('/home/carlos/ISGlobal/im_mk_same_geometry/patients2', '/home/carlos/ISGlobal/im_mk_same_geometry/results4', '/home/carlos/ISGlobal/im_mk_same_geometry/Params.yaml')"
