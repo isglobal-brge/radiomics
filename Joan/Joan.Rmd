@@ -13,6 +13,7 @@ nocite: '@*'
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(rgl)
 ```
 
 # An Introduction to Image Segmentation
@@ -46,7 +47,7 @@ According to its architecture, image segmentation algorithms can be grouped into
 
 * **Model-based Segmentation**. In [@MBS] is defined as the assignment of labels to pixels or voxels by matching the a priori known object model to the image data. Model-based approaches have been set up as probably the best strategies for picture analysis, and include Markov Random Field models, Atlas-based models, Graph cut models or Artificial Neural Networks, among others. 
 
-# DICOM Processing and Segmentation in Python
+# DICOM Processing in Python
 
 **DICOM** (Digital Imaging and Communications in Medicine) is a standard protocol for the management and transmission of medical images and related data and is used in many healthcare facilities. This section is dedicated to visualizing Achilles tendon CT images (DICOM files) in 1D (by histogram), 2D, and 3D. Finally, we will create segmentation masks that remove all voxels except for the Achilles tendon. In order to achieve this, we'll run a Python code based on the one from [@DICOMProcSegm] in RStudio using the library `reticulate`. 
 
@@ -105,7 +106,7 @@ print ('\n'.join(g[:5]))
 * `load_scan`: loads all DICOM images from a folder into a list for manipulation.
 * `get_pixels_hu`: converts raw voxel and pixel values into [Houndsfield Units](https://www.ncbi.nlm.nih.gov/books/NBK547721/), which are a relative quantitative measurement of radiodensity used by radiologists in the interpretation of computed tomography (CT) images.
 
-```{python, echo=FALSE, results='hide', warnings=FALSE, message=FALSE}
+```{python, results='hide', warnings=FALSE, message=FALSE}
 def load_scan(path):
     slices = [pydicom.read_file(path + '/' + s) for s in os.listdir(path)]
     slices.sort(key = lambda x: int(x.InstanceNumber))
@@ -142,12 +143,27 @@ def get_pixels_hu(scans):
 id=1
 patient = load_scan(data_path)
 patient_pixels = get_pixels_hu(patient)
+```
 
-#Save the new data to disk
+The conversion uses two values of the DICOM files' metadata, Rescale Intercept and Rescale Slope (see the lines below `# Convert to Hounsfield units (HU)`), which are usually stored in the DICOM header at the time of image acquisition. Still, they are absent in our dataset. Most CT scans use -1024 for Intercept and 1 for Slope, but they may not be correct in our case. However, we'll take them to explain how to interpret the results. 
+
+The next code line saves the new data to disk so we don't have to reprocess the stack every time.
+
+```{python, results='hide', warnings=FALSE, message=FALSE, cache=TRUE}
 np.save(output_path + "/fullimages_%d.npy" % (id), patient_pixels)
+```
 
-#1D-Visualisation
+## Displaying Images
 
+The first thing we should do is to check to see whether the Houndsfield Units are properly scaled and represented. Here there's a quick list of HU values of a few useful tissues and substances, sourced from Wikipedia.
+
+```{r, echo=FALSE, fig.cap = "Some HU values.", label="HU_values", out.width="40%", out.height=="40%", fig.align="center", cache=TRUE}
+knitr::include_graphics("./Images/HU_values.png")
+```
+
+It has to be said that HU values differ depending on the source. Let's now create a histogram of all the pixel data in the study.
+
+```{python, results='hide', warnings=FALSE, message=FALSE, collapse=TRUE, cache=TRUE}
 file_used=output_path+"/fullimages_%d.npy" % id
 patient_pixels = np.load(file_used).astype(np.float64)
 
@@ -157,7 +173,9 @@ plt.ylabel("Frequency")
 plt.show()
 ```
 
-## Dispaying an Image Stack
+As said earlier, the conversion may have not been done properly due to the absence of Rescale Intercept and Rescale Slope of the DICOM header. If it were correct, the high part around -1000 would be the background and air; also there would be some soft tissues such as fat, muscle or the Achilles tendon approximately in equal parts (from -500 to 700) and the high values would match bone. 
+
+## Displaying an Image Stack
 
 We'll be skipping every 2 slices to get a representative look at the study.
 
@@ -176,26 +194,41 @@ def sample_stack(stack, rows=4, cols=5, start_with=0, show_every=2):
 sample_stack(imgs_to_process)
 ```
 
+The images are oriented so that the area close to the heel is at the bottom and the area close to the toes is at the top. The Achilles tendon is the dark oval region at the bottom of the slices from 0 to 26. 
+
 ## Resampling
 
-```{python}
+In order to build a 3D plot through the slices it is required to know their thickness. We can obtain it in the DICOM header.
+
+```{python, collapse=TRUE}
 print ("Slice Thickness: %f" % patient[0].SliceThickness)
 print ("Pixel Spacing (row, col): (%f, %f) " % (patient[0].PixelSpacing[0], patient[0].PixelSpacing[1]))
+```
+
+This means we have 3 mm slices, and each pixel side is 0.1989 mm long. 
+
+Although a CT slice is typically reconstructed at 512 x 512 pixels, ours are 704 x 704, so each slice represents approximately 704 · 0.1989 mm = 140 mm of data in length and width.
+
+In order to display the CT in 3D isometric form, and also to compare between different scans, it would be useful to ensure that each slice is resampled in 1x1x1 mm voxels.
+
+```{python}
 id = 1
 imgs_to_process = np.load(output_path+'/fullimages_{}.npy'.format(id))
 def resample(image, scan, new_spacing=[1,1,1]):
     # Determine current pixel spacing
     spacing = map(float, ([scan[0].SliceThickness] + list(scan[0].PixelSpacing)))
     spacing = np.array(list(spacing))
+
     resize_factor = spacing / new_spacing
     new_real_shape = image.shape * resize_factor
     new_shape = np.round(new_real_shape)
     real_resize_factor = new_shape / image.shape
     new_spacing = spacing / real_resize_factor
     
-    image = scipy.ndimage.interpolation.zoom(image, real_resize_factor)
+    image = scipy.ndimage.zoom(image, real_resize_factor)
     
     return image, new_spacing
+
 print ("Shape before resampling\t", imgs_to_process.shape)
 imgs_after_resamp, spacing = resample(imgs_to_process, patient, [1,1,1])
 print ("Shape after resampling\t", imgs_after_resamp.shape)
@@ -203,14 +236,17 @@ print ("Shape after resampling\t", imgs_after_resamp.shape)
 
 ## 3D Plotting
 
+We now have enough information to plot the DICOM image in 3D space. We are doing it by creating a high-quality static using 3D capability of `matplotlib` (`plt_3d` function) and a interactive render using `plotly`, which has WebGL support via JavaScript (`plotly_3d` function). The [marching cubes](https://en.wikipedia.org/wiki/Marching_cubes) algorithm is used to generate a 3D mesh from the dataset.
+
 ```{python, warnings=FALSE, cache=TRUE}
-def make_mesh(image, threshold=-300, step_size=1):
+def make_mesh(image, threshold=300, step_size=1):
     print ("Transposing surface")
     p = image.transpose(2,1,0)
     
     print ("Calculating surface")
     verts, faces, norm, val = measure.marching_cubes(p, threshold, step_size=step_size, allow_degenerate=True) 
     return verts, faces
+  
 def plotly_3d(verts, faces):
     x,y,z = zip(*verts) 
     
@@ -229,6 +265,7 @@ def plotly_3d(verts, faces):
                         backgroundcolor='rgb(64, 64, 64)',
                         title="Interactive Visualization")
     iplot(fig)
+    
 def plt_3d(verts, faces):
     print ("Drawing")
     x,y,z = zip(*verts) 
@@ -245,11 +282,12 @@ def plt_3d(verts, faces):
     ax.set_facecolor((0.7, 0.7, 0.7))
     plt.show()
     
-v, f = make_mesh(imgs_after_resamp[::-1], 350)
+v, f = make_mesh(imgs_after_resamp[::-1])
 plt_3d(v, f)
-v, f = make_mesh(imgs_after_resamp[::-1], 350, 2)
 plotly_3d(v, f)
 ```
+
+To see the interactive render it's needed to run the code in the console.
 
 # Semi-Automatic Achilles Tendon Segmentation Using 3DSlicer
 
@@ -279,11 +317,264 @@ As you can see, there are some pixels not belonging to the Achilles tendon colou
 knitr::include_graphics("./Images/3DSlicer/Final.png")
 ```
 
-We have finally segmented the Achilles tendon. Now we can remove the air and ankle segments and export the segmentation to a labelmap at the "Segmentations" module. 3D-Slicer also allows us to get the images' radiomic features; to do it we switch to "Radiomics" module and generate the table using the labelmap.
+We have finally segmented the Achilles tendon. Now we can remove the air and ankle segments and export the segmentation to a labelmap at the "Segmentations" module. 3DSlicer also allows us to get the images' radiomic features; to do it we switch to "Radiomics" module and generate the table using the labelmap.
 
 ```{r, echo=FALSE, fig.cap = "Getting the radiomic features", label="3DS_Radiomics", out.width="100%", out.height=="100%", fig.align="center", cache=TRUE}
 knitr::include_graphics("./Images/3DSlicer/Radiomics.png")
 ```
+
+# Image classification from CT scans by training a 3D convolutional neural network
+
+In this section we are implementing a convolutional neural network to classify Achilles tendons into normal or abnormal from 3D CT ankle scans. We are adjusting the code from https://keras.io/examples/vision/3D_image_classification/.
+
+Before we start, we need to import some modules:
+
+```{python, warnings=FALSE}
+import os
+import zipfile
+import numpy as np
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+```
+
+Now we are loading and doing a first preprocessing to our data, which is a set of nifti files:
+
+```{python, warnings=FALSE}
+import nibabel as nib
+from scipy import ndimage
+
+def read_nifti_file(filepath):
+    """Read and load volume"""
+    # Read file
+    scan = nib.load(filepath)
+    # Get raw data
+    scan = scan.get_fdata()
+    return scan
+
+def normalize(volume):
+    """Normalize the volume"""
+    min = -1024
+    max = 3000
+    volume[volume < min] = min
+    volume[volume > max] = max
+    volume = (volume - min) / (max - min)
+    volume = volume.astype("float32")
+    return volume
+
+
+def resize_volume(img):
+    """Resize across z-axis"""
+    # Set the desired depth
+    desired_depth = 64
+    desired_width = 128
+    desired_height = 128
+    # Get current depth
+    current_depth = img.shape[-1]
+    current_width = img.shape[0]
+    current_height = img.shape[1]
+    # Compute depth factor
+    depth = current_depth / desired_depth
+    width = current_width / desired_width
+    height = current_height / desired_height
+    depth_factor = 1 / depth
+    width_factor = 1 / width
+    height_factor = 1 / height
+    # Rotate
+    img = ndimage.rotate(img, 90, reshape=False)
+    # Resize across z-axis
+    img = ndimage.zoom(img, (width_factor, height_factor, depth_factor), order=1)
+    return img
+
+
+def process_scan(path):
+    """Read and resize volume"""
+    # Read scan
+    volume = read_nifti_file(path)
+    # Normalize
+    volume = normalize(volume)
+    # Resize width, height and depth
+    volume = resize_volume(volume)
+    return volume
+  
+# Train paths
+
+normal_scan_paths_train = [
+    os.path.join(os.getcwd(), "./Images/Talons/normal_nii/train", x)
+    for x in os.listdir("./Images/Talons/normal_nii/train")
+]
+
+abnormal_scan_paths_train = [
+    os.path.join(os.getcwd(), "./Images/Talons/abnormal_nii/train", x)
+    for x in os.listdir("./Images/Talons/abnormal_nii/train")
+]
+
+# Building train dataset
+
+abnormal_scans_train = np.array([process_scan(path) for path in abnormal_scan_paths_train])
+normal_scans_train = np.array([process_scan(path) for path in normal_scan_paths_train])
+
+abnormal_labels_train = np.array([1 for _ in range(len(abnormal_scans_train))])
+normal_labels_train = np.array([0 for _ in range(len(normal_scans_train))])
+
+x_train = np.concatenate((abnormal_scans_train, normal_scans_train), axis=0)
+y_train = np.concatenate((abnormal_labels_train, normal_labels_train), axis=0)
+
+## Building test dataset
+
+#abnormal_scans_test = np.array([process_scan(path) for path in abnormal_scan_paths_test])
+#normal_scans_test = np.array([process_scan(path) for path in normal_scan_paths_test])
+
+#abnormal_labels_test = np.array([1 for _ in range(len(abnormal_scans_test))])
+#normal_labels_test = np.array([0 for _ in range(len(normal_scans_test))])
+
+#x_test = np.concatenate((abnormal_scans_test, normal_scans_test), axis=0)
+#y_test = np.concatenate((abnormal_labels_test, normal_labels_test), axis=0)
+```
+
+In order to get better results, we'll define a data augmentation by rotating the images at random angles. It will be performed on the fly during training. 
+
+```{python, error=FALSE, warnings=FALSE}
+import random
+from scipy import ndimage
+
+@tf.function
+def rotate(volume):
+    """Rotate the volume by a few degrees"""
+
+    def scipy_rotate(volume):
+        # define some rotation angles
+        angles = [-20, -10, -5, 5, 10, 20]
+        # pick angles at random
+        angle = random.choice(angles)
+        # rotate volume
+        volume = ndimage.rotate(volume, angle, reshape=False)
+        volume[volume < 0] = 0
+        volume[volume > 1] = 1
+        return volume
+
+    augmented_volume = tf.numpy_function(scipy_rotate, [volume], tf.float32)
+    return augmented_volume
+
+
+def train_preprocessing(volume, label):
+    """Process training data by rotating and adding a channel."""
+    # Rotate volume
+    volume = rotate(volume)
+    volume = tf.expand_dims(volume, axis=3)
+    return volume, label
+
+
+#def test_preprocessing(volume, label):
+#    """Process validation data by only adding a channel."""
+#    volume = tf.expand_dims(volume, axis=3)
+#    return volume, label
+
+# Define data loaders
+train_loader = tf.data.Dataset.from_tensor_slices((x_train, y_train))
+#test_loader = tf.data.Dataset.from_tensor_slices((x_test, y_test))
+
+batch_size = 2
+
+# Augment on the fly during training
+train_dataset = (
+    train_loader.shuffle(len(x_train))
+    .map(train_preprocessing)
+    .batch(batch_size)
+    .prefetch(2)
+)
+
+## Only rescale
+#test_dataset = (
+#    test_loader.shuffle(len(x_test))
+#    .map(test_preprocessing)
+#    .batch(batch_size)
+#    .prefetch(2)
+#)
+```
+
+Now it's turn to define and build our 3D CNN:
+
+```{python, error=FALSE, warnings=FALSE, eval=FALSE, results=FALSE}
+def get_model(width=128, height=128, depth=64):
+    """Build a 3D convolutional neural network model."""
+
+    inputs = keras.Input((width, height, depth, 1))
+
+    x = layers.Conv3D(filters=64, kernel_size=3, activation="relu")(inputs)
+    x = layers.MaxPool3D(pool_size=2)(x)
+    x = layers.BatchNormalization()(x)
+
+    x = layers.Conv3D(filters=64, kernel_size=3, activation="relu")(x)
+    x = layers.MaxPool3D(pool_size=2)(x)
+    x = layers.BatchNormalization()(x)
+
+    x = layers.Conv3D(filters=128, kernel_size=3, activation="relu")(x)
+    x = layers.MaxPool3D(pool_size=2)(x)
+    x = layers.BatchNormalization()(x)
+
+    x = layers.Conv3D(filters=256, kernel_size=3, activation="relu")(x)
+    x = layers.MaxPool3D(pool_size=2)(x)
+    x = layers.BatchNormalization()(x)
+
+    x = layers.GlobalAveragePooling3D()(x)
+    x = layers.Dense(units=512, activation="relu")(x)
+    x = layers.Dropout(0.3)(x)
+
+    outputs = layers.Dense(units=1, activation="sigmoid")(x)
+
+    # Define the model.
+    model = keras.Model(inputs, outputs, name="3dcnn")
+    return model
+  
+# Build model
+model = get_model(width=128, height=128, depth=64)
+model.summary()
+
+# Compile model
+initial_learning_rate = 0.0001
+lr_schedule = keras.optimizers.schedules.ExponentialDecay(
+    initial_learning_rate, decay_steps=100000, decay_rate=0.96, staircase=True
+)
+model.compile(
+    loss="binary_crossentropy",
+    optimizer=keras.optimizers.Adam(learning_rate=lr_schedule),
+    metrics=["acc"],
+)
+
+# Define callbacks
+checkpoint_cb = keras.callbacks.ModelCheckpoint(
+    "3d_image_classification.h5", save_best_only=True)
+
+# Train the model
+epochs = 100
+model.fit(
+    train_dataset,
+    epochs=epochs,
+    shuffle=True,
+    verbose=2,
+    callbacks=[checkpoint_cb]
+)
+
+```
+
+Once the model is trained we can make predictions to a single CT scan by running the following chunk:
+
+```{python, error=FALSE, warnings=FALSE, eval=FALSE, results=FALSE}
+# Load best weights.
+model.load_weights("3d_image_classification.h5")
+prediction = model.predict(np.expand_dims(PREPROCESSED_CTSCAN, axis=0))[0]
+scores = [1 - prediction[0], prediction[0]]
+
+class_names = ["normal", "abnormal"]
+for score, name in zip(scores, class_names):
+    print(
+        "This model is %.2f percent confident that CT scan is %s"
+        % ((100 * score), name)
+    )
+
+```
+
 
 # Bibliography
 
