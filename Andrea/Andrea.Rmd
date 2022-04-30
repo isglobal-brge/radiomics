@@ -45,7 +45,7 @@ Radiomics is a relatively new scientific filed. The first radiomics studies appe
 
 It is believed that, in the end, radiomics will use specific treatments for each patient, will help doctors select the most appropriate treatment for each patient, and will be able to change treatments quickly if they do not work.
 
-Some of the difficulties when performing radiomics research is that high quality images, with adequate size and complete datasets are needed. Different training and validation datasets are also necessary, to check if our algorithm works correctly. Another difficulty is class imbalance (classification problem where the number of observations per class is not equally distributed) and overfitting (when a statistical model exactly fits its training data). The main clinical applications of radiomics are radiogenomics and clinical outcome prediction.
+Some of the difficulties when performing radiomics research is that high quality images, with adequate size and complete datasets are needed. Different training and validation datasets are also necessary, to check if our algorithm works correctly. Another difficulty is class imbalance (classification problem where the number of observations per class is not equally distributed) and overfitting (when a statistical model exactly fits its training data). The main clinical applications of radiomics are radiogenomics and clinical outcome prediction.\
 
 ##### **Process of radiomics**
 Now we will briefly explain the process of radiomics.
