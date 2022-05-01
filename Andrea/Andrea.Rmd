@@ -1016,6 +1016,8 @@ paged_table(results)
 
 <span style="color:red">TO DO: explain final segmenation used</span>
 
+<span style="color:red">TO DO: explain pyradiomics</span>
+
 
  
 <br>
@@ -1201,7 +1203,6 @@ paged_table(read_table)
 ##### **RaDAr**
 
 <span style="color:red">In another .Rmd</span>
-
 
 
 
