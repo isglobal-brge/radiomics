@@ -85,6 +85,9 @@ We can obtain multiple types of features from images. Qualitative features are u
  
  
 ## 2. Image display (oro.dicom)
+
+<span style="color:red">TO DO: explain how obtain images (drawing)</span>
+
 In this section we will display a few images using R.
 
 The R package *oro.dicom* is a collection of input/output functions for medical imaging data that conform to the Digital Imaging and Communications in Medicine (DICOM) standard. The R package *RIA* is another package that was developed to facilitate radiomic analysis of medical images. 
@@ -171,6 +174,8 @@ paged_table(results, options = list(rows.print = 10, cols.print = 5))
  
  
 ## 4. Segmentation
+
+<span style="color:red">Explain better segmentation process</span>
 
 As we explained in the introduction, segmentation refers to delineating the areas of interest in the image in terms of pixels or voxels, in our case, the lung. Lung segmentation refers to the computer-based process of identifying the boundaries of lungs from surrounding thoracic tissue on the scan images. Once we have the segmented images, we can start our analysis.
 
@@ -1009,6 +1014,8 @@ paged_table(results)
 
 
 
+<span style="color:red">TO DO: explain final segmenation used</span>
+
 
  
 <br>
@@ -1193,34 +1200,7 @@ paged_table(read_table)
 
 ##### **RaDAr**
 
-In this section we will use the library *RadAR* (Radiomics Analysis with R). This is a software to perform comprehensive analysis of radiomic features. RadAR allows the users to carry out the entire processing of radiomic datasets, from data import to feature processing and visualization and implements multiple statistical methods for the analysis of these data.
-
-Load the library.
-
-```{r, message=FALSE, results=FALSE}
-library(RadAR)
-```
-
-With *RadAR* we can import the radiomic features that we extracted before with the *RIA* library.
-
-```{r}
-rdr <- import_radiomic_table("/Users/andrealetaalfonso/Desktop/TFG/A_Project/radiomic_features.txt")
-rdr
-```
-
-The *rdr* object is a *SummarizedExperiment*.
-
-We can extract the data with the function *assay()*.
-```{r}
-data <- assay(rdr)
-data[1:10,]
-```
-
-
-We can also save the rdr object to *.rda*.
-```{r}
-save(rdr, file = "radar_object.rda")
-```
+<span style="color:red">In another .Rmd</span>
 
 
 
