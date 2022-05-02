@@ -112,6 +112,8 @@ image3 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00
 image(t(image3$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
 ```
 
+<span style="color:red">TO DO: add visualization nifti</span>
+
 
 <br>
  
