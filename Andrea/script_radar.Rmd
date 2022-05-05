@@ -131,7 +131,7 @@ save(rdr_Norm, file = "rdr_Andrea_Norm.rda")
 We can open the *.rda* file with the following code:
 ```{r, warning=FALSE}
 library(admisc)
-test_NormShift <- listRDA("rdr_Andrea.rda")
+test_NormShift <- listRDA("rdr_Andrea_NormShift.rda")
 test_NormShift
 ```
 ```{r}
