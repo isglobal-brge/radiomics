@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 ```
 
 # Index
-1. Introduction
+1. Introduction to radiomics
 2. Image display
 3. Radiomic features
 4. Segmentation
@@ -50,10 +50,10 @@ Some of the difficulties when performing radiomics research is that high quality
 ##### **Process of radiomics**
 Now we will briefly explain the process of radiomics.
 
-1. Obtain image: first, we obtain a medical image from a scanner (it can be obtained from multiple modalities: magnetic resonance imaging (MRI), computed tomography (CT), positron-emission-tomography (PET)...).
-2. Image segmentation: this means dividing the image into multiple segments, in other words, delineating the areas of interest in the image in terms of pixels or voxels. This step can be done manually, semi-automatically or fully automatically.
-3. Feature extraction: after image segmentation, we can extract the features and classify them.
-4. Finally, we use databases to share our data. 
+1. <u>Obtain image</u>: first, we obtain a medical image from a scanner (it can be obtained from multiple modalities: magnetic resonance imaging (MRI), computed tomography (CT), positron-emission-tomography (PET)...).
+2. <u>Image segmentation</u>: this means dividing the image into multiple segments, in other words, delineating the areas of interest in the image in terms of pixels or voxels. This step can be done manually, semi-automatically or fully automatically.
+3. <u>Feature extraction</u>: after image segmentation, we can extract the features and classify them.
+4. Finally, we use <u>databases</u> to share our data. 
 
 ##### **DICOM images**
 In this project, we will study images obtained from scans of the lungs. The images we will obtain from the scans are DICOM images. DICOM (Digital Imaging and Communications in Medicine) is the standard for the communication and management of medical imaging information and related data. It is used worldwide to store, exchange, and transmit medical images. It defines the formats for medical images that can be exchanged with the data and quality necessary for clinical use. DICOM incorporates standards for imaging modalities such as radiography, ultrasonography, computed tomography (CT), magnetic resonance imaging (MRI), and radiation therapy. The most common applications of this standard are the display, storage, printing, and transmission of images.
@@ -61,24 +61,24 @@ In this project, we will study images obtained from scans of the lungs. The imag
 ##### **Radiomic techniques**
 To obtain the features, we can use multiple techniques. Radiomic techniques can be divided into four categories: intensity-based metrics, texture-based analysis, shape-based measures, and transform-based metrics. We will briefly discuss these techniques now.
 
-- Intensity-based metrics refers to statistics that are calculated from pixel values (or volumetric pixels called voxels). Additional information that can be obtained from analyzing the relationship between the voxels it is not considered. To compute the statistics, we select a region and extract the voxel values. They can be analyzed with histogram analysis. To quantify different aspects of the distribution we use average and variation, shape, and diversity.
+- <u>Intensity-based metrics</u> refers to statistics that are calculated from pixel values (or volumetric pixels called voxels). Additional information that can be obtained from analyzing the relationship between the voxels it is not considered. To compute the statistics, we select a region and extract the voxel values. They can be analyzed with histogram analysis. To quantify different aspects of the distribution we use average and variation, shape, and diversity.
 
-- Texture-based analysis refers to the analysis of image patterns, such as intensity, shape, or colors. Mathematical formulas based on the spatial relationship of voxels are used to quantify these concepts.
+- <u>Texture-based analysis</u> refers to the analysis of image patterns, such as intensity, shape, or colors. Mathematical formulas based on the spatial relationship of voxels are used to quantify these concepts.
 
-- Shape-based measures refer to the study of different components of a structure. They can be divided into 1D metrics (measurement of the distance between two points. They are used to describe the magnitude of an abnormality), 2D metrics (calculated on cross-sectional planes and are used to calculate different parameters that are based on areas) and 3D metrics (attempt to enumerate different aspects of volumetric shape).
+- <u>Shape-based measures</u> refer to the study of different components of a structure. They can be divided into 1D metrics (measurement of the distance between two points. They are used to describe the magnitude of an abnormality), 2D metrics (calculated on cross-sectional planes and are used to calculate different parameters that are based on areas) and 3D metrics (attempt to enumerate different aspects of volumetric shape).
 
-- Transform-based metrics refers to the transformation of images from spatial coordinates to what is called a frequency domain, without losing any information.
+- <u>Transform-based metrics</u> refers to the transformation of images from spatial coordinates to what is called a frequency domain, without losing any information.
 
 ##### **Radiomic features**
 We can obtain multiple types of features from images. Qualitative features are used to describe lesions, and quantitative features are extracted from images using computer programs that apply mathematical algorithms. Now, we will focus on quantitative features, which can be divided into different subgroups.
 
-- Shape features describe the shape of the traced region of interest and its geometric properties like volume, maximum diameter along different orthogonal directions, maximum surface, tumor compactness, etc. 
+- <u>Shape features</u> describe the shape of the traced region of interest and its geometric properties like volume, maximum diameter along different orthogonal directions, maximum surface, tumor compactness, etc. 
 
-- First-order statistics features describe the distribution of individual voxel values without taking into account spatial relationships. Some properties we obtain are the mean, median, maximum, minimum values of the voxel intensities on the image, skewness, kurtosis, etc.
+- <u>First-order statistics</u> features describe the distribution of individual voxel values without taking into account spatial relationships. Some properties we obtain are the mean, median, maximum, minimum values of the voxel intensities on the image, skewness, kurtosis, etc.
 
-- Second-order statistics features include the textural features. They are obtained computing the statistical relationships between neighboring voxels.
+- <u>Second-order statistics</u> features include the textural features. They are obtained computing the statistical relationships between neighboring voxels.
 
-- Higher-order statistics features are obtained by statistical methods after applying filters or mathematical transforms to the images. Some examples are fractal analysis, Minkowski functionals or Laplacian transforms of Gaussian-filtered images.
+- <u>Higher-order statistics</u> features are obtained by statistical methods after applying filters or mathematical transforms to the images. Some examples are fractal analysis, Minkowski functionals or Laplacian transforms of Gaussian-filtered images.
 
 
 <br>
@@ -88,7 +88,18 @@ We can obtain multiple types of features from images. Qualitative features are u
 
 <span style="color:red">TO DO: explain how obtain images (drawing)</span>
 
-In this section we will display a few images using R.
+In this section we will display a few images with different extensions. But first of all, we will explain how we obtain the images.
+
+We will be working with images that look like this:
+```{r, echo=FALSE, warning=FALSE, message=FALSE, , out.width = "250px", out.height = "350px"}
+library(oro.dicom)
+library(RIA)
+image_example <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00007637202177411956430/11.dcm")
+image(t(image_example$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
+```
+
+
+
 
 The R package *oro.dicom* is a collection of input/output functions for medical imaging data that conform to the Digital Imaging and Communications in Medicine (DICOM) standard. The R package *RIA* is another package that was developed to facilitate radiomic analysis of medical images. 
 
