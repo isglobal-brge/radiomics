@@ -129,6 +129,10 @@ image(t(image3$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
 ```
 
 
+<br>
+
+
+
 ##### **NIFTI (.nii) images**
 
 If we have nifit images, we can view them with thw library *RNifti*. And the function to view the image is: *readNifti(path_to_image)*.
@@ -170,6 +174,11 @@ First we will compute the radiomic features of the images without masks.
 To compute the radiomic features of the images using the library RIA, we first need to convert the DICOM images to *RIA_image* class. To do so, we will use the function *load_dicom(path_to_the_file)*. 
 
 If we have other image formats, there exists functions such as *load_nifti()*, *load_nrrd()* and *load_npy()* in RIA to read the images.
+
+
+<br>
+
+
 
 ##### **Radiomic features of 1 image**
 First, we compute the radiomic features of 1 image without a mask. 
@@ -213,6 +222,7 @@ DICOM <- radiomics_all(DICOM, bins_in = c(8, 16, 32), equal_prob = "both")
 ```
 
 
+<br>
 
 
 ##### **Radiomic features of 10 images**
