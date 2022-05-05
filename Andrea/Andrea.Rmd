@@ -167,19 +167,21 @@ oro.nifti::slice_overlay(image2, mask, z=100)
 ### Radiomic features without masks (RIA)
 First we will compute the radiomic features of the images without masks.
 
-To compute the radiomic features of the images using the library RIA, we first need to convert the DICOM images to RIA_image class. To do so, we will use the *load_dicom(path_of_the_file)* function. 
+To compute the radiomic features of the images using the library RIA, we first need to convert the DICOM images to *RIA_image* class. To do so, we will use the function *load_dicom(path_to_the_file)*. 
 
-If we have other image formats, there exist functions such as *load_nifti()*, *load_nrrd()* and *load_npy()* in RIA to read the images.
+If we have other image formats, there exists functions such as *load_nifti()*, *load_nrrd()* and *load_npy()* in RIA to read the images.
 
-##### **1 image**
-First, we compute the radiomic features of 1 image without a mask (we will do it for the first image displayed earlier). To compute the first-order statistics we use the *first_order()* function.
+##### **Radiomic features of 1 image**
+First, we compute the radiomic features of 1 image without a mask. 
 
-Some of the metrics computed are the mean, median, energy, entropy, and so on.
+To compute the <u>first-order statistics</u> we use the *first_order()* function.
+
+Some of the metrics computed are the mean, median, energy, entropy, and so on. RIA can calculate 44 different first-order statistics using the *first_order* function.
 
 ```{r, results = FALSE, message=FALSE}
 DICOM <- RIA::load_dicom(filename="/Users/andrealetaalfonso/Desktop/TFG/images/img/Folder_images/13", skipFirst128=FALSE, DICM=FALSE, boffset = 128)
-DICOM = first_order(RIA_data_in = DICOM) # first order statistics
-first_order <- RIA:::list_to_df(DICOM$stat_fo$orig) # list of first order statistics
+data <- first_order(RIA_data_in = DICOM) # first order statistics
+first_order <- RIA:::list_to_df(data$stat_fo$orig) # list of first order statistics
 name_characteristics <- rownames(first_order) # names of the first order statistics
 ```
 ```{r, message=FALSE}
@@ -187,9 +189,34 @@ library(rmarkdown)
 paged_table(first_order)
 ```
 
-##### **10 images**
-Now we will compute the first order characteristics of 10 images (images 10 through 19) from the same patient (ID00007637202177411956430) without a mask.
+With RIA we can also compute the <u>Gray level co-occurrence matrix (GLCM)</u> calculations and statistics. GLCMs are second-order statistics.
+We would use the function *glcm*.
+```{r, eval=FALSE}
+DICOM = glcm(RIA_data_in = DICOM, off_right = 1, off_down = 2, off_z = 2)
+```
 
+The function glrlm calculates <u>Gray level run length matrix (GLRLM)</u> matrices of 2D and 3D images. GLRLM are higher-order statistics. 
+We would use the function *glrlm*.
+```{r, eval=FALSE}
+DICOM = glrlm(RIA_data_in = DICOM, off_right = 1, off_down = 0, off_z = 1)
+```
+
+To compute the <u>GGeometry-based statistics</u>, use the function *geometry*. RIA calculates 9 conventional geometrical parameters and 3 fractal dimensions.
+```{r, eval=FALSE}
+DICOM = geometry(RIA_data_in = DICOM, use_orig = TRUE, calc_sub = FALSE)
+RIA:::list_to_df(DICOM$stat_geometry$orig)
+```
+
+And finally, if we want to compute all the radiomic features at once, RIA has the *radiomics_all* to do it. 
+```{r, eval=FALSE}
+DICOM <- radiomics_all(DICOM, bins_in = c(8, 16, 32), equal_prob = "both")
+```
+
+
+
+
+##### **Radiomic features of 10 images**
+Now we will compute the first order characteristics of 10 images (images 10 through 19) from the same patient (different slices) without a mask. We could do the following loop:
 ```{r, results = FALSE, message=FALSE}
 first_order <- c()
 res <- c()
@@ -205,7 +232,6 @@ for (i in first_image:last_image) { # for loop through all the images
 ```
 
 Finally, we combine all the results into a data.frame called 'results'.
-
 ```{r, layout="l-body-outset"}
 library(rmarkdown)
 results <- do.call(cbind.data.frame, res)
