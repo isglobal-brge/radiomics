@@ -26,17 +26,22 @@ With *RadAR* we can import the radiomic features that we extracted before using 
 
 <span style="color:red">TO DO: explain normalizacion y shift, y con normalizacion.</span>
 
-We will create the *rdr* object (with normalization and shift). We use the function *import_pyradiomics(path_to_folder)* to import the results we obtained using pyradiomics, where *path_to_folder* is the path to the folder containing the pyradiomics csv files. The function filters out duplicated feature names. 
-```{r, eval = FALSE}
+We will create the *rdr* object with normalization and shift, and another one with normalization only. We use the function *import_pyradiomics(path_to_folder)* to import the results we obtained using pyradiomics, where *path_to_folder* is the path to the folder containing the pyradiomics csv files. The function filters out duplicated feature names. 
+
+```{r, results='hide'}
 rdr_NormShift <- import_pyradiomics(dir="/Users/andrealetaalfonso/Desktop/TFG/A_Project/results/ECLIPSE_results_ParamsNormShiftCSV")
 ```
 
-```{r, include=FALSE}
-rdr_NormShift <- import_pyradiomics(dir="/Users/andrealetaalfonso/Desktop/TFG/A_Project/results/ECLIPSE_results_ParamsNormShiftCSV")
+```{r, results='hide'}
+rdr_Norm <- import_pyradiomics(dir="/Users/andrealetaalfonso/Desktop/TFG/A_Project/results/ECLIPSE_results_ParamsNormCSV")
 ```
 
 ```{r}
 rdr_NormShift
+```
+
+```{r}
+rdr_Norm
 ```
 
 
@@ -50,6 +55,11 @@ We can extract the data with the function *assay()*.
 ```{r}
 data <- assay(rdr_NormShift)
 data[1:10,1:2]
+```
+
+```{r}
+data2 <- assay(rdr_Norm)
+data2[1:10,1:2]
 ```
 
 We can check which image types (i.e., normal or wavelet filtered) features have been extracted from.
@@ -111,15 +121,22 @@ plot_heatmap_hcl(rdr = rdr)
 
 We can also save the rdr object to *.rda*.
 ```{r}
-save(rdr_NormShift, file = "rdr_Andrea.rda")
+save(rdr_NormShift, file = "rdr_Andrea_NormShift.rda")
+```
+```{r}
+save(rdr_Norm, file = "rdr_Andrea_Norm.rda")
 ```
 
 
 We can open the *.rda* file with the following code:
 ```{r, warning=FALSE}
 library(admisc)
-test <- listRDA("rdr_Andrea.rda")
-test
+test_NormShift <- listRDA("rdr_Andrea.rda")
+test_NormShift
+```
+```{r}
+test_Norm <- listRDA("rdr_Andrea_Norm.rda")
+test_Norm
 ```
 
 
