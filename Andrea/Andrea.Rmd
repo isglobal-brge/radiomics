@@ -25,9 +25,10 @@ knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 
     4.4. Segmentation with lungmask
 
-5. Radiomic features with masks
-
-    5.1. Analysis with RaDAr
+5. Radiomic features
+    5.1. Radiomic features with RIA
+    5.2.  Radiomic features with pyradiomics
+    5.3. Analysis with RaDAr
 
 
 <br>
@@ -257,7 +258,7 @@ paged_table(results, options = list(rows.print = 10, cols.print = 5))
  
 ## 4. Segmentation
 
-<span style="color:red">Explain better segmentation process</span>
+<span style="color:red">TO DO: Explain better segmentation process</span>
 
 As we explained in the introduction, segmentation refers to delineating the areas of interest in the image in terms of pixels or voxels, in our case, the lung. Lung segmentation refers to the computer-based process of identifying the boundaries of lungs from surrounding thoracic tissue on the scan images. Once we have the segmented images, we can start our analysis.
 
@@ -1012,14 +1013,20 @@ get_and_save_masks("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1")
 ```
 
 
+
+<span style="color:red">TO DO: explain final segmenation used</span>
+
+
+
+
 <br>
 
 
-## 5. Radiomic features with masks
+## 5. Radiomic features
 
 Now that we have in one folder all the images, and in another one all the masks, we can start computing the radiomic features of the images with the masks.
 
-We will be using lungmask.
+### 5.1. Radiomic features with RIA
 
 Load the images and the masks with the funcion *load_dicom()*.
 
@@ -1095,15 +1102,6 @@ paged_table(results)
 ```
 
 
-
-<span style="color:red">TO DO: explain final segmenation used</span>
-
-<span style="color:red">TO DO: explain pyradiomics</span>
-
-
- 
-<br>
-
 ##### **Information about the patients**
 
 We have a *.csv* file with information about the patients.
@@ -1147,8 +1145,22 @@ head(data_patients)
 <br>
 
 
+
+### 5.2. Radiomic features with pyradiomics
+
+<span style="color:red">TO DO: explain pyradiomics</span>
+
+
  
-### 5.1. Analysis with RaDAr
+<br>
+
+
+
+
+ 
+### 5.3. Analysis with RaDAr
+
+<span style="color:red">OLD version: find script_radar.Rmd</span>
 
 Now we will study multiple radiomic features with multiple patients. We will use the *RaDAr* to manipulate the results.
 
@@ -1284,7 +1296,7 @@ paged_table(read_table)
 
 ##### **RaDAr**
 
-<span style="color:red">In another .Rmd</span>
+<span style="color:red">In another .Rmd!!!!</span>
 
 
 
