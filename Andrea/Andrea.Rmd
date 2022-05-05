@@ -8,13 +8,13 @@ csl: apa.csl
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 ```
 
 # Index
 1. Introduction
-2. Image display (oro.dicom)
-3. Radiomic features (RIA)
+2. Image display
+3. Radiomic features
 4. Segmentation
 
     4.1. Segmentation with lungct
@@ -45,7 +45,7 @@ Radiomics is a relatively new scientific filed. The first radiomics studies appe
 
 It is believed that, in the end, radiomics will use specific treatments for each patient, will help doctors select the most appropriate treatment for each patient, and will be able to change treatments quickly if they do not work.
 
-Some of the difficulties when performing radiomics research is that high quality images, with adequate size and complete datasets are needed. Different training and validation datasets are also necessary, to check if our algorithm works correctly. Another difficulty is class imbalance (classification problem where the number of observations per class is not equally distributed) and overfitting (when a statistical model exactly fits its training data). The main clinical applications of radiomics are radiogenomics and clinical outcome prediction.\
+Some of the difficulties when performing radiomics research is that high quality images, with adequate size and complete datasets are needed. Different training and validation datasets are also necessary, to check if our algorithm works correctly. Another difficulty is class imbalance (classification problem where the number of observations per class is not equally distributed) and overfitting (when a statistical model exactly fits its training data). The main clinical applications of radiomics are radiogenomics and clinical outcome prediction.
 
 ##### **Process of radiomics**
 Now we will briefly explain the process of radiomics.
@@ -84,7 +84,7 @@ We can obtain multiple types of features from images. Qualitative features are u
 <br>
  
  
-## 2. Image display (oro.dicom)
+## 2. Image display
 
 <span style="color:red">TO DO: explain how obtain images (drawing)</span>
 
@@ -118,7 +118,7 @@ image(t(image3$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
 <br>
  
  
-## 3. Radiomic features (RIA)
+## 3. Radiomic features
 
 ### Radiomic features without masks (RIA)
 First we will compute the radiomic features of the images without masks.
@@ -572,7 +572,7 @@ imgs = get_pixels_hu(patient)
 ```
 
 Save in .npy format
-```{python}
+```{python, eval = FALSE}
 np.save(output_path + "fullimages_%d.npy" % (id), imgs)
 ```
 
@@ -759,7 +759,7 @@ sample_stack(masked_lung, show_every=10)
 ```
 
 Save masks in .npy format.
-```{python}
+```{python, eval = FALSE}
 np.save(output_path + "maskedimages_%d.npy" % (id), imgs)
 ```
 
@@ -927,7 +927,7 @@ Now, we can do the same for all of the images in the folder.
 
 We generate the masks and save them in the path + _mask.
 
-```{python, results = FALSE}
+```{python, results = FALSE, eval = FALSE}
 get_and_save_masks("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1")
 ```
 
@@ -1107,7 +1107,7 @@ paged_table(results)
 
 Now we will analyze mulitple patients at the same time.
 
-```{r, results=FALSE, message=FALSE, warning=FALSE}
+```{r, eval = FALSE, results=FALSE, message=FALSE, warning=FALSE}
 res <- c() # vector for the results
 path_folders <- "/Users/andrealetaalfonso/Desktop/TFG/DICOMS/rstudio-export" # path where all the folders are at
 patients_list <- list.files(path_folders) # list of the name of the folders of every patient
@@ -1127,7 +1127,7 @@ for(i in patients_list){ # for every patient
   res[i] <- RIA:::list_to_df(images$stat_fo$orig)
 }
 ```
-```{r}
+```{r, eval = FALSE}
 library(rmarkdown)
 results <- do.call(cbind.data.frame, res) # results
 colnames(results) <- patients_list
@@ -1136,13 +1136,13 @@ rownames(results) <- name_characteristics
 
 We will export these results to a *.txt* file.
 
-```{r}
+```{r, eval = FALSE}
 write.table(results, file="first_order.txt", sep="\t")
 ```
 
 We can check that we exported the file correclty with: *read.delim("file.txt")*.
 
-```{r}
+```{r, eval = FALSE}
 library(rmarkdown)
 table1 <- read.delim("first_order.txt")
 paged_table(table1)
@@ -1150,7 +1150,7 @@ paged_table(table1)
 
 We can also compute the Geometry-based statistics.
 
-```{r, results=FALSE, message=FALSE, warning=FALSE}
+```{r, results=FALSE, message=FALSE, warning=FALSE, eval = FALSE}
 res2 <- c() # vector for the results
 path_folders <- "/Users/andrealetaalfonso/Desktop/TFG/DICOMS/rstudio-export" # path where all the folders are at
 patients_list <- list.files(path_folders) # list of the name of the folders of every patient
@@ -1170,18 +1170,18 @@ for(i in patients_list){ # for every patient
   res2[i] <- RIA:::list_to_df(images$stat_geometry$orig)
 }
 ```
-```{r}
+```{r, eval = FALSE}
 results2 <- do.call(cbind.data.frame, res2) # results
 colnames(results2) <- patients_list
 rownames(results2) <- name_characteristics
 ```
 
 We will also export these results to another *.txt* file.
-```{r}
+```{r, eval = FALSE}
 write.table(results2, file="geometry.txt", sep="\t")
 ```
 
-```{r}
+```{r, eval = FALSE}
 library(rmarkdown)
 table2 <- read.delim("geometry.txt")
 paged_table(table2)
