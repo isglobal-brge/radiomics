@@ -28,11 +28,19 @@ With *RadAR* we can import the radiomic features that we extracted before using 
 
 We will create the *rdr* object with normalization and shift, and another one with normalization only. We use the function *import_pyradiomics(path_to_folder)* to import the results we obtained using pyradiomics, where *path_to_folder* is the path to the folder containing the pyradiomics csv files. The function filters out duplicated feature names. 
 
-```{r, results='hide'}
+```{r, eval = FALSE}
 rdr_NormShift <- import_pyradiomics(dir="/Users/andrealetaalfonso/Desktop/TFG/A_Project/results/ECLIPSE_results_ParamsNormShiftCSV")
 ```
 
-```{r, results='hide'}
+```{r, include=FALSE}
+rdr_NormShift <- import_pyradiomics(dir="/Users/andrealetaalfonso/Desktop/TFG/A_Project/results/ECLIPSE_results_ParamsNormShiftCSV")
+```
+
+```{r, eval = FALSE}
+rdr_Norm <- import_pyradiomics(dir="/Users/andrealetaalfonso/Desktop/TFG/A_Project/results/ECLIPSE_results_ParamsNormCSV")
+```
+
+```{r, include=FALSE}
 rdr_Norm <- import_pyradiomics(dir="/Users/andrealetaalfonso/Desktop/TFG/A_Project/results/ECLIPSE_results_ParamsNormCSV")
 ```
 
