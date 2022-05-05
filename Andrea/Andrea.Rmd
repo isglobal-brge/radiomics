@@ -86,31 +86,36 @@ We can obtain multiple types of features from images. Qualitative features are u
  
 ## 2. Image display
 
-<span style="color:red">TO DO: explain how obtain images (drawing)</span>
-
 In this section we will display a few images with different extensions. But first of all, we will explain how we obtain the images.
 
 We will be working with images that look like this:
-```{r, echo=FALSE, warning=FALSE, message=FALSE, , out.width = "250px", out.height = "350px"}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, , out.width = "200px", out.height = "300px"}
 library(oro.dicom)
 library(RIA)
 image_example <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00007637202177411956430/11.dcm")
 image(t(image_example$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
 ```
 
+To obtain these images, we emit x-rays through an x-ray tube. The rays pass through the lungs and reach a detector. Depending on the tissue it passes through, it absorbs more or less x-rays. The scanner uses the different levels of absorption to create the image.
+To make the images, several slices of the lung are made (horizontal slices), if we combine these slices, we can obtain the image of the lung in 3 dimensions.
+
+```{r , echo=FALSE, out.width="55%", out.height=="55%", fig.align="center"}
+knitr::include_graphics("./img/ct_scan.png")
+```
 
 
 
+##### **DICOM (.dcm) images**
 The R package *oro.dicom* is a collection of input/output functions for medical imaging data that conform to the Digital Imaging and Communications in Medicine (DICOM) standard. The R package *RIA* is another package that was developed to facilitate radiomic analysis of medical images. 
 
 First we load the libraries oro.dicom and RIA.
-
 ```{r, message=FALSE}
 library(oro.dicom)
 library(RIA)
 ```
 
-Now we will display 3 images from the same patient (ID00007637202177411956430). To read the images we use the function *readDICOMFile(path_of_the_image)*.
+Now we will display 3 images from the same patient (that is three slices of a person's lung). To read the images we use the function: *readDICOMFile(path_to_the_image)*.
 
 ```{r, out.width = "250px", out.height = "350px"}
 image1 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00007637202177411956430/11.dcm")
@@ -123,7 +128,35 @@ image3 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00
 image(t(image3$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
 ```
 
-<span style="color:red">TO DO: add visualization nifti</span>
+
+##### **NIFTI (.nii) images**
+
+If we have nifit images, we can view them with thw library *RNifti*. And the function to view the image is: *readNifti(path_to_image)*.
+
+```{r, message=FALSE}
+library(RNifti)
+image <- readNifti("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/rstudio-export/023140000001/023140000001_INSP_STD_L1_ECLIPSE.nii.gz")
+view(image, point = c(239, 239, 131))
+```
+
+We can also use the library *oro.nifti* and *neurobase*. To view the images use: *neurobase::readnii(path_to_image)*. For example, an image and a mask:
+
+```{r, message=FALSE, out.width="30%"}
+library(oro.nifti)
+# Image
+image2 <- neurobase::readnii("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/rstudio-export/023140000001/023140000001_INSP_STD_L1_ECLIPSE.nii.gz")
+image(image2,z=100,plot.type="single")
+# Mask
+mask <- neurobase::readnii("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/rstudio-export/023140000001/023140000001_INSP_STD_L1_ECLIPSE_mask.nii.gz")
+image(mask,z=100,plot.type="single")
+```
+
+And to overlay the image and the mask use the function: *oro.nifti::slice_overlay(the_image, the_mask, z)*:
+
+```{r, message=FALSE, out.width="30%"}
+oro.nifti::slice_overlay(image2, mask, z=100)
+```
+
 
 
 <br>
