@@ -8,13 +8,13 @@ csl: apa.csl
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 ```
 
 # Index
 1. Introduction
-2. Image display (oro.dicom)
-3. Radiomic features (RIA)
+2. Image display
+3. Radiomic features
 4. Segmentation
 
     4.1. Segmentation with lungct
@@ -84,7 +84,10 @@ We can obtain multiple types of features from images. Qualitative features are u
 <br>
  
  
-## 2. Image display (oro.dicom)
+## 2. Image display
+
+<span style="color:red">TO DO: explain how obtain images (drawing)</span>
+
 In this section we will display a few images using R.
 
 The R package *oro.dicom* is a collection of input/output functions for medical imaging data that conform to the Digital Imaging and Communications in Medicine (DICOM) standard. The R package *RIA* is another package that was developed to facilitate radiomic analysis of medical images. 
@@ -109,11 +112,13 @@ image3 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00
 image(t(image3$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
 ```
 
+<span style="color:red">TO DO: add visualization nifti</span>
+
 
 <br>
  
  
-## 3. Radiomic features (RIA)
+## 3. Radiomic features
 
 ### Radiomic features without masks (RIA)
 First we will compute the radiomic features of the images without masks.
@@ -171,6 +176,8 @@ paged_table(results, options = list(rows.print = 10, cols.print = 5))
  
  
 ## 4. Segmentation
+
+<span style="color:red">Explain better segmentation process</span>
 
 As we explained in the introduction, segmentation refers to delineating the areas of interest in the image in terms of pixels or voxels, in our case, the lung. Lung segmentation refers to the computer-based process of identifying the boundaries of lungs from surrounding thoracic tissue on the scan images. Once we have the segmented images, we can start our analysis.
 
@@ -565,7 +572,7 @@ imgs = get_pixels_hu(patient)
 ```
 
 Save in .npy format
-```{python}
+```{python, eval = FALSE}
 np.save(output_path + "fullimages_%d.npy" % (id), imgs)
 ```
 
@@ -752,7 +759,7 @@ sample_stack(masked_lung, show_every=10)
 ```
 
 Save masks in .npy format.
-```{python}
+```{python, eval = FALSE}
 np.save(output_path + "maskedimages_%d.npy" % (id), imgs)
 ```
 
@@ -920,7 +927,7 @@ Now, we can do the same for all of the images in the folder.
 
 We generate the masks and save them in the path + _mask.
 
-```{python, results = FALSE}
+```{python, results = FALSE, eval = FALSE}
 get_and_save_masks("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1")
 ```
 
@@ -1009,6 +1016,10 @@ paged_table(results)
 
 
 
+<span style="color:red">TO DO: explain final segmenation used</span>
+
+<span style="color:red">TO DO: explain pyradiomics</span>
+
 
  
 <br>
@@ -1096,7 +1107,7 @@ paged_table(results)
 
 Now we will analyze mulitple patients at the same time.
 
-```{r, results=FALSE, message=FALSE, warning=FALSE}
+```{r, eval = FALSE, results=FALSE, message=FALSE, warning=FALSE}
 res <- c() # vector for the results
 path_folders <- "/Users/andrealetaalfonso/Desktop/TFG/DICOMS/rstudio-export" # path where all the folders are at
 patients_list <- list.files(path_folders) # list of the name of the folders of every patient
@@ -1116,7 +1127,7 @@ for(i in patients_list){ # for every patient
   res[i] <- RIA:::list_to_df(images$stat_fo$orig)
 }
 ```
-```{r}
+```{r, eval = FALSE}
 library(rmarkdown)
 results <- do.call(cbind.data.frame, res) # results
 colnames(results) <- patients_list
@@ -1125,13 +1136,13 @@ rownames(results) <- name_characteristics
 
 We will export these results to a *.txt* file.
 
-```{r}
+```{r, eval = FALSE}
 write.table(results, file="first_order.txt", sep="\t")
 ```
 
 We can check that we exported the file correclty with: *read.delim("file.txt")*.
 
-```{r}
+```{r, eval = FALSE}
 library(rmarkdown)
 table1 <- read.delim("first_order.txt")
 paged_table(table1)
@@ -1139,7 +1150,7 @@ paged_table(table1)
 
 We can also compute the Geometry-based statistics.
 
-```{r, results=FALSE, message=FALSE, warning=FALSE}
+```{r, results=FALSE, message=FALSE, warning=FALSE, eval = FALSE}
 res2 <- c() # vector for the results
 path_folders <- "/Users/andrealetaalfonso/Desktop/TFG/DICOMS/rstudio-export" # path where all the folders are at
 patients_list <- list.files(path_folders) # list of the name of the folders of every patient
@@ -1159,18 +1170,18 @@ for(i in patients_list){ # for every patient
   res2[i] <- RIA:::list_to_df(images$stat_geometry$orig)
 }
 ```
-```{r}
+```{r, eval = FALSE}
 results2 <- do.call(cbind.data.frame, res2) # results
 colnames(results2) <- patients_list
 rownames(results2) <- name_characteristics
 ```
 
 We will also export these results to another *.txt* file.
-```{r}
+```{r, eval = FALSE}
 write.table(results2, file="geometry.txt", sep="\t")
 ```
 
-```{r}
+```{r, eval = FALSE}
 library(rmarkdown)
 table2 <- read.delim("geometry.txt")
 paged_table(table2)
@@ -1193,35 +1204,7 @@ paged_table(read_table)
 
 ##### **RaDAr**
 
-In this section we will use the library *RadAR* (Radiomics Analysis with R). This is a software to perform comprehensive analysis of radiomic features. RadAR allows the users to carry out the entire processing of radiomic datasets, from data import to feature processing and visualization and implements multiple statistical methods for the analysis of these data.
-
-Load the library.
-
-```{r, message=FALSE, results=FALSE}
-library(RadAR)
-```
-
-With *RadAR* we can import the radiomic features that we extracted before with the *RIA* library.
-
-```{r}
-rdr <- import_radiomic_table("/Users/andrealetaalfonso/Desktop/TFG/A_Project/radiomic_features.txt")
-rdr
-```
-
-The *rdr* object is a *SummarizedExperiment*.
-
-We can extract the data with the function *assay()*.
-```{r}
-data <- assay(rdr)
-data[1:10,]
-```
-
-
-We can also save the rdr object to *.rda*.
-```{r}
-save(rdr, file = "radar_object.rda")
-```
-
+<span style="color:red">In another .Rmd</span>
 
 
 
