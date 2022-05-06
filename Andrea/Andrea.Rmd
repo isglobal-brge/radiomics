@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 ```
 
 # Index
-1. Introduction
+1. Introduction to radiomics
 2. Image display
 3. Radiomic features
 4. Segmentation
@@ -25,9 +25,10 @@ knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 
     4.4. Segmentation with lungmask
 
-5. Radiomic features with masks
-
-    5.1. Analysis with RaDAr
+5. Radiomic features
+    5.1. Radiomic features with RIA
+    5.2.  Radiomic features with pyradiomics
+    5.3. Analysis with RaDAr
 
 
 <br>
@@ -50,10 +51,10 @@ Some of the difficulties when performing radiomics research is that high quality
 ##### **Process of radiomics**
 Now we will briefly explain the process of radiomics.
 
-1. Obtain image: first, we obtain a medical image from a scanner (it can be obtained from multiple modalities: magnetic resonance imaging (MRI), computed tomography (CT), positron-emission-tomography (PET)...).
-2. Image segmentation: this means dividing the image into multiple segments, in other words, delineating the areas of interest in the image in terms of pixels or voxels. This step can be done manually, semi-automatically or fully automatically.
-3. Feature extraction: after image segmentation, we can extract the features and classify them.
-4. Finally, we use databases to share our data. 
+1. <u>Obtain image</u>: first, we obtain a medical image from a scanner (it can be obtained from multiple modalities: magnetic resonance imaging (MRI), computed tomography (CT), positron-emission-tomography (PET)...).
+2. <u>Image segmentation</u>: this means dividing the image into multiple segments, in other words, delineating the areas of interest in the image in terms of pixels or voxels. This step can be done manually, semi-automatically or fully automatically.
+3. <u>Feature extraction</u>: after image segmentation, we can extract the features and classify them.
+4. Finally, we use <u>databases</u> to share our data. 
 
 ##### **DICOM images**
 In this project, we will study images obtained from scans of the lungs. The images we will obtain from the scans are DICOM images. DICOM (Digital Imaging and Communications in Medicine) is the standard for the communication and management of medical imaging information and related data. It is used worldwide to store, exchange, and transmit medical images. It defines the formats for medical images that can be exchanged with the data and quality necessary for clinical use. DICOM incorporates standards for imaging modalities such as radiography, ultrasonography, computed tomography (CT), magnetic resonance imaging (MRI), and radiation therapy. The most common applications of this standard are the display, storage, printing, and transmission of images.
@@ -61,24 +62,24 @@ In this project, we will study images obtained from scans of the lungs. The imag
 ##### **Radiomic techniques**
 To obtain the features, we can use multiple techniques. Radiomic techniques can be divided into four categories: intensity-based metrics, texture-based analysis, shape-based measures, and transform-based metrics. We will briefly discuss these techniques now.
 
-- Intensity-based metrics refers to statistics that are calculated from pixel values (or volumetric pixels called voxels). Additional information that can be obtained from analyzing the relationship between the voxels it is not considered. To compute the statistics, we select a region and extract the voxel values. They can be analyzed with histogram analysis. To quantify different aspects of the distribution we use average and variation, shape, and diversity.
+- <u>Intensity-based metrics</u> refers to statistics that are calculated from pixel values (or volumetric pixels called voxels). Additional information that can be obtained from analyzing the relationship between the voxels it is not considered. To compute the statistics, we select a region and extract the voxel values. They can be analyzed with histogram analysis. To quantify different aspects of the distribution we use average and variation, shape, and diversity.
 
-- Texture-based analysis refers to the analysis of image patterns, such as intensity, shape, or colors. Mathematical formulas based on the spatial relationship of voxels are used to quantify these concepts.
+- <u>Texture-based analysis</u> refers to the analysis of image patterns, such as intensity, shape, or colors. Mathematical formulas based on the spatial relationship of voxels are used to quantify these concepts.
 
-- Shape-based measures refer to the study of different components of a structure. They can be divided into 1D metrics (measurement of the distance between two points. They are used to describe the magnitude of an abnormality), 2D metrics (calculated on cross-sectional planes and are used to calculate different parameters that are based on areas) and 3D metrics (attempt to enumerate different aspects of volumetric shape).
+- <u>Shape-based measures</u> refer to the study of different components of a structure. They can be divided into 1D metrics (measurement of the distance between two points. They are used to describe the magnitude of an abnormality), 2D metrics (calculated on cross-sectional planes and are used to calculate different parameters that are based on areas) and 3D metrics (attempt to enumerate different aspects of volumetric shape).
 
-- Transform-based metrics refers to the transformation of images from spatial coordinates to what is called a frequency domain, without losing any information.
+- <u>Transform-based metrics</u> refers to the transformation of images from spatial coordinates to what is called a frequency domain, without losing any information.
 
 ##### **Radiomic features**
 We can obtain multiple types of features from images. Qualitative features are used to describe lesions, and quantitative features are extracted from images using computer programs that apply mathematical algorithms. Now, we will focus on quantitative features, which can be divided into different subgroups.
 
-- Shape features describe the shape of the traced region of interest and its geometric properties like volume, maximum diameter along different orthogonal directions, maximum surface, tumor compactness, etc. 
+- <u>Shape features</u> describe the shape of the traced region of interest and its geometric properties like volume, maximum diameter along different orthogonal directions, maximum surface, tumor compactness, etc. 
 
-- First-order statistics features describe the distribution of individual voxel values without taking into account spatial relationships. Some properties we obtain are the mean, median, maximum, minimum values of the voxel intensities on the image, skewness, kurtosis, etc.
+- <u>First-order statistics</u> features describe the distribution of individual voxel values without taking into account spatial relationships. Some properties we obtain are the mean, median, maximum, minimum values of the voxel intensities on the image, skewness, kurtosis, etc.
 
-- Second-order statistics features include the textural features. They are obtained computing the statistical relationships between neighboring voxels.
+- <u>Second-order statistics</u> features include the textural features. They are obtained computing the statistical relationships between neighboring voxels.
 
-- Higher-order statistics features are obtained by statistical methods after applying filters or mathematical transforms to the images. Some examples are fractal analysis, Minkowski functionals or Laplacian transforms of Gaussian-filtered images.
+- <u>Higher-order statistics</u> features are obtained by statistical methods after applying filters or mathematical transforms to the images. Some examples are fractal analysis, Minkowski functionals or Laplacian transforms of Gaussian-filtered images.
 
 
 <br>
@@ -86,20 +87,36 @@ We can obtain multiple types of features from images. Qualitative features are u
  
 ## 2. Image display
 
-<span style="color:red">TO DO: explain how obtain images (drawing)</span>
+In this section we will display a few images with different extensions. But first of all, we will explain how we obtain the images.
 
-In this section we will display a few images using R.
+We will be working with images that look like this:
 
+```{r, echo=FALSE, warning=FALSE, message=FALSE, , out.width = "200px", out.height = "300px"}
+library(oro.dicom)
+library(RIA)
+image_example <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00007637202177411956430/11.dcm")
+image(t(image_example$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
+```
+
+To obtain these images, we emit x-rays through an x-ray tube. The rays pass through the lungs and reach a detector. Depending on the tissue it passes through, it absorbs more or less x-rays. The scanner uses the different levels of absorption to create the image.
+To make the images, several slices of the lung are made (horizontal slices), if we combine these slices, we can obtain the image of the lung in 3 dimensions.
+
+```{r , echo=FALSE, out.width="55%", out.height=="55%", fig.align="center"}
+knitr::include_graphics("./img/ct_scan.png")
+```
+
+
+
+##### **DICOM (.dcm) images**
 The R package *oro.dicom* is a collection of input/output functions for medical imaging data that conform to the Digital Imaging and Communications in Medicine (DICOM) standard. The R package *RIA* is another package that was developed to facilitate radiomic analysis of medical images. 
 
 First we load the libraries oro.dicom and RIA.
-
 ```{r, message=FALSE}
 library(oro.dicom)
 library(RIA)
 ```
 
-Now we will display 3 images from the same patient (ID00007637202177411956430). To read the images we use the function *readDICOMFile(path_of_the_image)*.
+Now we will display 3 images from the same patient (that is three slices of a person's lung). To read the images we use the function: *readDICOMFile(path_to_the_image)*.
 
 ```{r, out.width = "250px", out.height = "350px"}
 image1 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00007637202177411956430/11.dcm")
@@ -112,7 +129,39 @@ image3 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00
 image(t(image3$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
 ```
 
-<span style="color:red">TO DO: add visualization nifti</span>
+
+<br>
+
+
+
+##### **NIFTI (.nii) images**
+
+If we have nifit images, we can view them with thw library *RNifti*. And the function to view the image is: *readNifti(path_to_image)*.
+
+```{r, message=FALSE}
+library(RNifti)
+image <- readNifti("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/rstudio-export/023140000001/023140000001_INSP_STD_L1_ECLIPSE.nii.gz")
+view(image, point = c(239, 239, 131))
+```
+
+We can also use the library *oro.nifti* and *neurobase*. To view the images use: *neurobase::readnii(path_to_image)*. For example, an image and a mask:
+
+```{r, message=FALSE, out.width="30%"}
+library(oro.nifti)
+# Image
+image2 <- neurobase::readnii("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/rstudio-export/023140000001/023140000001_INSP_STD_L1_ECLIPSE.nii.gz")
+image(image2,z=100,plot.type="single")
+# Mask
+mask <- neurobase::readnii("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/rstudio-export/023140000001/023140000001_INSP_STD_L1_ECLIPSE_mask.nii.gz")
+image(mask,z=100,plot.type="single")
+```
+
+And to overlay the image and the mask use the function: *oro.nifti::slice_overlay(the_image, the_mask, z)*:
+
+```{r, message=FALSE, out.width="30%"}
+oro.nifti::slice_overlay(image2, mask, z=100)
+```
+
 
 
 <br>
@@ -123,19 +172,26 @@ image(t(image3$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
 ### Radiomic features without masks (RIA)
 First we will compute the radiomic features of the images without masks.
 
-To compute the radiomic features of the images using the library RIA, we first need to convert the DICOM images to RIA_image class. To do so, we will use the *load_dicom(path_of_the_file)* function. 
+To compute the radiomic features of the images using the library RIA, we first need to convert the DICOM images to *RIA_image* class. To do so, we will use the function *load_dicom(path_to_the_file)*. 
 
-If we have other image formats, there exist functions such as *load_nifti()*, *load_nrrd()* and *load_npy()* in RIA to read the images.
+If we have other image formats, there exists functions such as *load_nifti()*, *load_nrrd()* and *load_npy()* in RIA to read the images.
 
-##### **1 image**
-First, we compute the radiomic features of 1 image without a mask (we will do it for the first image displayed earlier). To compute the first-order statistics we use the *first_order()* function.
 
-Some of the metrics computed are the mean, median, energy, entropy, and so on.
+<br>
+
+
+
+##### **Radiomic features of 1 image**
+First, we compute the radiomic features of 1 image without a mask. 
+
+To compute the <u>first-order statistics</u> we use the *first_order()* function.
+
+Some of the metrics computed are the mean, median, energy, entropy, and so on. RIA can calculate 44 different first-order statistics using the *first_order* function.
 
 ```{r, results = FALSE, message=FALSE}
 DICOM <- RIA::load_dicom(filename="/Users/andrealetaalfonso/Desktop/TFG/images/img/Folder_images/13", skipFirst128=FALSE, DICM=FALSE, boffset = 128)
-DICOM = first_order(RIA_data_in = DICOM) # first order statistics
-first_order <- RIA:::list_to_df(DICOM$stat_fo$orig) # list of first order statistics
+data <- first_order(RIA_data_in = DICOM) # first order statistics
+first_order <- RIA:::list_to_df(data$stat_fo$orig) # list of first order statistics
 name_characteristics <- rownames(first_order) # names of the first order statistics
 ```
 ```{r, message=FALSE}
@@ -143,9 +199,35 @@ library(rmarkdown)
 paged_table(first_order)
 ```
 
-##### **10 images**
-Now we will compute the first order characteristics of 10 images (images 10 through 19) from the same patient (ID00007637202177411956430) without a mask.
+With RIA we can also compute the <u>Gray level co-occurrence matrix (GLCM)</u> calculations and statistics. GLCMs are second-order statistics.
+We would use the function *glcm*.
+```{r, eval=FALSE}
+DICOM = glcm(RIA_data_in = DICOM, off_right = 1, off_down = 2, off_z = 2)
+```
 
+The function glrlm calculates <u>Gray level run length matrix (GLRLM)</u> matrices of 2D and 3D images. GLRLM are higher-order statistics. 
+We would use the function *glrlm*.
+```{r, eval=FALSE}
+DICOM = glrlm(RIA_data_in = DICOM, off_right = 1, off_down = 0, off_z = 1)
+```
+
+To compute the <u>GGeometry-based statistics</u>, use the function *geometry*. RIA calculates 9 conventional geometrical parameters and 3 fractal dimensions.
+```{r, eval=FALSE}
+DICOM = geometry(RIA_data_in = DICOM, use_orig = TRUE, calc_sub = FALSE)
+RIA:::list_to_df(DICOM$stat_geometry$orig)
+```
+
+And finally, if we want to compute all the radiomic features at once, RIA has the *radiomics_all* to do it. 
+```{r, eval=FALSE}
+DICOM <- radiomics_all(DICOM, bins_in = c(8, 16, 32), equal_prob = "both")
+```
+
+
+<br>
+
+
+##### **Radiomic features of 10 images**
+Now we will compute the first order characteristics of 10 images (images 10 through 19) from the same patient (different slices) without a mask. We could do the following loop:
 ```{r, results = FALSE, message=FALSE}
 first_order <- c()
 res <- c()
@@ -161,7 +243,6 @@ for (i in first_image:last_image) { # for loop through all the images
 ```
 
 Finally, we combine all the results into a data.frame called 'results'.
-
 ```{r, layout="l-body-outset"}
 library(rmarkdown)
 results <- do.call(cbind.data.frame, res)
@@ -177,7 +258,7 @@ paged_table(results, options = list(rows.print = 10, cols.print = 5))
  
 ## 4. Segmentation
 
-<span style="color:red">Explain better segmentation process</span>
+<span style="color:red">TO DO: Explain better segmentation process</span>
 
 As we explained in the introduction, segmentation refers to delineating the areas of interest in the image in terms of pixels or voxels, in our case, the lung. Lung segmentation refers to the computer-based process of identifying the boundaries of lungs from surrounding thoracic tissue on the scan images. Once we have the segmented images, we can start our analysis.
 
@@ -932,14 +1013,20 @@ get_and_save_masks("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1")
 ```
 
 
+
+<span style="color:red">TO DO: explain final segmenation used</span>
+
+
+
+
 <br>
 
 
-## 5. Radiomic features with masks
+## 5. Radiomic features
 
 Now that we have in one folder all the images, and in another one all the masks, we can start computing the radiomic features of the images with the masks.
 
-We will be using lungmask.
+### 5.1. Radiomic features with RIA
 
 Load the images and the masks with the funcion *load_dicom()*.
 
@@ -1015,15 +1102,6 @@ paged_table(results)
 ```
 
 
-
-<span style="color:red">TO DO: explain final segmenation used</span>
-
-<span style="color:red">TO DO: explain pyradiomics</span>
-
-
- 
-<br>
-
 ##### **Information about the patients**
 
 We have a *.csv* file with information about the patients.
@@ -1067,8 +1145,22 @@ head(data_patients)
 <br>
 
 
+
+### 5.2. Radiomic features with pyradiomics
+
+<span style="color:red">TO DO: explain pyradiomics</span>
+
+
  
-### 5.1. Analysis with RaDAr
+<br>
+
+
+
+
+ 
+### 5.3. Analysis with RaDAr
+
+<span style="color:red">OLD version: find script_radar.Rmd</span>
 
 Now we will study multiple radiomic features with multiple patients. We will use the *RaDAr* to manipulate the results.
 
@@ -1204,7 +1296,7 @@ paged_table(read_table)
 
 ##### **RaDAr**
 
-<span style="color:red">In another .Rmd</span>
+<span style="color:red">In another .Rmd!!!!</span>
 
 
 
