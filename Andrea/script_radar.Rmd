@@ -128,21 +128,21 @@ plot_heatmap_hcl(rdr = rdr)
 ```
 
 We can also save the rdr object to *.rda*.
-```{r}
+```{r, eval = FALSE}
 save(rdr_NormShift, file = "rdr_Andrea_NormShift.rda")
 ```
-```{r}
+```{r, eval = FALSE}
 save(rdr_Norm, file = "rdr_Andrea_Norm.rda")
 ```
 
 
 We can open the *.rda* file with the following code:
-```{r, warning=FALSE}
+```{r, warning=FALSE, eval = FALSE}
 library(admisc)
 test_NormShift <- listRDA("rdr_Andrea_NormShift.rda")
 test_NormShift
 ```
-```{r}
+```{r, eval = FALSE}
 test_Norm <- listRDA("rdr_Andrea_Norm.rda")
 test_Norm
 ```
