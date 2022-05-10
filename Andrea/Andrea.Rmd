@@ -1208,7 +1208,7 @@ To perform data analysis, we will use *RaDAr* objects, we will explain it in the
  
 ### 5.3. Analysis with RaDAr
 
-<span style="color:red">OLD version: find script_radar.Rmd</span>
+##### **Example creating RaDAr object**
 
 Now we will study multiple radiomic features with multiple patients. We will use the *RaDAr* to manipulate the results.
 
@@ -1342,9 +1342,9 @@ read_table <- read.delim("radiomic_features.txt")
 paged_table(read_table)
 ```
 
-##### **RaDAr**
+##### **RaDAr Analysis**
 
-<span style="color:red">In another .Rmd!!!!</span>
+<span style="color:red">In another .Rmd</span>
 
 
 
