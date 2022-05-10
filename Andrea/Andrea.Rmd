@@ -1148,13 +1148,61 @@ head(data_patients)
 
 ### 5.2. Radiomic features with pyradiomics
 
-<span style="color:red">TO DO: explain pyradiomics</span>
+We can also compute the radiomic features with *pyradiomics*, which is an open-source python package for the extraction of radiomics features from medical imaging. 
+
+On average, Pyradiomics extracts around 1500 features per image.
+
+Now we will briefly explain the feature classes supported by pyradiomics.
+
+- <u>First Order Statistics</u>
+
+They describe the distribution of voxel intensities within the image region defined by the mask through commonly used and basic metrics. The metrics are: Energy, Total Energy, Entropy, Minimum, 10th percentile, 90th percentile, Maximum, Mean, Median, Interquartile Range, Range, Mean Absolute Deviation (MAD), Robust Mean Absolute Deviation (rMAD), Root Mean Squared (RMS), Standard Deviation, Skewness, Kurtosis, Variance and Uniformity.
+
+- <u>Shape-based (3D)</u>
+
+In this group of features are included descriptors of the three-dimensional size and shape of the region of interest. The metrics are: Mesh Volume, Voxel Volume, Surface Area, Surface Area to Volume ratio, Sphericity, Compactness 1, Compactness 2, Spherical Disproportion, Maximum 3D diameter, Maximum 2D diameter (Slice), Maximum 2D diameter (Column), Maximum 2D diameter (Row), Major Axis Length, Minor Axis Length, Least Axis Length, Elongation, Flatness.
+
+
+- <u>Shape-based (2D)</u>
+
+In this group of features are included descriptors of the two-dimensional size and shape of the region of interest. The metrics are: Mesh Surface, Pixel Surface, Perimeter, Perimeter to Surface ratio, Sphericity, Spherical Disproportion, Maximum 2D diameter, Major Axis Length, Minor Axis Length and Elongation.
+
+
+- <u>Gray Level Cooccurence Matrix (GLCM)</u>
+
+The metrics are: Autocorrelation, Joint Average, Cluster Prominence, Cluster Shade, Cluster Tendency, Contrast, Correlation, Difference Average, Difference Entropy, Difference Variance, Dissimilarity, Joint Energy, Joint Entropy, Homogeneity 1, Homogeneity 2, Informational Measure of Correlation (IMC) 1, Informational Measure of Correlation (IMC) 2, Inverse Difference Moment (IDM), Maximal Correlation Coefficient (MCC), Inverse Difference Moment Normalized (IDMN), Inverse Difference (ID), Inverse Difference Normalized (IDN), Inverse Variance, Maximum Probability, Sum Average, Sum Variance,  Sum Entropy and Sum of Squares.
+
+
+- <u>Gray Level Run Length Matrix (GLRLM)</u>
+
+A Gray Level Size Zone (GLSZM) quantifies gray level zones in an image. A gray level zone is defined as a the number of connected voxels that share the same gray level intensity. The metrics are: Small Area Emphasis (SAE), Large Area Emphasis (LAE), Gray Level Non-Uniformity (GLN), Gray Level Non-Uniformity Normalized (GLNN), Size-Zone Non-Uniformity (SZN), Size-Zone Non-Uniformity Normalized (SZNN), Zone Percentage (ZP), Gray Level Variance (GLV), Zone Variance (ZV), Zone Entropy (ZE), Low Gray Level Zone Emphasis (LGLZE), High Gray Level Zone Emphasis (HGLZE), Small Area Low Gray Level Emphasis (SALGLE), Small Area High Gray Level Emphasis (SAHGLE), Large Area Low Gray Level Emphasis (LALGLE) and Large Area High Gray Level Emphasis (LAHGLE).
+
+
+- <u>Gray Level Size Zone Matrix (GLSZM)</u>
+
+A Gray Level Run Length Matrix (GLRLM) quantifies gray level runs, which are defined as the length in number of pixels, of consecutive pixels that have the same gray level value. The metrics are: Short Run Emphasis (SRE), Long Run Emphasis (LRE), Gray Level Non-Uniformity (GLN), Gray Level Non-Uniformity Normalized (GLNN), Run Length Non-Uniformity (RLN), Run Length Non-Uniformity Normalized (RLNN), Run Percentage (RP), Gray Level Variance (GLV), Run Variance (RV), Run Entropy (RE), Low Gray Level Run Emphasis (LGLRE), High Gray Level Run Emphasis (HGLRE), Short Run Low Gray Level Emphasis (SRLGLE), Short Run High Gray Level Emphasis (SRHGLE), Long Run Low Gray Level Emphasis (LRLGLE) and Long Run High Gray Level Emphasis (LRHGLE).
+
+- <u>Neigbouring Gray Tone Difference Matrix (NGTDM)</u>
+
+A Neighbouring Gray Tone Difference Matrix quantifies the difference between a gray value and the average gray value of its neighbours within distance delta. The metrics are: Coarseness, Contrast, Busyness, Complexity and Strength.
+
+- <u>Gray Level Dependence Matrix (GLDM)</u>
+
+A Gray Level Dependence Matrix (GLDM) quantifies gray level dependencies in an image. The metrics are: Small Dependence Emphasis (SDE), Large Dependence Emphasis (LDE), Gray Level Non-Uniformity (GLN), Gray Level Non-Uniformity Normalized (GLNN), Dependence Non-Uniformity (DN),  Dependence Non-Uniformity Normalized (DNN), Gray Level Variance (GLV), Dependence Variance (DV), Dependence Entropy (DE), Dependence Percentage, Low Gray Level Emphasis (LGLE), High Gray Level Emphasis (HGLE), Small Dependence Low Gray Level Emphasis (SDLGLE), Small Dependence High Gray Level Emphasis (SDHGLE), Large Dependence Low Gray Level Emphasis (LDLGLE) and Large Dependence High Gray Level Emphasis (LDHGLE).
 
 
  
 <br>
 
 
+We computed all these metrics with the images. Let's load the radiomic features of one patient and view some of the values:
+```{r}
+example <- read.table("/Users/andrealetaalfonso/Desktop/TFG/A_Project/results/ECLIPSE_results_ParamsNorm/023140000001_INSP_STD_L1_ECLIPSE.nii.gz.tsv", sep="\t")
+colnames(example) <- c("Features", "Values")
+example[20:30,]
+```
+
+To perform data analysis, we will use *RaDAr* objects, we will explain it in the next section.
 
 
  
