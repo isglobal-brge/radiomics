@@ -955,7 +955,7 @@ plt.show()
 
 Now we create a mask for the image above.
 ```{python, results = FALSE, warnings = FALSE}
-image1 <- get_img_sitk("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1/std_38.dcm")
+image1 = get_img_sitk("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1/std_38.dcm")
 mask_filter_single, masked_lung_single = generate_mask(image1)
 ```
 
