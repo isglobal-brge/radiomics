@@ -1118,7 +1118,7 @@ The data we are provided with means the following:
 
 We will only select the information about the patients that we have.
 
-```{r}
+```{r, eval=FALSE}
 data_patients <- data_patients[data_patients$Patient %in% images_folder_names,]
 head(data_patients)
 ```
