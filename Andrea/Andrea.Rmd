@@ -26,9 +26,24 @@ knitr::opts_chunk$set(echo = TRUE)
     4.4. Segmentation with lungmask
 
 5. Radiomic features
+
     5.1. Radiomic features with RIA
+    
     5.2.  Radiomic features with pyradiomics
-    5.3. Analysis with RaDAr
+
+6. RaDAr object
+
+    6.1. Example creating RaDAr object
+
+    6.2. RaDAr object with L1
+
+7. Data analysis 
+    
+    7.1. Clinical data
+
+    7.2. PCA
+
+    7.3. CCA
 
 
 <br>
@@ -1085,45 +1100,6 @@ paged_table(results)
 ```
 
 
-##### **Information about the patients**
-
-We have a *.csv* file with information about the patients.
-
-Let's open the file and view some of the rows.
-
-```{r}
-data_patients <- read.csv('/Users/andrealetaalfonso/Desktop/TFG/images/train.csv')
-data_patients <- as.data.frame(data_patients)
-head(data_patients)
-```
-
-The data we are provided with means the following:
-
-- Patient: a unique Id for each patient (also the name of the patient's DICOM folder)
-
-- Weeks: the relative number of weeks pre/post the baseline CT (may be negative)
-
-- FVC: the recorded lung capacity in ml
-
-- Percent: a computed field which approximates the patient's FVC as a percent of the typical FVC for a person of similar characteristics
-
-- Age
-
-- Sex
-
-- SmokingStatus
-
-
-
-
-We will only select the information about the patients that we have.
-
-```{r, eval=FALSE}
-data_patients <- data_patients[data_patients$Patient %in% images_folder_names,]
-head(data_patients)
-```
-
-
  
 <br>
 
@@ -1188,10 +1164,13 @@ example[20:30,]
 To perform data analysis, we will use *RaDAr* objects, we will explain it in the next section.
 
 
- 
-### 5.3. Analysis with RaDAr
+<br>
 
-##### **Example creating RaDAr object**
+
+
+## 6. RaDAr object
+
+### 6.1 Example creating RaDAr object
 
 Now we will study multiple radiomic features with multiple patients. We will use the *RaDAr* to manipulate the results.
 
@@ -1325,9 +1304,10 @@ read_table <- read.delim("radiomic_features.txt")
 paged_table(read_table)
 ```
 
-##### **RaDAr Analysis**
+### 6.2 RaDAr object with L1
 
-<span style="color:red">In another .Rmd</span>
+
+<span style="color:red">Continue in another .Rmd............</span>
 
 
 
