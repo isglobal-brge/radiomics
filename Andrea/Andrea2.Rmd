@@ -248,7 +248,7 @@ clinic_data <- read.delim("eclipse_all.txt")
 head(clinic_data) # view firsts values
 ```
 
-Add 0 in front of index to match *rdr* names:
+Add 0 in front of index to match rdr names:
 ```{r}
 clinic_data$id <- paste0("0", clinic_data$id)
 ```
@@ -266,11 +266,6 @@ library(tidyverse)
 clinical_data_T1 <- dplyr::select(clinic_data, !ends_with("t3"))
 ```
 
-Characters to factors:
-```{r}
-ch <- sapply(clinical_data_T1, is.character)
-clinical_data_T1[ch] <- lapply(clinical_data_T1[ch], as.factor)
-```
 
 Check for missing data:
 ```{r}
@@ -301,11 +296,11 @@ clinical_data_T1 <- clinical_data_T1 %>%  mutate_if(is.integer,
                                                     function(x) ifelse(is.na(x), which.max(x), x)) 
 ```
 
-
-Impute missing values of factor variables for the most common value:
+Impute missing values of categroical variables for the most common value:
 ```{r}
 clinical_data_T1[, sapply(clinical_data_T1, function(x) !is.numeric(x))] <- apply(clinical_data_T1[, sapply(clinical_data_T1, function(x) !is.numeric(x))], 
-                                                      2, function(x) {x[is.na(x)] <- names(sort(table(x), decreasing = TRUE)[1]); x})
+                                                      2, 
+                                                      function(x) {x[is.na(x)] <- names(sort(table(x), decreasing = TRUE)[1]); x})
 ```
 
 Check for missing data:
@@ -313,16 +308,19 @@ Check for missing data:
 sum(is.na(clinical_data_T1))
 ```
 
+
+Characters to factors:
 ```{r}
+ch <- sapply(clinical_data_T1, is.character)
+clinical_data_T1[ch] <- lapply(clinical_data_T1[ch], as.factor)
 head(clinical_data_T1)
 ```
 
 Now that we have a clean data set, we will exported:
-```{r, eval=FALSE}
+```{r}
 write.table(clinical_data_T1, file = "eclipse_all_CLEAN.txt", sep = "\t")
 ```
 
-Load the file:
 ```{r}
 clinic_data_clean <- read.delim("eclipse_all_CLEAN.txt")
 head(clinic_data_clean) # view firsts values
@@ -338,6 +336,40 @@ Recall that PCA is a statistical approach that allows you to summarize the conte
 
 
 For PCA we want only want categorical data.\
+
+
+Load the clean data set:
+```{r}
+clinic_data_clean <- read.delim("eclipse_all_CLEAN.txt")
+head(clinic_data_clean) # view firsts values
+```
+
+Load the libraries needed to perform PCA:
+```{r, message=FALSE}
+library(ade4)
+library(made4)
+library(scatterplot3d)
+```
+
+To do PCA, we need all columns to be numeric.
+```{r}
+datos <- mutate_all(clinic_data_clean, function(x) as.numeric(as.factor(x)))
+head(datos)
+```
+
+Perform PCA:
+```{r}
+results_PCA <- ord(datos, type="coa")
+```
+
+```{r}
+names(results_PCA)
+```
+
+
+```{r}
+plot(results_PCA, classvec=colnames(datos), genecol="grey3")
+```
 
 
 
