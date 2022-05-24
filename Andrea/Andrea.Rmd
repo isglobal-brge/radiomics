@@ -41,9 +41,9 @@ knitr::opts_chunk$set(echo = TRUE)
     
     7.1. Clinical data
 
-    7.2. PCA
+    7.2. Principal Component Analysis (PCA)
 
-    7.3. CCA
+    7.3. Canonical correlation analysis (CCA)
 
 
 <br>
