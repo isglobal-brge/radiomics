@@ -207,11 +207,18 @@ rdr_L1 <- file$rdr_L1
 rdr_L1
 ```
 
+Data frame for rdr:
+```{r}
+data_rdr_L1 <- assay(rdr_L1)
+df_rdr <- as.data.frame(data_rdr_L1)
+df_rdr[1:10,1:2]
+```
+
 
 
 ##### **Chronic obstructive pulmonary disease (COPD)**
 
-Chronic obstructive pulmonary disease (COPD) is a long-term lung illness in which the lungs' small airways are damaged, making it difficult for air to enter and exit.
+Chronic obstructive pulmonary disease (COPD) is a long-term lung illness in which the lungs' small airways are damaged, making it difficult for air to enter and exit.\
 
 COPD patients commonly experience one or more of the following symptoms:
 
@@ -226,42 +233,33 @@ COPD patients commonly experience one or more of the following symptoms:
 - chest tightness
 
 
-Shortness of breath is the most common symptom of COPD. Simple daily tasks like walking short distances or walking a stairway might cause COPD sufferers to become out of breath. Even at rest, breathing might become difficult as the condition progresses.
+Shortness of breath is the most common symptom of COPD. Simple daily tasks like walking short distances or walking a stairway might cause COPD sufferers to become out of breath. Even at rest, breathing might become difficult as the condition progresses.\
 
-Long-term cigarette smoking is the most common cause of COPD. The more cigarettes you smoke, the more likely you are to get COPD.
+Long-term cigarette smoking is the most common cause of COPD. The more cigarettes you smoke, the more likely you are to get COPD.\
 
 
-##### **Canonical correlation analysis**
+##### **Clinical data**
 
-Now we will analyze the radiomic features against the variables at time T1 using **canonical correlation**.
+Before we begin with our analysis, we need to explore our clinical data.
 
-Canonical correlation analysis (CCA) is a statistical technique for extracting information from cross-covariance matrices. If we have two vectors of random variables, X = (X1,..., Xn) and Y = (Y1,..., Ym), and the variables are correlated, canonical-correlation analysis will find linear combinations of X and Y that have the highest correlation. 
+
+##### **Canonical correlation analysis (CCA)**
+
+Now we will analyze the radiomic features against the variables at time T1 using **canonical correlation**.\
+
+Canonical correlation analysis (CCA) is a statistical technique for extracting information from cross-covariance matrices. If we have two vectors of random variables, X = (X1,..., Xn) and Y = (Y1,..., Ym), and the variables are correlated, canonical-correlation analysis will find linear combinations of X and Y that have the highest correlation. \
 
 Multiple correlation analysis predicts only one dependent variable from several independents, but canonical correlation predicts multiple dependent variables from multiple independents.\
 
-**Data frame for rdr**
-
-Data frame rdr with only L1:
-```{r}
-data_rdr_L1 <- assay(rdr_L1)
-df_rdr <- as.data.frame(data_rdr_L1)
-df_rdr[1:10,1:2]
-```
-
-**Data frame for clinical data**
 
 
 ###### **Principal Component Analysis (PCA)**
 
-We will first start doing principal component analysis with the radiomic features.
+We will first start doing principal component analysis with the radiomic features.\
 
-Recall that PCA is a statistical approach that allows you to summarize the content of big data tables using a smaller set of "summary indices" that are easier to display and study.
-
-
-
-For PCA we want only want categorical data.
+Recall that PCA is a statistical approach that allows you to summarize the content of big data tables using a smaller set of "summary indices" that are easier to display and study.\
 
 
-
+For PCA we want only want categorical data.\
 
 
