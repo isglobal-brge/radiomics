@@ -32,24 +32,21 @@ We will create the *rdr* object with normalization and shift, and another one wi
 rdr_NormShift <- import_pyradiomics(dir="/Users/andrealetaalfonso/Desktop/TFG/A_Project/results/ECLIPSE_results_ParamsNormShiftCSV")
 ```
 
-```{r, include=FALSE}
-rdr_NormShift <- import_pyradiomics(dir="/Users/andrealetaalfonso/Desktop/TFG/A_Project/results/ECLIPSE_results_ParamsNormShiftCSV")
-```
-
 ```{r, eval = FALSE}
 rdr_Norm <- import_pyradiomics(dir="/Users/andrealetaalfonso/Desktop/TFG/A_Project/results/ECLIPSE_results_ParamsNormCSV")
 ```
 
-```{r, include=FALSE}
-rdr_Norm <- import_pyradiomics(dir="/Users/andrealetaalfonso/Desktop/TFG/A_Project/results/ECLIPSE_results_ParamsNormCSV")
+We can read the rdr file once it's created:
+```{r, warning=FALSE}
+library(admisc)
+b <- listRDA("rdr_Andrea_NormShift.rda")
+b
 ```
 
-```{r}
-rdr_NormShift
-```
-
-```{r}
-rdr_Norm
+```{r, warning=FALSE}
+a <- listRDA("rdr_Andrea_Norm.rda")
+rdr <- a$rdr_Norm
+rdr
 ```
 
 
@@ -96,7 +93,6 @@ plot_correlation_matrix(rdr = rdr_NormShift,
                         view_as = "heatmap", 
                         which_data = "normal")
 ```
-
 
 A different way to visualize the correlation matrix is by using correlation plot:
 ```{r, out.width="70%"}
@@ -146,5 +142,126 @@ test_NormShift
 test_Norm <- listRDA("rdr_Andrea_Norm.rda")
 test_Norm
 ```
+
+
+**Prepare only L1 radar**
+
+Now we are interested in only the time L1.
+
+Open *rdr*:
+```{r, warning=FALSE}
+a <- listRDA("rdr_Andrea_Norm.rda")
+rdr <- a$rdr_Norm
+rdr
+```
+
+Change names: eliminate the extension of the name and keep the number and separate between different times (L1, L2, L3).
+```{r}
+o <- colnames(rdr)
+oo <- sapply(o, strsplit, "_")
+id  <- unlist(lapply(oo, "[[", 1))
+time <- unlist(lapply(oo, "[[", 4)) 
+df <- data.frame(filename = o, id = id, time = time)
+df
+```
+
+Change the names of the *id* of the *rdr*, instead of having names like *023140000001_INSP_STD_L1_ECLIPSE.nii.gz.tsv*, we change them to *023140000001*.
+```{r}
+colnames(rdr) <- id
+rdr
+```
+
+Add the time (L1, L2, L3) as a new column in our *rdr* object.
+```{r}
+colData(rdr) <- cbind(colData(rdr), time)
+colData(rdr)
+```
+
+Let's view our rdr object with all this transformations:
+```{r}
+rdr
+```
+
+Compute how many L1, L2 and L3 we have:
+```{r}
+table(colData(rdr)$time)
+```
+
+Let's create another one but only with T1:
+```{r}
+rdr_time_L1 <- rdr[, rdr$time == "L1"]
+rdr_time_L1
+```
+
+It is done correctly because we have now 2371 patients with L1.
+
+Save the radar:
+```{r, eval=FALSE}
+save(rdr_time_L1, file = "rdr_L1_Andrea.rda")
+```
+
+Open the radar:
+```{r, warning=FALSE}
+file <- listRDA("rdr_L1_Andrea.rda")
+rdr_L1 <- file$rdr_L1
+rdr_L1
+```
+
+
+
+##### **Chronic obstructive pulmonary disease (COPD)**
+
+Chronic obstructive pulmonary disease (COPD) is a long-term lung illness in which the lungs' small airways are damaged, making it difficult for air to enter and exit.
+
+COPD patients commonly experience one or more of the following symptoms:
+
+- having trouble breathing 
+
+- prolonged cough (more than 3 months) 
+
+- a cough with mucus most days
+
+- wheezing (a whistling sound when you breathe)
+
+- chest tightness
+
+
+Shortness of breath is the most common symptom of COPD. Simple daily tasks like walking short distances or walking a stairway might cause COPD sufferers to become out of breath. Even at rest, breathing might become difficult as the condition progresses.
+
+Long-term cigarette smoking is the most common cause of COPD. The more cigarettes you smoke, the more likely you are to get COPD.
+
+
+##### **Canonical correlation analysis**
+
+Now we will analyze the radiomic features against the variables at time T1 using **canonical correlation**.
+
+Canonical correlation analysis (CCA) is a statistical technique for extracting information from cross-covariance matrices. If we have two vectors of random variables, X = (X1,..., Xn) and Y = (Y1,..., Ym), and the variables are correlated, canonical-correlation analysis will find linear combinations of X and Y that have the highest correlation. 
+
+Multiple correlation analysis predicts only one dependent variable from several independents, but canonical correlation predicts multiple dependent variables from multiple independents.\
+
+**Data frame for rdr**
+
+Data frame rdr with only L1:
+```{r}
+data_rdr_L1 <- assay(rdr_L1)
+df_rdr <- as.data.frame(data_rdr_L1)
+df_rdr[1:10,1:2]
+```
+
+**Data frame for clinical data**
+
+
+###### **Principal Component Analysis (PCA)**
+
+We will first start doing principal component analysis with the radiomic features.
+
+Recall that PCA is a statistical approach that allows you to summarize the content of big data tables using a smaller set of "summary indices" that are easier to display and study.
+
+
+
+For PCA we want only want categorical data.
+
+
+
 
 
