@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-##### **RaDAr**
+### 6.2 RaDAr object with L1
 
 In this section we will use the library *RadAR* (Radiomics Analysis with R). This is a software to perform comprehensive analysis of radiomic features. RadAR allows the users to carry out the entire processing of radiomic datasets, from data import to feature processing and visualization and implements multiple statistical methods for the analysis of these data.
 
@@ -214,9 +214,9 @@ df_rdr <- as.data.frame(data_rdr_L1)
 df_rdr[1:10,1:2]
 ```
 
+## 7. Data analysis 
 
-
-##### **Chronic obstructive pulmonary disease (COPD)**
+First of all, we will make an introduction to **Chronic obstructive pulmonary disease (COPD)**.\
 
 Chronic obstructive pulmonary disease (COPD) is a long-term lung illness in which the lungs' small airways are damaged, making it difficult for air to enter and exit.\
 
@@ -238,12 +238,26 @@ Shortness of breath is the most common symptom of COPD. Simple daily tasks like 
 Long-term cigarette smoking is the most common cause of COPD. The more cigarettes you smoke, the more likely you are to get COPD.\
 
 
-##### **Clinical data**
+### 7.1 Clinical data
+
 
 Before we begin with our analysis, we need to explore our clinical data.
 
 
-##### **Canonical correlation analysis (CCA)**
+
+
+### 7.2 Principal Component Analysis (PCA)
+
+We will first start doing principal component analysis with the radiomic features.\
+
+Recall that PCA is a statistical approach that allows you to summarize the content of big data tables using a smaller set of "summary indices" that are easier to display and study.\
+
+
+For PCA we want only want categorical data.\
+
+
+
+### 7.2 Canonical correlation analysis (CCA)
 
 Now we will analyze the radiomic features against the variables at time T1 using **canonical correlation**.\
 
@@ -253,13 +267,7 @@ Multiple correlation analysis predicts only one dependent variable from several 
 
 
 
-###### **Principal Component Analysis (PCA)**
-
-We will first start doing principal component analysis with the radiomic features.\
-
-Recall that PCA is a statistical approach that allows you to summarize the content of big data tables using a smaller set of "summary indices" that are easier to display and study.\
 
 
-For PCA we want only want categorical data.\
 
 
