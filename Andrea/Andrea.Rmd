@@ -1175,46 +1175,22 @@ To perform data analysis, we will use *RaDAr* objects, we will explain it in the
 Now we will study multiple radiomic features with multiple patients. We will use the *RaDAr* to manipulate the results.
 
 
-First we load the libraries.
-
+Load the libraries.
 ```{r, message=FALSE, results=FALSE}
 library(RIA)
 library(RNifti)
 ```
 
-We will view one patient images.
+Compute **first order statistics**:
 
-Load the images and the masks of the images. In this case, we have the images in nifti format, so we will use the function *load_nifti* from the RIA library.
-
-```{r, results=FALSE, message=FALSE, warning=FALSE, eval = FALSE}
-example1 <- RIA::load_nifti(filename = "/Users/andrealetaalfonso/Desktop/TFG/DICOMS/rstudio-export/023140000001/023140000001_INSP_STD_L1_ECLIPSE.nii.gz",
-                            mask_filename = "/Users/andrealetaalfonso/Desktop/TFG/DICOMS/rstudio-export/023140000001/023140000001_INSP_STD_L1_ECLIPSE_mask.nii.gz")
-```
-
-Now we will load the images with *readNifti* and view the image with the function *view*.
-
-```{r, warning=FALSE, eval = FALSE}
-image <- readNifti("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/rstudio-export/023140000001/023140000001_INSP_STD_L1_ECLIPSE.nii.gz")
-view(image)
-```
-
-And we can also compute the first order characteristics for this patient.
-
-```{r, warning=FALSE, message=FALSE, eval = FALSE}
-library(rmarkdown)
-radiomic <- RIA::first_order(example1)
-results <- RIA:::list_to_df(radiomic$stat_fo$orig)
-paged_table(results)
-```
-
-Now we will analyze mulitple patients at the same time.
-
-```{r, eval = FALSE, results=FALSE, message=FALSE, warning=FALSE}
-res <- c() # vector for the results
+```{r, eval=FALSE}
 path_folders <- "/Users/andrealetaalfonso/Desktop/TFG/DICOMS/rstudio-export" # path where all the folders are at
 patients_list <- list.files(path_folders) # list of the name of the folders of every patient
+
+# Compute first_order to patient i
+fun <- function(i){
   
-for(i in patients_list){ # for every patient
+  res <- c() # vector for the results
   
   patient_path <- file.path(path_folders, i, fsep="/") # path to folder of every patient
   images_folder_names <- grep(list.files(path = patient_path), pattern='mask.nii.gz', invert=TRUE, value=TRUE) # name of nii files
@@ -1222,87 +1198,117 @@ for(i in patients_list){ # for every patient
   images_path <- file.path(patient_path, images_folder_names, fsep="/") # path to images files
   mask_path <- file.path(patient_path, mask_folder_names, fsep="/") # path to masks files
   
-  images = RIA::load_nifti(filename = images_path, mask_filename = mask_path) # load images and masks
-  images = RIA::first_order(images) # compute first order
-  radiomic_list <- RIA:::list_to_df(images$stat_fo$orig)
-  name_characteristics <- rownames(radiomic_list)
-  res[i] <- RIA:::list_to_df(images$stat_fo$orig)
+  # Add tryCatch block
+  pre_symbol <- NULL
+  tryCatch({images = RIA::load_nifti(filename = images_path, mask_filename = mask_path)
+  pre_symbol <- "blah"}, # try to load images and masks
+  error = function(e) { print(e)})
+  # If succeed
+  if(!is.null(pre_symbol)){
+    images = RIA::load_nifti(filename = images_path, mask_filename = mask_path)
+    images = RIA::first_order(images) # compute first order
+    radiomic_list <- RIA:::list_to_df(images$stat_fo$orig)
+    name_characteristics <- rownames(radiomic_list)
+    res <- RIA:::list_to_df(images$stat_fo$orig)
+    res
+  } else{ # if not succeed, fill values with NA
+    res <- rep("NA", 44)
+  }
+  
 }
 ```
-```{r, eval = FALSE}
-library(rmarkdown)
-results <- do.call(cbind.data.frame, res) # results
-colnames(results) <- patients_list
-rownames(results) <- name_characteristics
+
+```{r, eval=FALSE}
+get_radiomic_features <- function(list_patients){
+  results_map <- purrr:::map(list_patients, fun) # Apply fun function to all the patients
+  results <- do.call(cbind.data.frame, results_map) # results
+  colnames(results) <- list_patients
+  rownames(results) <- name_characteristics
+  write.table(results, file="first_order.txt", sep="\t")
+  results
+}
 ```
 
-We will export these results to a *.txt* file.
+```{r, eval=FALSE}
+# Obtain radiomic features
+radiomic_features <- get_radiomic_features(patients_list)
 
-```{r, eval = FALSE}
-write.table(results, file="first_order.txt", sep="\t")
+table1 <- read.delim("first_order.txt") # read table
 ```
 
-We can check that we exported the file correclty with: *read.delim("file.txt")*.
+Compute **geometry-based statistics**:
 
-```{r, eval = FALSE}
-library(rmarkdown)
-table1 <- read.delim("first_order.txt")
-paged_table(table1)
-```
-
-We can also compute the Geometry-based statistics.
-
-```{r, results=FALSE, message=FALSE, warning=FALSE, eval = FALSE}
-res2 <- c() # vector for the results
+```{r, eval=FALSE}
 path_folders <- "/Users/andrealetaalfonso/Desktop/TFG/DICOMS/rstudio-export" # path where all the folders are at
 patients_list <- list.files(path_folders) # list of the name of the folders of every patient
+
+# Compute first_order to patient i
+fun <- function(i){
   
-for(i in patients_list){ # for every patient
+  res <- c() # vector for the results
   
   patient_path <- file.path(path_folders, i, fsep="/") # path to folder of every patient
-  images_folder_names <- grep(list.files(path = patient_path), pattern='mask.nii.gz', invert=TRUE, value=TRUE) # name nii files
-  mask_folder_names <- list.files(patient_path, pattern="mask.nii.gz") # name mask files
-  images_path <- file.path(patient_path, images_folder_names, fsep="/") # path to nii files
-  mask_path <- file.path(patient_path, mask_folder_names, fsep="/") # path to masks
+  images_folder_names <- grep(list.files(path = patient_path), pattern='mask.nii.gz', invert=TRUE, value=TRUE) # name of nii files
+  mask_folder_names <- list.files(patient_path, pattern="mask.nii.gz") # name of mask files
+  images_path <- file.path(patient_path, images_folder_names, fsep="/") # path to images files
+  mask_path <- file.path(patient_path, mask_folder_names, fsep="/") # path to masks files
   
-  images = RIA::load_nifti(filename = images_path, mask_filename = mask_path) # load images and masks
-  images = RIA::geometry(RIA_data_in = images, use_orig = TRUE, calc_sub = FALSE)
-  radiomic_list <- RIA:::list_to_df(images$stat_geometry$orig)
-  name_characteristics <- rownames(radiomic_list)
-  res2[i] <- RIA:::list_to_df(images$stat_geometry$orig)
+  # Add tryCatch block
+  pre_symbol <- NULL
+  tryCatch({images = RIA::load_nifti(filename = images_path, mask_filename = mask_path)
+  pre_symbol <- "blah"}, # try to load images and masks
+  error = function(e) { print(e)})
+  # If succeed
+  if(!is.null(pre_symbol)){
+    images = RIA::load_nifti(filename = images_path, mask_filename = mask_path)
+    images = RIA::geometry(RIA_data_in = images, use_orig = TRUE, calc_sub = FALSE)
+    radiomic_list <- RIA:::list_to_df(images$stat_geometry$orig)
+    name_characteristics <- rownames(radiomic_list)
+    res <- RIA:::list_to_df(images$stat_geometry$orig)
+    res
+  } else{ # if not succeed, fill values with NA
+    res <- rep("NA", 12)
+  }
+  
 }
 ```
-```{r, eval = FALSE}
-results2 <- do.call(cbind.data.frame, res2) # results
-colnames(results2) <- patients_list
-rownames(results2) <- name_characteristics
+
+```{r, eval=FALSE}
+get_radiomic_features <- function(list_patients){
+  results_map <- purrr:::map(list_patients, fun) # Apply fun function to all the patients
+  results <- do.call(cbind.data.frame, results_map) # results
+  colnames(results) <- list_patients
+  rownames(results) <- name_characteristics
+  write.table(results, file="geometry.txt", sep="\t")
+  results
+}
 ```
 
-We will also export these results to another *.txt* file.
-```{r, eval = FALSE}
-write.table(results2, file="geometry.txt", sep="\t")
+```{r, eval=FALSE}
+# Obtain radiomic features
+radiomic_features <- get_radiomic_features(patients_list)
+
+table2 <- read.delim("geometry.txt") # read table
 ```
 
-```{r, eval = FALSE}
-library(rmarkdown)
-table2 <- read.delim("geometry.txt")
-paged_table(table2)
-```
-
-We can combine both files.
-```{r, eval = FALSE}
+Combine and export the results:
+```{r, eval=FALSE}
 table1 <- as.data.frame(table1)
 table2 <- as.data.frame(table2)
 radiomic_features <- rbind(table1, table2)
-```
 
-And export the results into one *.txt* file.
-```{r, eval = FALSE}
-library(rmarkdown)
 all_results_table <- write.table(radiomic_features, file="radiomic_features.txt", sep="\t")
 read_table <- read.delim("radiomic_features.txt")
-paged_table(read_table)
 ```
+
+Let's create the **RadAR**:
+```{r, eval=FALSE}
+library(RadAR)
+rdr.ria <- import_radiomic_table("/Users/andrealetaalfonso/Desktop/TFG/A_Project/radiomic_features.txt")
+rdr.ria
+```
+
+
 
 ### 6.2 RaDAr object with L1
 
