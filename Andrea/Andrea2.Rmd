@@ -240,9 +240,93 @@ Long-term cigarette smoking is the most common cause of COPD. The more cigarette
 
 ### 7.1 Clinical data
 
+Before we begin with our analysis, we need to explore our clinical data and clean it.
 
-Before we begin with our analysis, we need to explore our clinical data.
+View data:
+```{r}
+clinic_data <- read.delim("eclipse_all.txt")
+head(clinic_data) # view firsts values
+```
 
+Add 0 in front of index to match *rdr* names:
+```{r}
+clinic_data$id <- paste0("0", clinic_data$id)
+```
+
+```{r}
+clinic_data <- clinic_data[-1] # delete first columns (index 0,1,2...)
+row.names(clinic_data) <- clinic_data$id # id as rownames
+clinic_data$id <- NULL # delete id colum
+head(clinic_data)
+```
+
+Select variables of t1.
+```{r}
+library(tidyverse)
+clinical_data_T1 <- dplyr::select(clinic_data, !ends_with("t3"))
+```
+
+Characters to factors:
+```{r}
+ch <- sapply(clinical_data_T1, is.character)
+clinical_data_T1[ch] <- lapply(clinical_data_T1[ch], as.factor)
+```
+
+Check for missing data:
+```{r}
+sum(is.na(clinical_data_T1))
+```
+
+Delete variables that have more than a 50% of missing values:
+```{r}
+more_50_missing <- names(clinical_data_T1[ , colMeans(is.na(clinical_data_T1)) > 0.5])
+more_50_missing
+clinical_data_T1 <- clinical_data_T1[, !colnames(clinical_data_T1) %in% more_50_missing]
+```
+
+Check for missing data:
+```{r}
+sum(is.na(clinical_data_T1))
+```
+
+Impute missing values of double variables for the mean value:
+```{r}
+clinical_data_T1 <- clinical_data_T1 %>%  mutate_if(is.double,
+                                                    function(x) ifelse(is.na(x), mean(x, na.rm = T), x)) 
+```
+
+Impute missing values of integer variables for the most common value:
+```{r}
+clinical_data_T1 <- clinical_data_T1 %>%  mutate_if(is.integer,
+                                                    function(x) ifelse(is.na(x), which.max(x), x)) 
+```
+
+
+Impute missing values of factor variables for the most common value:
+```{r}
+clinical_data_T1[, sapply(clinical_data_T1, function(x) !is.numeric(x))] <- apply(clinical_data_T1[, sapply(clinical_data_T1, function(x) !is.numeric(x))], 
+                                                      2, function(x) {x[is.na(x)] <- names(sort(table(x), decreasing = TRUE)[1]); x})
+```
+
+Check for missing data:
+```{r}
+sum(is.na(clinical_data_T1))
+```
+
+```{r}
+head(clinical_data_T1)
+```
+
+Now that we have a clean data set, we will exported:
+```{r, eval=FALSE}
+write.table(clinical_data_T1, file = "eclipse_all_CLEAN.txt", sep = "\t")
+```
+
+Load the file:
+```{r}
+clinic_data_clean <- read.delim("eclipse_all_CLEAN.txt")
+head(clinic_data_clean) # view firsts values
+```
 
 
 
