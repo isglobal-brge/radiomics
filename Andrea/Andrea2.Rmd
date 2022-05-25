@@ -515,7 +515,7 @@ Now we want the id as rows instead of columns:
 ```{r}
 df_rdr3 <- as.data.frame(t(df_rdr2))
 rownames(df_rdr3) <- colnames(df_rdr2) # put id names
-head(df_rdr3)
+paged_table(df_rdr3)
 ```
 
 ```{r}
