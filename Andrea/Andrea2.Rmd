@@ -266,7 +266,6 @@ library(tidyverse)
 clinical_data_T1 <- dplyr::select(clinic_data, !ends_with("t3"))
 ```
 
-
 Check for missing data:
 ```{r}
 sum(is.na(clinical_data_T1))
