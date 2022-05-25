@@ -455,6 +455,11 @@ Visualize the result:
 plot(mcoin, axes=1:2, sample.lab=FALSE, df.color=1:2)
 ```
 
+### 7.4 TRTGRP prediction
+
+
+
+
 
 
 
