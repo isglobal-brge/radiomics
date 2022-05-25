@@ -57,28 +57,28 @@ The *rdr* object is a *SummarizedExperiment*.
 The available clinical data can be also imported in the *rdr* object.
 
 We can extract the data with the function *assay()*.
-```{r}
+```{r, eval = FALSE}
 data <- assay(rdr_NormShift)
 data[1:10,1:2]
 ```
 
-```{r}
+```{r, eval = FALSE}
 data2 <- assay(rdr_Norm)
 data2[1:10,1:2]
 ```
 
 We can check which image types (i.e., normal or wavelet filtered) features have been extracted from.
-```{r}
+```{r, eval = FALSE}
 print_image_type(rdr = rdr_NormShift)
 ```
 
 The *rdr* object can be also filter by feature type.
-```{r}
+```{r, eval = FALSE}
 print_feature_type(rdr = rdr_NormShift)
 ```
 
 To access to the elements of patients (columns) or features (rows) we can do:
-```{r}
+```{r, eval = FALSE}
 names(colData(rdr_NormShift)) # columns
 names(rowData(rdr_NormShift)) # rows
 ```
@@ -87,7 +87,7 @@ names(rowData(rdr_NormShift)) # rows
 **Correlation matrix**
 
 Visualize the correlation matrix:
-```{r, out.width="70%"}
+```{r, out.width="70%", eval = FALSE}
 plot_correlation_matrix(rdr = rdr_NormShift, 
                         method_correlation = "spearman", 
                         view_as = "heatmap", 
@@ -95,7 +95,7 @@ plot_correlation_matrix(rdr = rdr_NormShift,
 ```
 
 A different way to visualize the correlation matrix is by using correlation plot:
-```{r, out.width="70%"}
+```{r, out.width="70%", eval = FALSE}
 plot_correlation_matrix(rdr = rdr_NormShift, 
                         method_correlation = "pearson", 
                         view_as = "corrplot", 
@@ -106,12 +106,12 @@ plot_correlation_matrix(rdr = rdr_NormShift,
 **Pre-processing and visualization of radiomic features**
 
 Scale features:
-```{r}
+```{r, eval = FALSE}
 rdr_scaled <- scale_feature_values(rdr = rdr_NormShift, method = "minmax")
 ```
 
 Group features:
-```{r}
+```{r, eval = FALSE}
 rdr <- do_hierarchical_clustering(rdr = rdr_scaled, 
                                   which_data = "scaled", 
                                   method_dist_col = "correlation.spearman")
@@ -119,7 +119,7 @@ rdr <- do_hierarchical_clustering(rdr = rdr_scaled,
 ```
 
 Heat map:
-```{r, out.width="70%"}
+```{r, out.width="70%", eval = FALSE}
 plot_heatmap_hcl(rdr = rdr) 
 ```
 
@@ -162,7 +162,6 @@ oo <- sapply(o, strsplit, "_")
 id  <- unlist(lapply(oo, "[[", 1))
 time <- unlist(lapply(oo, "[[", 4)) 
 df <- data.frame(filename = o, id = id, time = time)
-df
 ```
 
 Change the names of the *id* of the *rdr*, instead of having names like *023140000001_INSP_STD_L1_ECLIPSE.nii.gz.tsv*, we change them to *023140000001*.
@@ -243,9 +242,10 @@ Long-term cigarette smoking is the most common cause of COPD. The more cigarette
 Before we begin with our analysis, we need to explore our clinical data and clean it.
 
 View data:
-```{r}
+```{r, warning=FALSE}
 clinic_data <- read.delim("eclipse_all.txt")
-head(clinic_data) # view firsts values
+library(rmarkdown)
+paged_table(clinic_data)
 ```
 
 Add 0 in front of index to match rdr names:
@@ -257,12 +257,14 @@ clinic_data$id <- paste0("0", clinic_data$id)
 clinic_data <- clinic_data[-1] # delete first columns (index 0,1,2...)
 row.names(clinic_data) <- clinic_data$id # id as rownames
 clinic_data$id <- NULL # delete id colum
-head(clinic_data)
+paged_table(clinic_data)
 ```
 
 Select variables of t1.
-```{r}
+```{r, warning=FALSE, results='hide'}
 library(tidyverse)
+```
+```{r, warning=FALSE}
 clinical_data_T1 <- dplyr::select(clinic_data, !ends_with("t3"))
 ```
 
@@ -312,7 +314,7 @@ Characters to factors:
 ```{r}
 ch <- sapply(clinical_data_T1, is.character)
 clinical_data_T1[ch] <- lapply(clinical_data_T1[ch], as.factor)
-head(clinical_data_T1)
+paged_table(clinical_data_T1)
 ```
 
 Now that we have a clean data set, we will exported:
@@ -322,7 +324,7 @@ write.table(clinical_data_T1, file = "eclipse_all_CLEAN.txt", sep = "\t")
 
 ```{r}
 clinic_data_clean <- read.delim("eclipse_all_CLEAN.txt")
-head(clinic_data_clean) # view firsts values
+paged_table(clinic_data_clean) # view firsts values
 ```
 
 
@@ -340,7 +342,7 @@ For PCA we want only want categorical data.\
 Load the clean data set:
 ```{r}
 clinic_data_clean <- read.delim("eclipse_all_CLEAN.txt")
-head(clinic_data_clean) # view firsts values
+paged_table(clinic_data_clean) # view firsts values
 ```
 
 Load the libraries needed to perform PCA:
@@ -352,13 +354,13 @@ library(scatterplot3d)
 
 To do PCA, we need all columns to be numeric.
 ```{r}
-datos <- mutate_all(clinic_data_clean, function(x) as.numeric(as.factor(x)))
-head(datos)
+data <- mutate_all(clinic_data_clean, function(x) as.numeric(as.factor(x)))
+paged_table(data)
 ```
 
 Perform PCA:
 ```{r}
-results_PCA <- ord(datos, type="coa")
+results_PCA <- ord(data, type="coa")
 ```
 
 ```{r}
@@ -367,7 +369,7 @@ names(results_PCA)
 
 
 ```{r}
-plot(results_PCA, classvec=colnames(datos), genecol="grey3")
+plot(results_PCA, classvec=colnames(data), genecol="grey3")
 ```
 
 
@@ -389,13 +391,13 @@ library(admisc)
 file <- listRDA("rdr_L1_Andrea.rda")
 rdr_L1 <- file$rdr_L1
 df_rdr <- as.data.frame(assay(rdr_L1))
-head(df_rdr)
+paged_table(df_rdr)
 ```
 
 Load the clean data set:
 ```{r}
 clean_data <- read.delim("eclipse_all_CLEAN.txt")
-head(clean_data) # view firsts values
+paged_table(clean_data) # view firsts values
 ```
 
 To do CCA, we need all columns to be numeric.
@@ -407,7 +409,7 @@ Now we want the id as columns instead of rows.
 ```{r}
 df_clinical <- as.data.frame(t(clean_data))
 colnames(df_clinical) <- rownames(clean_data) # put id names
-head(df_clinical)
+paged_table(df_clinical)
 ```
 
 Now we have both data frames. But they differ int the number of id. Select in data frames only if id match the common id.
@@ -434,7 +436,7 @@ both_tables <- list("rdr"=df_rdr, "clinical"=df_clinical)
 ```
 
 Load the library to do CCA:
-```{r}
+```{r, warning=FALSE}
 library(omicade4)
 ```
 
@@ -464,7 +466,7 @@ library(admisc)
 file <- listRDA("rdr_L1_Andrea.rda")
 rdr_L1 <- file$rdr_L1
 df_rdr <- as.data.frame(assay(rdr_L1))
-head(df_rdr)
+paged_table(df_rdr)
 ```
 
 Load the clean data set and convert characters to factors:
@@ -472,7 +474,7 @@ Load the clean data set and convert characters to factors:
 clean_data <- read.delim("eclipse_all_CLEAN.txt")
 ch <- sapply(clean_data, is.character)
 clean_data[ch] <- lapply(clean_data[ch], as.factor)
-head(clean_data)
+paged_table(clean_data)
 ```
 
 View a summary of our variable of interest *TRTGRP.t1*:
@@ -487,7 +489,7 @@ We are interested in predicting *TRTGRP.t1* given the radiomic features. So we w
 
 Since both tables differ in the number of id, we select in data frames only if id match the common id.
 
-```{r}
+```{r, warning=FALSE}
 library(tidyverse)
 id_in_rdr <- colnames(df_rdr) # id of rdr
 id_in_clinical <- rownames(clean_data) # id of clinical
@@ -506,7 +508,7 @@ table(TRTGRP_values)
 Add the values to the data frame:
 ```{r}
 df_rdr2 <- rbind(df_rdr, "TRTGRP_values" = TRTGRP_values)
-tail(df_rdr2)
+paged_table(df_rdr2)
 ```
 
 Now we want the id as rows instead of columns:
@@ -554,7 +556,7 @@ names_changed <- unlist(lapply(names_number, function(x) paste("A", x, sep="")))
 # Change the names
 library(data.table)
 setnames(df_rdr4, old=names_number, new = names_changed, skip_absent=TRUE)
-head(df_rdr4)
+paged_table(df_rdr4)
 ```
 
 
@@ -567,7 +569,7 @@ test_data <- df_rdr4[-rows, ]
 
 
 Now we will use Random Forest with caret and balancing data:
-```{r}
+```{r, warning=FALSE}
 library(caret)
 # 10-fold cross-validation using downsampling
 ctrl <- caret::trainControl(method = "cv",
@@ -592,7 +594,7 @@ oj_cm_rf
 ```
 
 Without balancing data:
-```{r, warning=FALSE}
+```{r, warning=FALSE, results=FALSE}
 library(randomForest)
 ```
 
