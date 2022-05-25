@@ -1,0 +1,626 @@
+---
+title: "radar script"
+output:
+  html_document: default
+  pdf_document: default
+bibliography: Andrea.bib
+csl: apa.csl
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+### 6.2 RaDAr object with L1
+
+In this section we will use the library *RadAR* (Radiomics Analysis with R). This is a software to perform comprehensive analysis of radiomic features. RadAR allows the users to carry out the entire processing of radiomic datasets, from data import to feature processing and visualization and implements multiple statistical methods for the analysis of these data.
+
+First we load the *RadAR* library.
+```{r, message=FALSE, results='hide', warning=FALSE}
+library(RadAR)
+```
+
+
+With *RadAR* we can import the radiomic features that we extracted before using pyradiomics.
+
+<span style="color:red">TO DO: explain normalizacion y shift, y con normalizacion.</span>
+
+We will create the *rdr* object with normalization and shift, and another one with normalization only. We use the function *import_pyradiomics(path_to_folder)* to import the results we obtained using pyradiomics, where *path_to_folder* is the path to the folder containing the pyradiomics csv files. The function filters out duplicated feature names. 
+
+```{r, eval = FALSE}
+rdr_NormShift <- import_pyradiomics(dir="/Users/andrealetaalfonso/Desktop/TFG/A_Project/results/ECLIPSE_results_ParamsNormShiftCSV")
+```
+
+```{r, eval = FALSE}
+rdr_Norm <- import_pyradiomics(dir="/Users/andrealetaalfonso/Desktop/TFG/A_Project/results/ECLIPSE_results_ParamsNormCSV")
+```
+
+We can read the rdr file once it's created:
+```{r, warning=FALSE}
+library(admisc)
+b <- listRDA("rdr_Andrea_NormShift.rda")
+b
+```
+
+```{r, warning=FALSE}
+a <- listRDA("rdr_Andrea_Norm.rda")
+rdr <- a$rdr_Norm
+rdr
+```
+
+
+The *rdr* object is a *SummarizedExperiment*.
+
+<span style="color:red">TO DO: explain more & add image SummarizedExperiment</span>
+
+The available clinical data can be also imported in the *rdr* object.
+
+We can extract the data with the function *assay()*.
+```{r, eval = FALSE}
+data <- assay(rdr_NormShift)
+data[1:10,1:2]
+```
+
+```{r, eval = FALSE}
+data2 <- assay(rdr_Norm)
+data2[1:10,1:2]
+```
+
+We can check which image types (i.e., normal or wavelet filtered) features have been extracted from.
+```{r, eval = FALSE}
+print_image_type(rdr = rdr_NormShift)
+```
+
+The *rdr* object can be also filter by feature type.
+```{r, eval = FALSE}
+print_feature_type(rdr = rdr_NormShift)
+```
+
+To access to the elements of patients (columns) or features (rows) we can do:
+```{r, eval = FALSE}
+names(colData(rdr_NormShift)) # columns
+names(rowData(rdr_NormShift)) # rows
+```
+
+
+**Correlation matrix**
+
+Visualize the correlation matrix:
+```{r, out.width="70%", eval = FALSE}
+plot_correlation_matrix(rdr = rdr_NormShift, 
+                        method_correlation = "spearman", 
+                        view_as = "heatmap", 
+                        which_data = "normal")
+```
+
+A different way to visualize the correlation matrix is by using correlation plot:
+```{r, out.width="70%", eval = FALSE}
+plot_correlation_matrix(rdr = rdr_NormShift, 
+                        method_correlation = "pearson", 
+                        view_as = "corrplot", 
+                        which_data = "normal")
+```
+
+
+**Pre-processing and visualization of radiomic features**
+
+Scale features:
+```{r, eval = FALSE}
+rdr_scaled <- scale_feature_values(rdr = rdr_NormShift, method = "minmax")
+```
+
+Group features:
+```{r, eval = FALSE}
+rdr <- do_hierarchical_clustering(rdr = rdr_scaled, 
+                                  which_data = "scaled", 
+                                  method_dist_col = "correlation.spearman")
+
+```
+
+Heat map:
+```{r, out.width="70%", eval = FALSE}
+plot_heatmap_hcl(rdr = rdr) 
+```
+
+We can also save the rdr object to *.rda*.
+```{r, eval = FALSE}
+save(rdr_NormShift, file = "rdr_Andrea_NormShift.rda")
+```
+```{r, eval = FALSE}
+save(rdr_Norm, file = "rdr_Andrea_Norm.rda")
+```
+
+
+We can open the *.rda* file with the following code:
+```{r, warning=FALSE, eval = FALSE}
+library(admisc)
+test_NormShift <- listRDA("rdr_Andrea_NormShift.rda")
+test_NormShift
+```
+```{r, eval = FALSE}
+test_Norm <- listRDA("rdr_Andrea_Norm.rda")
+test_Norm
+```
+
+
+**Prepare only L1 radar**
+
+Now we are interested in only the time L1.
+
+Open *rdr*:
+```{r, warning=FALSE}
+a <- listRDA("rdr_Andrea_Norm.rda")
+rdr <- a$rdr_Norm
+rdr
+```
+
+Change names: eliminate the extension of the name and keep the number and separate between different times (L1, L2, L3).
+```{r}
+o <- colnames(rdr)
+oo <- sapply(o, strsplit, "_")
+id  <- unlist(lapply(oo, "[[", 1))
+time <- unlist(lapply(oo, "[[", 4)) 
+df <- data.frame(filename = o, id = id, time = time)
+```
+
+Change the names of the *id* of the *rdr*, instead of having names like *023140000001_INSP_STD_L1_ECLIPSE.nii.gz.tsv*, we change them to *023140000001*.
+```{r}
+colnames(rdr) <- id
+rdr
+```
+
+Add the time (L1, L2, L3) as a new column in our *rdr* object.
+```{r}
+colData(rdr) <- cbind(colData(rdr), time)
+colData(rdr)
+```
+
+Let's view our rdr object with all this transformations:
+```{r}
+rdr
+```
+
+Compute how many L1, L2 and L3 we have:
+```{r}
+table(colData(rdr)$time)
+```
+
+Let's create another one but only with T1:
+```{r}
+rdr_time_L1 <- rdr[, rdr$time == "L1"]
+rdr_time_L1
+```
+
+It is done correctly because we have now 2371 patients with L1.
+
+Save the radar:
+```{r, eval=FALSE}
+save(rdr_time_L1, file = "rdr_L1_Andrea.rda")
+```
+
+Open the radar:
+```{r, warning=FALSE}
+file <- listRDA("rdr_L1_Andrea.rda")
+rdr_L1 <- file$rdr_L1
+rdr_L1
+```
+
+Data frame for rdr:
+```{r}
+data_rdr_L1 <- assay(rdr_L1)
+df_rdr <- as.data.frame(data_rdr_L1)
+df_rdr[1:10,1:2]
+```
+
+## 7. Data analysis 
+
+First of all, we will make an introduction to **Chronic obstructive pulmonary disease (COPD)**.\
+
+Chronic obstructive pulmonary disease (COPD) is a long-term lung illness in which the lungs' small airways are damaged, making it difficult for air to enter and exit.\
+
+COPD patients commonly experience one or more of the following symptoms:
+
+- having trouble breathing 
+
+- prolonged cough (more than 3 months) 
+
+- a cough with mucus most days
+
+- wheezing (a whistling sound when you breathe)
+
+- chest tightness
+
+
+Shortness of breath is the most common symptom of COPD. Simple daily tasks like walking short distances or walking a stairway might cause COPD sufferers to become out of breath. Even at rest, breathing might become difficult as the condition progresses.\
+
+Long-term cigarette smoking is the most common cause of COPD. The more cigarettes you smoke, the more likely you are to get COPD.\
+
+
+### 7.1 Clinical data
+
+Before we begin with our analysis, we need to explore our clinical data and clean it.
+
+View data:
+```{r, warning=FALSE}
+clinic_data <- read.delim("eclipse_all.txt")
+library(rmarkdown)
+paged_table(clinic_data)
+```
+
+Add 0 in front of index to match rdr names:
+```{r}
+clinic_data$id <- paste0("0", clinic_data$id)
+```
+
+```{r}
+clinic_data <- clinic_data[-1] # delete first columns (index 0,1,2...)
+row.names(clinic_data) <- clinic_data$id # id as rownames
+clinic_data$id <- NULL # delete id colum
+paged_table(clinic_data)
+```
+
+Select variables of t1.
+```{r, warning=FALSE, results='hide'}
+library(tidyverse)
+```
+```{r, warning=FALSE}
+clinical_data_T1 <- dplyr::select(clinic_data, !ends_with("t3"))
+```
+
+Check for missing data:
+```{r}
+sum(is.na(clinical_data_T1))
+```
+
+Delete variables that have more than a 50% of missing values:
+```{r}
+more_50_missing <- names(clinical_data_T1[ , colMeans(is.na(clinical_data_T1)) > 0.5])
+more_50_missing
+clinical_data_T1 <- clinical_data_T1[, !colnames(clinical_data_T1) %in% more_50_missing]
+```
+
+Check for missing data:
+```{r}
+sum(is.na(clinical_data_T1))
+```
+
+Impute missing values of double variables for the mean value:
+```{r}
+clinical_data_T1 <- clinical_data_T1 %>%  mutate_if(is.double,
+                                                    function(x) ifelse(is.na(x), mean(x, na.rm = T), x)) 
+```
+
+Impute missing values of integer variables for the most common value:
+```{r}
+clinical_data_T1 <- clinical_data_T1 %>%  mutate_if(is.integer,
+                                                    function(x) ifelse(is.na(x), which.max(x), x)) 
+```
+
+Impute missing values of categroical variables for the most common value:
+```{r}
+clinical_data_T1[, sapply(clinical_data_T1, function(x) !is.numeric(x))] <- apply(clinical_data_T1[, sapply(clinical_data_T1, function(x) !is.numeric(x))], 
+                                                      2, 
+                                                      function(x) {x[is.na(x)] <- names(sort(table(x), decreasing = TRUE)[1]); x})
+```
+
+Check for missing data:
+```{r}
+sum(is.na(clinical_data_T1))
+```
+
+
+Characters to factors:
+```{r}
+ch <- sapply(clinical_data_T1, is.character)
+clinical_data_T1[ch] <- lapply(clinical_data_T1[ch], as.factor)
+paged_table(clinical_data_T1)
+```
+
+Now that we have a clean data set, we will exported:
+```{r}
+write.table(clinical_data_T1, file = "eclipse_all_CLEAN.txt", sep = "\t")
+```
+
+```{r}
+clinic_data_clean <- read.delim("eclipse_all_CLEAN.txt")
+paged_table(clinic_data_clean) # view firsts values
+```
+
+
+
+### 7.2 Principal Component Analysis (PCA)
+
+We will first start doing principal component analysis with the radiomic features.\
+
+Recall that PCA is a statistical approach that allows you to summarize the content of big data tables using a smaller set of "summary indices" that are easier to display and study.\
+
+
+For PCA we want only want categorical data.\
+
+
+Load the clean data set:
+```{r}
+clinic_data_clean <- read.delim("eclipse_all_CLEAN.txt")
+paged_table(clinic_data_clean) # view firsts values
+```
+
+Load the libraries needed to perform PCA:
+```{r, message=FALSE}
+library(ade4)
+library(made4)
+library(scatterplot3d)
+```
+
+To do PCA, we need all columns to be numeric.
+```{r}
+data <- mutate_all(clinic_data_clean, function(x) as.numeric(as.factor(x)))
+paged_table(data)
+```
+
+Perform PCA:
+```{r}
+results_PCA <- ord(data, type="coa")
+```
+
+```{r}
+names(results_PCA)
+```
+
+
+```{r}
+plot(results_PCA, classvec=colnames(data), genecol="grey3")
+```
+
+
+
+### 7.2 Canonical correlation analysis (CCA)
+
+Now we will analyze the radiomic features against the variables at time T1 using **canonical correlation**.\
+
+Canonical correlation analysis (CCA) is a statistical technique for extracting information from cross-covariance matrices. If we have two vectors of random variables, X = (X1,..., Xn) and Y = (Y1,..., Ym), and the variables are correlated, canonical-correlation analysis will find linear combinations of X and Y that have the highest correlation. \
+
+Multiple correlation analysis predicts only one dependent variable from several independents, but canonical correlation predicts multiple dependent variables from multiple independents.\
+
+In our case, we will have 2 tables. One with the radiomics features, and another one with the clinical data. We want to have id -> columns and features -> rows.\
+
+
+Load the radar object and convert it to a data frame:
+```{r, warning=FALSE}
+library(admisc)
+file <- listRDA("rdr_L1_Andrea.rda")
+rdr_L1 <- file$rdr_L1
+df_rdr <- as.data.frame(assay(rdr_L1))
+paged_table(df_rdr)
+```
+
+Load the clean data set:
+```{r}
+clean_data <- read.delim("eclipse_all_CLEAN.txt")
+paged_table(clean_data) # view firsts values
+```
+
+To do CCA, we need all columns to be numeric.
+```{r}
+clean_data <- mutate_all(clean_data, function(x) as.numeric(as.factor(x)))
+```
+
+Now we want the id as columns instead of rows.
+```{r}
+df_clinical <- as.data.frame(t(clean_data))
+colnames(df_clinical) <- rownames(clean_data) # put id names
+paged_table(df_clinical)
+```
+
+Now we have both data frames. But they differ int the number of id. Select in data frames only if id match the common id.
+```{r}
+id_in_rdr <- colnames(df_rdr) # id of rdr
+id_in_clinical <- colnames(df_clinical) # id of clinical
+common_id <- Reduce(intersect, list(id_in_rdr,id_in_clinical)) # common id
+
+df_clinical <- select(df_clinical, one_of(common_id))
+df_rdr <- select(df_rdr, one_of(common_id))
+```
+
+Check types:
+```{r}
+type(df_rdr)
+type(df_clinical)
+class(df_rdr)
+class(df_rdr)
+```
+
+Combine both data frames into a list.
+```{r}
+both_tables <- list("rdr"=df_rdr, "clinical"=df_clinical)
+```
+
+Load the library to do CCA:
+```{r, warning=FALSE}
+library(omicade4)
+```
+
+Check the dimension are correct:
+```{r}
+sapply(both_tables, dim)
+```
+
+Perform CCA:
+```{r}
+mcoin <- mcia(both_tables, cia.nf=10)
+class(mcoin)
+```
+
+Visualize the result:
+```{r}
+plot(mcoin, axes=1:2, sample.lab=FALSE, df.color=1:2)
+```
+
+### 7.4 TRTGRP prediction
+
+Now we will use different methods to predict *TRTGRP* with the radiomic features.\
+
+Load the radar object and convert it to a data frame:
+```{r, warning=FALSE}
+library(admisc)
+file <- listRDA("rdr_L1_Andrea.rda")
+rdr_L1 <- file$rdr_L1
+df_rdr <- as.data.frame(assay(rdr_L1))
+paged_table(df_rdr)
+```
+
+Load the clean data set and convert characters to factors:
+```{r}
+clean_data <- read.delim("eclipse_all_CLEAN.txt")
+ch <- sapply(clean_data, is.character)
+clean_data[ch] <- lapply(clean_data[ch], as.factor)
+paged_table(clean_data)
+```
+
+View a summary of our variable of interest *TRTGRP.t1*:
+```{r}
+table(clean_data$TRTGRP.t1)
+```
+
+
+We have three different levels: COPD Subjects Non-smoker, Controls and Smoker Controls.\
+
+We are interested in predicting *TRTGRP.t1* given the radiomic features. So we will add this variable to the table of radiomic features.\
+
+Since both tables differ in the number of id, we select in data frames only if id match the common id.
+
+```{r, warning=FALSE}
+library(tidyverse)
+id_in_rdr <- colnames(df_rdr) # id of rdr
+id_in_clinical <- rownames(clean_data) # id of clinical
+common_id <- Reduce(intersect, list(id_in_rdr,id_in_clinical)) # common id
+df_clinical <- clean_data %>% filter(row.names(clean_data) %in% common_id)
+df_rdr <- select(df_rdr, one_of(common_id))
+```
+
+Convert *TRTGRP.t1* to numeric:
+```{r}
+df_clinical$TRTGRP.t1 <- as.numeric(df_clinical$TRTGRP.t1)
+TRTGRP_values <- df_clinical$TRTGRP.t1
+table(TRTGRP_values)
+```
+
+Add the values to the data frame:
+```{r}
+df_rdr2 <- rbind(df_rdr, "TRTGRP_values" = TRTGRP_values)
+paged_table(df_rdr2)
+```
+
+Now we want the id as rows instead of columns:
+```{r}
+df_rdr3 <- as.data.frame(t(df_rdr2))
+rownames(df_rdr3) <- colnames(df_rdr2) # put id names
+paged_table(df_rdr3)
+```
+
+```{r}
+df_rdr3$TRTGRP_values <- as.factor(df_rdr3$TRTGRP_values)
+levels(df_rdr3$TRTGRP_values) <- c("COPD Subjects", "Non-smoker Controls", "Smoker Controls")
+```
+
+
+
+**Boosting Forest**
+
+<span style="color:red">TO DO</span>
+
+**Random Forest**
+
+With the data we have, we need to balance the data.
+
+Check how much data we have of each type:
+```{r, out.width="50%"}
+barplot(prop.table(table(df_rdr3$TRTGRP_values)),
+        col = rainbow(3), ylim = c(0, 1),
+        main = "Class Distribution")
+```
+
+We can clearly see that we don't have balanced data, this will produce not very accurate results in our models.
+```{r}
+table(TRTGRP_values)
+```
+
+
+With Random Forest we can't have columns starting with numbers, so we will change them and add an A before the number:
+```{r}
+df_rdr4 <- df_rdr3
+# Columns that start with numbers
+names_number <- colnames(df_rdr4 %>% dplyr:: select(starts_with(c("0","1","2","3","4","5","6","7","8","9"))))
+# Add and A before the number
+names_changed <- unlist(lapply(names_number, function(x) paste("A", x, sep="")))
+# Change the names
+library(data.table)
+setnames(df_rdr4, old=names_number, new = names_changed, skip_absent=TRUE)
+paged_table(df_rdr4)
+```
+
+
+We select train 70% and test 30% randomly:
+```{r}
+rows <- sample(nrow(df_rdr4), .7 * nrow(df_rdr4))
+train_data <- df_rdr4[rows, ]
+test_data <- df_rdr4[-rows, ]
+```
+
+
+Now we will use Random Forest with caret and balancing data:
+```{r, warning=FALSE}
+library(caret)
+# 10-fold cross-validation using downsampling
+ctrl <- caret::trainControl(method = "cv",
+                   number = 10,
+                   verboseIter = FALSE,
+                   summaryFunction = multiClassSummary,
+                   sampling = "down")
+
+set.seed(42)
+model_rf_under <- caret::train(TRTGRP_values ~ ., 
+                               data = train_data,
+                               method = "rf",
+                               trControl = ctrl)
+model_rf_under
+```
+
+Prediction:
+```{r}
+pred_rf <- predict(model_rf_under, newdata = test_data, type = "raw") 
+oj_cm_rf <- confusionMatrix(pred_rf, test_data$TRTGRP_values) 
+oj_cm_rf
+```
+
+Without balancing data:
+```{r, warning=FALSE, results=FALSE}
+library(randomForest)
+```
+
+Create the model:
+```{r, warning=FALSE}
+model <- randomForest(TRTGRP_values ~ . , data = train_data)
+model
+```
+
+Make predictions and print confusion matrix:
+```{r}
+predictions <- predict(model, test_data)
+(confusion_matrix <- with(test_data, table(predictions, TRTGRP_values)))
+```
+
+Accuracy of our model:
+```{r}
+100 * sum(diag(confusion_matrix)) / sum(confusion_matrix)
+```
+
+<span style="color:red">Better results without balancing data?</span>
+
+**XGBoost**
+
+<span style="color:red">TO DO</span>
+
+
+
+

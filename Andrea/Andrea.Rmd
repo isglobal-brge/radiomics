@@ -8,8 +8,9 @@ csl: apa.csl
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+knitr::opts_chunk$set(echo = TRUE)
 ```
+
 
 # Index
 1. Introduction to radiomics
@@ -26,9 +27,26 @@ knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
     4.4. Segmentation with lungmask
 
 5. Radiomic features
+
     5.1. Radiomic features with RIA
+    
     5.2.  Radiomic features with pyradiomics
-    5.3. Analysis with RaDAr
+
+6. RaDAr object
+
+    6.1. Example creating RaDAr object
+
+    6.2. RaDAr object with L1
+
+7. Data analysis 
+    
+    7.1. Clinical data
+
+    7.2. Principal Component Analysis (PCA)
+
+    7.3. Canonical correlation analysis (CCA)
+
+    7.4 TRTGRP prediction
 
 
 <br>
@@ -91,7 +109,7 @@ In this section we will display a few images with different extensions. But firs
 
 We will be working with images that look like this:
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, , out.width = "200px", out.height = "300px"}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, out.width = "200px", out.height = "300px"}
 library(oro.dicom)
 library(RIA)
 image_example <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00007637202177411956430/11.dcm")
@@ -283,41 +301,24 @@ library(ANTsRCore)
 Now we have to convert the data from DCM to NII. NIFTI (Neuroimaging Informatics Technology Initiative) is a data format for the storage of Functional Magnetic Resonance Imaging (fMRI) and other medical images.
 
 ```{r, message=FALSE}
-res <- dcm2niir::dcm2nii(basedir="/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00184637202242062969203")
-checked <- check_dcm2nii(res) # Manipulating the output
-```
-
-Next we plot some images.
-
-```{r, out.width = "700px", out.height = "400px"}
-image <- antsImageRead(checked)
-plot(image)
-```
-
-We create the masks.
-
-```{r, results = FALSE, message=FALSE}
-mask <- segment_lung(image)
-```
-And finally, we plot some of the masks.
-
-```{r, message=FALSE, out.width = "700px", out.height = "400px"}
-plot(mask$lung_mask)
-```
-
-Now, we will do the same for another set of images.
-```{r, message=FALSE}
 res2 <- dcm2niir::dcm2nii(basedir="/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1")
 checked2 <- check_dcm2nii(res2) # Manipulating the output
 ```
+
+Next we plot some images.
 ```{r, out.width = "700px", out.height = "400px"}
 image2 <- antsImageRead(checked2)
 plot(image2)
 ```
 
+We create the masks.
+
 ```{r, results = FALSE, message=FALSE}
 mask2 <- segment_lung(image2)
 ```
+
+And finally, we plot some of the masks.
+
 ```{r, message=FALSE, out.width = "700px", out.height = "400px"}
 plot(mask2$lung_mask)
 ```
@@ -343,7 +344,7 @@ Now we will create multiple .txt files with the results of the radiomic features
 
 The IDs of the patients are the following.
 
-```{r}
+```{r, eval = FALSE}
 patient1 <- "ID00007637202177411956430"
 patient2 <- "ID00009637202177434476278"
 patient3 <- "ID00010637202177584971671"
@@ -727,14 +728,14 @@ print ("Shape after resampling\t", imgs_after_resamp.shape)
 
 **3D Plotting**
 
-```{python}
+```{python, eval = FALSE}
 def make_mesh(image, threshold=-300, step_size=1):
     p = image.transpose(2,1,0)
     verts, faces, norm, val = measure.marching_cubes(p, threshold, step_size=step_size, allow_degenerate=True) 
     return verts, faces
 ```
 
-```{python}
+```{python, eval = FALSE}
 def plt_3d(verts, faces):
     x,y,z = zip(*verts) 
     fig = plt.figure(figsize=(10, 10))
@@ -751,7 +752,7 @@ def plt_3d(verts, faces):
     plt.show()
 ```
 
-```{python, out.width = "450"}
+```{python, out.width = "450", eval = FALSE}
 v, f = make_mesh(imgs_after_resamp, 350)
 plt_3d(v, f)
 ```
@@ -964,30 +965,30 @@ def get_and_save_masks(series_path):
 ```
 
 Plot one image.
-```{python, out.width = "400", eval = FALSE}
+```{python, out.width = "400"}
 ds = pydicom.dcmread("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1/std_38.dcm")
 plt.imshow(ds.pixel_array, cmap='gray')
 plt.show()
 ```
 
 Now we create a mask for the image above.
-```{python, results = FALSE, warnings = FALSE, eval= FALSE}
-image1 <- get_img_sitk("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1/std_38.dcm")
+```{python, results = FALSE, warnings = FALSE}
+image1 = get_img_sitk("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1/std_38.dcm")
 mask_filter_single, masked_lung_single = generate_mask(image1)
 ```
 
-```{python, out.width = "400", eval= FALSE}
+```{python, out.width = "400"}
 plt.imshow(mask_filter_single, cmap='gray')
 plt.show()
 ```
 
-```{python, out.width = "400", eval= FALSE}
+```{python, out.width = "400"}
 plt.imshow(masked_lung_single, cmap='gray')
 plt.show()
 ```
 
 We can visualize it all in one panel.
-```{python, results = FALSE, out.width = "600", eval= FALSE}
+```{python, results = FALSE, out.width = "600"}
 fig, ax = plt.subplots(1,3)
 ax[0].set_title("Original", fontsize='small')
 ax[0].imshow(ds.pixel_array, cmap='gray')
@@ -1057,7 +1058,7 @@ Now we will do the same but for 5 patients (in our case) at the same time.
 
 First obtain and save the mask of the images.
 
-```{python, results = FALSE, warnings = FALSE}
+```{python, results = FALSE, warnings = FALSE, eval = FALSE}
 # List of all the patient folders
 patients = [f for f in os.listdir("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle") if not f.startswith('.')]
 
@@ -1069,7 +1070,7 @@ for i in patients: # for loop through all the patients
 
 Now we compute the radiomic features.
 
-```{r, message=FALSE, warnings = FALSE, results = FALSE}
+```{r, message=FALSE, warnings = FALSE, results = FALSE, eval = FALSE}
 library(RIA)
 library(rmarkdown)
 
@@ -1093,51 +1094,12 @@ paged_table(results)
 
 ```
 
-```{r, message=FALSE, warnings = FALSE}
+```{r, message=FALSE, warnings = FALSE, eval = FALSE}
 results <- do.call(cbind.data.frame, res)
 colnames(results) <- seq(1, length(images_folder_names))
 rownames(results) <- name_characteristics
 paged_table(results)
 
-```
-
-
-##### **Information about the patients**
-
-We have a *.csv* file with information about the patients.
-
-Let's open the file and view some of the rows.
-
-```{r}
-data_patients <- read.csv('/Users/andrealetaalfonso/Desktop/TFG/images/train.csv')
-data_patients <- as.data.frame(data_patients)
-head(data_patients)
-```
-
-The data we are provided with means the following:
-
-- Patient: a unique Id for each patient (also the name of the patient's DICOM folder)
-
-- Weeks: the relative number of weeks pre/post the baseline CT (may be negative)
-
-- FVC: the recorded lung capacity in ml
-
-- Percent: a computed field which approximates the patient's FVC as a percent of the typical FVC for a person of similar characteristics
-
-- Age
-
-- Sex
-
-- SmokingStatus
-
-
-
-
-We will only select the information about the patients that we have.
-
-```{r}
-data_patients <- data_patients[data_patients$Patient %in% images_folder_names,]
-head(data_patients)
 ```
 
 
@@ -1205,54 +1167,33 @@ example[20:30,]
 To perform data analysis, we will use *RaDAr* objects, we will explain it in the next section.
 
 
- 
-### 5.3. Analysis with RaDAr
+<br>
 
-##### **Example creating RaDAr object**
+
+
+## 6. RaDAr object
+
+### 6.1 Example creating RaDAr object
 
 Now we will study multiple radiomic features with multiple patients. We will use the *RaDAr* to manipulate the results.
 
 
-First we load the libraries.
-
+Load the libraries.
 ```{r, message=FALSE, results=FALSE}
 library(RIA)
 library(RNifti)
 ```
 
-We will view one patient images.
+Compute **first order statistics**:
 
-Load the images and the masks of the images. In this case, we have the images in nifti format, so we will use the function *load_nifti* from the RIA library.
-
-```{r, results=FALSE, message=FALSE, warning=FALSE}
-example1 <- RIA::load_nifti(filename = "/Users/andrealetaalfonso/Desktop/TFG/DICOMS/rstudio-export/023140000001/023140000001_INSP_STD_L1_ECLIPSE.nii.gz",
-                            mask_filename = "/Users/andrealetaalfonso/Desktop/TFG/DICOMS/rstudio-export/023140000001/023140000001_INSP_STD_L1_ECLIPSE_mask.nii.gz")
-```
-
-Now we will load the images with *readNifti* and view the image with the function *view*.
-
-```{r, warning=FALSE}
-image <- readNifti("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/rstudio-export/023140000001/023140000001_INSP_STD_L1_ECLIPSE.nii.gz")
-view(image)
-```
-
-And we can also compute the first order characteristics for this patient.
-
-```{r, warning=FALSE, message=FALSE}
-library(rmarkdown)
-radiomic <- RIA::first_order(example1)
-results <- RIA:::list_to_df(radiomic$stat_fo$orig)
-paged_table(results)
-```
-
-Now we will analyze mulitple patients at the same time.
-
-```{r, eval = FALSE, results=FALSE, message=FALSE, warning=FALSE}
-res <- c() # vector for the results
+```{r, eval=FALSE}
 path_folders <- "/Users/andrealetaalfonso/Desktop/TFG/DICOMS/rstudio-export" # path where all the folders are at
 patients_list <- list.files(path_folders) # list of the name of the folders of every patient
+
+# Compute first_order to patient i
+fun <- function(i){
   
-for(i in patients_list){ # for every patient
+  res <- c() # vector for the results
   
   patient_path <- file.path(path_folders, i, fsep="/") # path to folder of every patient
   images_folder_names <- grep(list.files(path = patient_path), pattern='mask.nii.gz', invert=TRUE, value=TRUE) # name of nii files
@@ -1260,91 +1201,122 @@ for(i in patients_list){ # for every patient
   images_path <- file.path(patient_path, images_folder_names, fsep="/") # path to images files
   mask_path <- file.path(patient_path, mask_folder_names, fsep="/") # path to masks files
   
-  images = RIA::load_nifti(filename = images_path, mask_filename = mask_path) # load images and masks
-  images = RIA::first_order(images) # compute first order
-  radiomic_list <- RIA:::list_to_df(images$stat_fo$orig)
-  name_characteristics <- rownames(radiomic_list)
-  res[i] <- RIA:::list_to_df(images$stat_fo$orig)
+  # Add tryCatch block
+  pre_symbol <- NULL
+  tryCatch({images = RIA::load_nifti(filename = images_path, mask_filename = mask_path)
+  pre_symbol <- "blah"}, # try to load images and masks
+  error = function(e) { print(e)})
+  # If succeed
+  if(!is.null(pre_symbol)){
+    images = RIA::load_nifti(filename = images_path, mask_filename = mask_path)
+    images = RIA::first_order(images) # compute first order
+    radiomic_list <- RIA:::list_to_df(images$stat_fo$orig)
+    name_characteristics <- rownames(radiomic_list)
+    res <- RIA:::list_to_df(images$stat_fo$orig)
+    res
+  } else{ # if not succeed, fill values with NA
+    res <- rep("NA", 44)
+  }
+  
 }
 ```
-```{r, eval = FALSE}
-library(rmarkdown)
-results <- do.call(cbind.data.frame, res) # results
-colnames(results) <- patients_list
-rownames(results) <- name_characteristics
+
+```{r, eval=FALSE}
+get_radiomic_features <- function(list_patients){
+  results_map <- purrr:::map(list_patients, fun) # Apply fun function to all the patients
+  results <- do.call(cbind.data.frame, results_map) # results
+  colnames(results) <- list_patients
+  rownames(results) <- name_characteristics
+  write.table(results, file="first_order.txt", sep="\t")
+  results
+}
 ```
 
-We will export these results to a *.txt* file.
+```{r, eval=FALSE}
+# Obtain radiomic features
+radiomic_features <- get_radiomic_features(patients_list)
 
-```{r, eval = FALSE}
-write.table(results, file="first_order.txt", sep="\t")
+table1 <- read.delim("first_order.txt") # read table
 ```
 
-We can check that we exported the file correclty with: *read.delim("file.txt")*.
+Compute **geometry-based statistics**:
 
-```{r, eval = FALSE}
-library(rmarkdown)
-table1 <- read.delim("first_order.txt")
-paged_table(table1)
-```
-
-We can also compute the Geometry-based statistics.
-
-```{r, results=FALSE, message=FALSE, warning=FALSE, eval = FALSE}
-res2 <- c() # vector for the results
+```{r, eval=FALSE}
 path_folders <- "/Users/andrealetaalfonso/Desktop/TFG/DICOMS/rstudio-export" # path where all the folders are at
 patients_list <- list.files(path_folders) # list of the name of the folders of every patient
+
+# Compute first_order to patient i
+fun <- function(i){
   
-for(i in patients_list){ # for every patient
+  res <- c() # vector for the results
   
   patient_path <- file.path(path_folders, i, fsep="/") # path to folder of every patient
-  images_folder_names <- grep(list.files(path = patient_path), pattern='mask.nii.gz', invert=TRUE, value=TRUE) # name nii files
-  mask_folder_names <- list.files(patient_path, pattern="mask.nii.gz") # name mask files
-  images_path <- file.path(patient_path, images_folder_names, fsep="/") # path to nii files
-  mask_path <- file.path(patient_path, mask_folder_names, fsep="/") # path to masks
+  images_folder_names <- grep(list.files(path = patient_path), pattern='mask.nii.gz', invert=TRUE, value=TRUE) # name of nii files
+  mask_folder_names <- list.files(patient_path, pattern="mask.nii.gz") # name of mask files
+  images_path <- file.path(patient_path, images_folder_names, fsep="/") # path to images files
+  mask_path <- file.path(patient_path, mask_folder_names, fsep="/") # path to masks files
   
-  images = RIA::load_nifti(filename = images_path, mask_filename = mask_path) # load images and masks
-  images = RIA::geometry(RIA_data_in = images, use_orig = TRUE, calc_sub = FALSE)
-  radiomic_list <- RIA:::list_to_df(images$stat_geometry$orig)
-  name_characteristics <- rownames(radiomic_list)
-  res2[i] <- RIA:::list_to_df(images$stat_geometry$orig)
+  # Add tryCatch block
+  pre_symbol <- NULL
+  tryCatch({images = RIA::load_nifti(filename = images_path, mask_filename = mask_path)
+  pre_symbol <- "blah"}, # try to load images and masks
+  error = function(e) { print(e)})
+  # If succeed
+  if(!is.null(pre_symbol)){
+    images = RIA::load_nifti(filename = images_path, mask_filename = mask_path)
+    images = RIA::geometry(RIA_data_in = images, use_orig = TRUE, calc_sub = FALSE)
+    radiomic_list <- RIA:::list_to_df(images$stat_geometry$orig)
+    name_characteristics <- rownames(radiomic_list)
+    res <- RIA:::list_to_df(images$stat_geometry$orig)
+    res
+  } else{ # if not succeed, fill values with NA
+    res <- rep("NA", 12)
+  }
+  
 }
 ```
-```{r, eval = FALSE}
-results2 <- do.call(cbind.data.frame, res2) # results
-colnames(results2) <- patients_list
-rownames(results2) <- name_characteristics
+
+```{r, eval=FALSE}
+get_radiomic_features <- function(list_patients){
+  results_map <- purrr:::map(list_patients, fun) # Apply fun function to all the patients
+  results <- do.call(cbind.data.frame, results_map) # results
+  colnames(results) <- list_patients
+  rownames(results) <- name_characteristics
+  write.table(results, file="geometry.txt", sep="\t")
+  results
+}
 ```
 
-We will also export these results to another *.txt* file.
-```{r, eval = FALSE}
-write.table(results2, file="geometry.txt", sep="\t")
+```{r, eval=FALSE}
+# Obtain radiomic features
+radiomic_features <- get_radiomic_features(patients_list)
+
+table2 <- read.delim("geometry.txt") # read table
 ```
 
-```{r, eval = FALSE}
-library(rmarkdown)
-table2 <- read.delim("geometry.txt")
-paged_table(table2)
-```
-
-We can combine both files.
-```{r}
+Combine and export the results:
+```{r, eval=FALSE}
 table1 <- as.data.frame(table1)
 table2 <- as.data.frame(table2)
 radiomic_features <- rbind(table1, table2)
-```
 
-And export the results into one *.txt* file.
-```{r}
-library(rmarkdown)
 all_results_table <- write.table(radiomic_features, file="radiomic_features.txt", sep="\t")
 read_table <- read.delim("radiomic_features.txt")
-paged_table(read_table)
 ```
 
-##### **RaDAr Analysis**
+Let's create the **RadAR**:
+```{r, eval=FALSE}
+library(RadAR)
+rdr.ria <- import_radiomic_table("/Users/andrealetaalfonso/Desktop/TFG/A_Project/radiomic_features.txt")
+rdr.ria
+```
 
-<span style="color:red">In another .Rmd</span>
+
+
+### 6.2 RaDAr object with L1
+
+
+<span style="color:red">Continue in another .Rmd............</span>
 
 
 
