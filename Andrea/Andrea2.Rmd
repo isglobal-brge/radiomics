@@ -456,9 +456,168 @@ plot(mcoin, axes=1:2, sample.lab=FALSE, df.color=1:2)
 
 ### 7.4 TRTGRP prediction
 
+Now we will use different methods to predict *TRTGRP* with the radiomic features.\
+
+Load the radar object and convert it to a data frame:
+```{r, warning=FALSE}
+library(admisc)
+file <- listRDA("rdr_L1_Andrea.rda")
+rdr_L1 <- file$rdr_L1
+df_rdr <- as.data.frame(assay(rdr_L1))
+head(df_rdr)
+```
+
+Load the clean data set and convert characters to factors:
+```{r}
+clean_data <- read.delim("eclipse_all_CLEAN.txt")
+ch <- sapply(clean_data, is.character)
+clean_data[ch] <- lapply(clean_data[ch], as.factor)
+head(clean_data)
+```
+
+View a summary of our variable of interest *TRTGRP.t1*:
+```{r}
+table(clean_data$TRTGRP.t1)
+```
+
+
+We have three different levels: COPD Subjects Non-smoker, Controls and Smoker Controls.\
+
+We are interested in predicting *TRTGRP.t1* given the radiomic features. So we will add this variable to the table of radiomic features.\
+
+Since both tables differ in the number of id, we select in data frames only if id match the common id.
+
+```{r}
+library(tidyverse)
+id_in_rdr <- colnames(df_rdr) # id of rdr
+id_in_clinical <- rownames(clean_data) # id of clinical
+common_id <- Reduce(intersect, list(id_in_rdr,id_in_clinical)) # common id
+df_clinical <- clean_data %>% filter(row.names(clean_data) %in% common_id)
+df_rdr <- select(df_rdr, one_of(common_id))
+```
+
+Convert *TRTGRP.t1* to numeric:
+```{r}
+df_clinical$TRTGRP.t1 <- as.numeric(df_clinical$TRTGRP.t1)
+TRTGRP_values <- df_clinical$TRTGRP.t1
+table(TRTGRP_values)
+```
+
+Add the values to the data frame:
+```{r}
+df_rdr2 <- rbind(df_rdr, "TRTGRP_values" = TRTGRP_values)
+tail(df_rdr2)
+```
+
+Now we want the id as rows instead of columns:
+```{r}
+df_rdr3 <- as.data.frame(t(df_rdr2))
+rownames(df_rdr3) <- colnames(df_rdr2) # put id names
+head(df_rdr3)
+```
+
+```{r}
+df_rdr3$TRTGRP_values <- as.factor(df_rdr3$TRTGRP_values)
+levels(df_rdr3$TRTGRP_values) <- c("COPD Subjects", "Non-smoker Controls", "Smoker Controls")
+```
 
 
 
+**Boosting Forest**
+
+<span style="color:red">TO DO</span>
+
+**Random Forest**
+
+With the data we have, we need to balance the data.
+
+Check how much data we have of each type:
+```{r, out.width="50%"}
+barplot(prop.table(table(df_rdr3$TRTGRP_values)),
+        col = rainbow(3), ylim = c(0, 1),
+        main = "Class Distribution")
+```
+
+We can clearly see that we don't have balanced data, this will produce not very accurate results in our models.
+```{r}
+table(TRTGRP_values)
+```
+
+
+With Random Forest we can't have columns starting with numbers, so we will change them and add an A before the number:
+```{r}
+df_rdr4 <- df_rdr3
+# Columns that start with numbers
+names_number <- colnames(df_rdr4 %>% dplyr:: select(starts_with(c("0","1","2","3","4","5","6","7","8","9"))))
+# Add and A before the number
+names_changed <- unlist(lapply(names_number, function(x) paste("A", x, sep="")))
+# Change the names
+library(data.table)
+setnames(df_rdr4, old=names_number, new = names_changed, skip_absent=TRUE)
+head(df_rdr4)
+```
+
+
+We select train 70% and test 30% randomly:
+```{r}
+rows <- sample(nrow(df_rdr4), .7 * nrow(df_rdr4))
+train_data <- df_rdr4[rows, ]
+test_data <- df_rdr4[-rows, ]
+```
+
+
+Now we will use Random Forest with caret and balancing data:
+```{r}
+library(caret)
+# 10-fold cross-validation using downsampling
+ctrl <- caret::trainControl(method = "cv",
+                   number = 10,
+                   verboseIter = FALSE,
+                   summaryFunction = multiClassSummary,
+                   sampling = "down")
+
+set.seed(42)
+model_rf_under <- caret::train(TRTGRP_values ~ ., 
+                               data = train_data,
+                               method = "rf",
+                               trControl = ctrl)
+model_rf_under
+```
+
+Prediction:
+```{r}
+pred_rf <- predict(model_rf_under, newdata = test_data, type = "raw") 
+oj_cm_rf <- confusionMatrix(pred_rf, test_data$TRTGRP_values) 
+oj_cm_rf
+```
+
+Without balancing data:
+```{r, warning=FALSE}
+library(randomForest)
+```
+
+Create the model:
+```{r, warning=FALSE}
+model <- randomForest(TRTGRP_values ~ . , data = train_data)
+model
+```
+
+Make predictions and print confusion matrix:
+```{r}
+predictions <- predict(model, test_data)
+(confusion_matrix <- with(test_data, table(predictions, TRTGRP_values)))
+```
+
+Accuracy of our model:
+```{r}
+100 * sum(diag(confusion_matrix)) / sum(confusion_matrix)
+```
+
+<span style="color:red">Better results without balancing data?</span>
+
+**XGBoost**
+
+<span style="color:red">TO DO</span>
 
 
 
