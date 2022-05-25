@@ -381,7 +381,79 @@ Canonical correlation analysis (CCA) is a statistical technique for extracting i
 
 Multiple correlation analysis predicts only one dependent variable from several independents, but canonical correlation predicts multiple dependent variables from multiple independents.\
 
+In our case, we will have 2 tables. One with the radiomics features, and another one with the clinical data. We want to have id -> columns and features -> rows.\
 
+
+Load the radar object and convert it to a data frame:
+```{r, warning=FALSE}
+library(admisc)
+file <- listRDA("rdr_L1_Andrea.rda")
+rdr_L1 <- file$rdr_L1
+df_rdr <- as.data.frame(assay(rdr_L1))
+head(df_rdr)
+```
+
+Load the clean data set:
+```{r}
+clean_data <- read.delim("eclipse_all_CLEAN.txt")
+head(clean_data) # view firsts values
+```
+
+To do CCA, we need all columns to be numeric.
+```{r}
+clean_data <- mutate_all(clean_data, function(x) as.numeric(as.factor(x)))
+```
+
+Now we want the id as columns instead of rows.
+```{r}
+df_clinical <- as.data.frame(t(clean_data))
+colnames(df_clinical) <- rownames(clean_data) # put id names
+head(df_clinical)
+```
+
+Now we have both data frames. But they differ int the number of id. Select in data frames only if id match the common id.
+```{r}
+id_in_rdr <- colnames(df_rdr) # id of rdr
+id_in_clinical <- colnames(df_clinical) # id of clinical
+common_id <- Reduce(intersect, list(id_in_rdr,id_in_clinical)) # common id
+
+df_clinical <- select(df_clinical, one_of(common_id))
+df_rdr <- select(df_rdr, one_of(common_id))
+```
+
+Check types:
+```{r}
+type(df_rdr)
+type(df_clinical)
+class(df_rdr)
+class(df_rdr)
+```
+
+Combine both data frames into a list.
+```{r}
+both_tables <- list("rdr"=df_rdr, "clinical"=df_clinical)
+```
+
+Load the library to do CCA:
+```{r}
+library(omicade4)
+```
+
+Check the dimension are correct:
+```{r}
+sapply(both_tables, dim)
+```
+
+Perform CCA:
+```{r}
+mcoin <- mcia(both_tables, cia.nf=10)
+class(mcoin)
+```
+
+Visualize the result:
+```{r}
+plot(mcoin, axes=1:2, sample.lab=FALSE, df.color=1:2)
+```
 
 
 
