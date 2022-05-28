@@ -387,6 +387,7 @@ In our case, we will have 2 tables. One with the radiomics features, and another
 
 Load the radar object and convert it to a data frame:
 ```{r, warning=FALSE}
+library(rmarkdown)
 library(admisc)
 file <- listRDA("rdr_L1_Andrea.rda")
 rdr_L1 <- file$rdr_L1
@@ -619,8 +620,99 @@ Accuracy of our model:
 
 **XGBoost**
 
-<span style="color:red">TO DO</span>
+We create a function that takes as a parameter your entire dataset and returns the accuracy of a XgBoost model.\
 
+Load the libraries.
+```{r}
+library(xgboost)
+library(caret)
+```
+
+Function:
+```{r}
+XgBoost <- function(data){
+  
+  #### Select train 70% and test 30% randomly
+  rows <- sample(nrow(data), .7 * nrow(data))
+  train_data <- data[rows, ] # train data
+  test_data <- data[-rows, ] # test data
+  
+  ####  Independent and dependent variables for train and test
+  
+  
+  X_train = data.matrix(train_data[,-ncol(data)]) 
+  y_train = train_data[,ncol(data)] 
+    
+  X_test = data.matrix(test_data[,-ncol(data)])  
+  y_test = test_data[,ncol(data)] 
+  
+  #### Convert the train and test data into xgboost matrix type
+  
+  xgboost_train = xgb.DMatrix(data=X_train, label=y_train)
+  xgboost_test = xgb.DMatrix(data=X_test, label=y_test)
+  
+  
+  #### Train a model using our training data
+  model <- xgboost(data = xgboost_train,                      
+                   max.depth = 3, # max depth 
+                   nrounds = 50) # max number of boosting iterations
+  
+  
+  #### Make predictions on the test dataset:
+  pred_test <- predict(model, xgboost_test)
+  
+  
+  #### Convert prediction to factor type:
+  pred_test[(pred_test>3)] = 3
+  pred_y <- as.factor((levels(y_test))[round(pred_test)])
+  
+  
+  #### Create a confusion matrix:
+  conf_mat <- confusionMatrix(y_test, pred_y)
+  return(conf_mat$overall["Accuracy"])
+  
+}
+```
+
+First we will do XgBoost *without balancing* the data:
+```{r}
+XgBoost(df_rdr3)
+```
+
+We get an Accuracy of around 66%.
+
+```{r}
+table(df_rdr3$TRTGRP_values)
+```
+
+
+Now we balance our data with *Downsampling* method, which takes the lowest value (in our case Non-smoker Controls = 193) and makes all classes have the same amount of values:
+```{r}
+down_data <- downSample(x = df_rdr3[, -ncol(df_rdr3)],
+                         y = df_rdr3$TRTGRP_values)
+table(down_data$Class) 
+```
+
+```{r}
+XgBoost(down_data)
+```
+
+We get worse results with an Accuracy of 38%.
+
+Now we balance our data with *SMOTE* method, which is an oversampling technique where the  samples are generated for the minority class. 
+
+```{r}
+# remotes::install_github("cran/DMwR")
+library(DMwR)
+smote_data <- SMOTE(TRTGRP_values ~ ., data  = df_rdr3)                         
+table(smote_data$TRTGRP_values) 
+```
+
+```{r}
+XgBoost(smote_data)
+```
+
+We get better results with an Accuracy of 72%.
 
 
 
