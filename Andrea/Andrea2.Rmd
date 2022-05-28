@@ -541,6 +541,20 @@ table(TRTGRP_values)
 
 **Random Forest**
 
+With Random Forest we can't have columns starting with numbers, so we will change them and add an A before the number:
+```{r}
+df_rdr4 <- df_rdr3
+# Columns that start with numbers
+names_number <- colnames(df_rdr4 %>% dplyr:: select(starts_with(c("0","1","2","3","4","5","6","7","8","9"))))
+# Add and A before the number
+names_changed <- unlist(lapply(names_number, function(x) paste("A", x, sep="")))
+# Change the names
+library(data.table)
+setnames(df_rdr4, old=names_number, new = names_changed, skip_absent=TRUE)
+paged_table(df_rdr4)
+```
+
+
 We create a function that takes as a parameter your entire dataset and returns the accuracy of a Random Forest model.\
 
 Load the library.
