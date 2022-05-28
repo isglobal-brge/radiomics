@@ -37,8 +37,11 @@ rdr_Norm <- import_pyradiomics(dir="/Users/andrealetaalfonso/Desktop/TFG/A_Proje
 ```
 
 We can read the rdr file once it's created:
-```{r, warning=FALSE}
+```{r, warning=FALSE, results='hide'}
 library(admisc)
+```
+
+```{r, warning=FALSE}
 b <- listRDA("rdr_Andrea_NormShift.rda")
 b
 ```
@@ -542,6 +545,10 @@ table(TRTGRP_values)
 **Random Forest**
 
 With Random Forest we can't have columns starting with numbers, so we will change them and add an A before the number:
+```{r, warning=FALSE, results='hide'}
+library(data.table)
+```
+
 ```{r}
 df_rdr4 <- df_rdr3
 # Columns that start with numbers
@@ -549,7 +556,6 @@ names_number <- colnames(df_rdr4 %>% dplyr:: select(starts_with(c("0","1","2","3
 # Add and A before the number
 names_changed <- unlist(lapply(names_number, function(x) paste("A", x, sep="")))
 # Change the names
-library(data.table)
 setnames(df_rdr4, old=names_number, new = names_changed, skip_absent=TRUE)
 paged_table(df_rdr4)
 ```
@@ -558,7 +564,7 @@ paged_table(df_rdr4)
 We create a function that takes as a parameter your entire dataset and returns the accuracy of a Random Forest model.\
 
 Load the library.
-```{r, warning=FALSE}
+```{r, warning=FALSE, results='hide'}
 library(randomForest)
 ```
 
@@ -600,10 +606,12 @@ table(df_rdr4$TRTGRP_values)
 
 
 Now we balance our data with *SMOTE* method, which is an oversampling technique where the  samples are generated for the minority class. 
-
-```{r}
+```{r, warning=FALSE, results='hide'}
 # remotes::install_github("cran/DMwR")
 library(DMwR)
+```
+
+```{r}
 smote_data <- SMOTE(TRTGRP_values ~ ., data  = df_rdr4)                         
 table(smote_data$TRTGRP_values) 
 ```
@@ -621,7 +629,7 @@ We get better results with an Accuracy of around 84%.\
 We create a function that takes as a parameter your entire dataset and returns the accuracy of a XgBoost model.\
 
 Load the libraries.
-```{r}
+```{r, warning=FALSE, results='hide'}
 library(xgboost)
 library(caret)
 ```
@@ -699,8 +707,6 @@ We get worse results with an Accuracy of 38%.
 Now we balance our data with *SMOTE* method, which is an oversampling technique where the  samples are generated for the minority class. 
 
 ```{r}
-# remotes::install_github("cran/DMwR")
-library(DMwR)
 smote_data <- SMOTE(TRTGRP_values ~ ., data  = df_rdr3)                         
 table(smote_data$TRTGRP_values) 
 ```
