@@ -533,7 +533,7 @@ table(TRTGRP_values)
 
 
 
-**Boosting Forest**
+**Boosting**
 
 <span style="color:red">TO DO</span>
 
