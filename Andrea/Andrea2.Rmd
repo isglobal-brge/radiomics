@@ -7,7 +7,7 @@ bibliography: Andrea.bib
 csl: apa.csl
 ---
 
-```{r setup, include=FALSE}
+```{r setup, results=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -60,7 +60,7 @@ paged_table(clinic_data)
 ```
 
 Select variables of t1.
-```{r, warning=FALSE, include = FALSE}
+```{r, warning=FALSE, results = FALSE}
 library(tidyverse)
 ```
 ```{r, warning=FALSE}
@@ -144,7 +144,7 @@ paged_table(clinic_data_clean) # view firsts values
 ```
 
 Load the libraries needed to perform PCA:
-```{r, message=FALSE}
+```{r, message=FALSE, results = FALSE}
 library(ade4)
 library(made4)
 library(scatterplot3d)
@@ -184,7 +184,7 @@ In our case, we will have 2 tables. One with the radiomics features, and another
 
 
 Load the radar object and convert it to a data frame:
-```{r, warning=FALSE}
+```{r, warning=FALSE, results = FALSE}
 library(rmarkdown)
 library(admisc)
 file <- listRDA("rdr_L1_Andrea.rda")
@@ -221,14 +221,6 @@ df_clinical <- select(df_clinical, one_of(common_id))
 df_rdr <- select(df_rdr, one_of(common_id))
 ```
 
-Check types:
-```{r}
-type(df_rdr)
-type(df_clinical)
-class(df_rdr)
-class(df_rdr)
-```
-
 Combine both data frames into a list.
 ```{r}
 both_tables <- list("rdr"=df_rdr, "clinical"=df_clinical)
@@ -247,7 +239,6 @@ sapply(both_tables, dim)
 Perform CCA:
 ```{r}
 mcoin <- mcia(both_tables, cia.nf=10)
-class(mcoin)
 ```
 
 Visualize the result:
@@ -347,7 +338,7 @@ table(TRTGRP_values)
 **Random Forest**
 
 With Random Forest we can't have columns starting with numbers, so we will change them and add an A before the number:
-```{r, warning=FALSE, include = FALSE}
+```{r, warning=FALSE, results = FALSE}
 library(data.table)
 ```
 
@@ -366,7 +357,7 @@ paged_table(df_rdr4)
 We create a function that takes as a parameter your entire dataset and returns the accuracy of a Random Forest model.\
 
 Load the library.
-```{r, warning=FALSE, include = FALSE}
+```{r, warning=FALSE, results = FALSE}
 library(randomForest)
 ```
 
@@ -408,7 +399,7 @@ table(df_rdr4$TRTGRP_values)
 
 
 Now we balance our data with *SMOTE* method, which is an oversampling technique where the  samples are generated for the minority class. 
-```{r, warning=FALSE, include = FALSE}
+```{r, warning=FALSE, results = FALSE}
 # remotes::install_github("cran/DMwR")
 library(DMwR)
 ```
@@ -431,7 +422,7 @@ We get better results with an Accuracy of around 84%.\
 We create a function that takes as a parameter your entire dataset and returns the accuracy of a XgBoost model.\
 
 Load the libraries.
-```{r, warning=FALSE, include = FALSE}
+```{r, warning=FALSE, results = FALSE}
 library(xgboost)
 library(caret)
 ```
@@ -518,7 +509,7 @@ table(smote_data$TRTGRP_values)
 XgBoost(smote_data)
 ```
 
-We get better results with an Accuracy of 72%.
+We get better results with an Accuracy of 70%.
 
 
 
