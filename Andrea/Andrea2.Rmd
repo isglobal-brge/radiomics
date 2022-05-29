@@ -615,8 +615,20 @@ We get better results with an Accuracy of 70%.
 ### 7.5 GOLDCD + TRTGRP prediction
 
 
+<span style="color:red">TO DO: finish</span>
 
-<span style="color:red">TO DO</span>
+Now we will create a new variable *goldcd_trtgrp* which is a combination of the variables GOLDCD + TRTGRP, it will have levels: COPD_2, COPD_3, COPD_4, COPD_9, Non-smoke_Control, Smoke_Control).
+
+
+Summary of *GOLDCD*:
+```{r, eval=FALSE}
+table(clean_data$GOLDCD)
+```
+
+Summary of *TRTGRP.t1*:
+```{r, eval=FALSE}
+table(clean_data$TRTGRP.t1)
+```
 
 
 
