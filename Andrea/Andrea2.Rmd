@@ -608,3 +608,16 @@ We get better results with an Accuracy of 70%.
 
 
 
+<br>
+
+
+
+### 7.5 GOLDCD + TRTGRP prediction
+
+
+
+<span style="color:red">TO DO</span>
+
+
+
+
