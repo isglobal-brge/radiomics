@@ -36,6 +36,9 @@ Shortness of breath is the most common symptom of COPD. Simple daily tasks like 
 Long-term cigarette smoking is the most common cause of COPD. The more cigarettes you smoke, the more likely you are to get COPD.\
 
 
+<br>
+
+
 ### 7.1 Clinical data
 
 Before we begin with our analysis, we need to explore our clinical data and clean it.
@@ -126,6 +129,9 @@ paged_table(clinic_data_clean) # view firsts values
 ```
 
 
+<br>
+
+
 
 ### 7.2 Principal Component Analysis (PCA)
 
@@ -169,6 +175,9 @@ names(results_PCA)
 ```{r}
 plot(results_PCA, classvec=colnames(data), genecol="grey3")
 ```
+
+
+<br>
 
 
 
@@ -245,6 +254,11 @@ Visualize the result:
 ```{r}
 plot(mcoin, axes=1:2, sample.lab=FALSE, df.color=1:2)
 ```
+
+
+<br>
+
+
 
 ### 7.4 TRTGRP prediction
 
@@ -328,10 +342,16 @@ table(TRTGRP_values)
 ```
 
 
+<br>
+
 
 **Boosting**
 
 <span style="color:red">TO DO</span>
+
+
+
+<br>
 
 
 
@@ -414,6 +434,11 @@ RandomForest(smote_data)
 ```
 
 We get better results with an Accuracy of around 84%.\
+
+
+
+<br>
+
 
 
 
