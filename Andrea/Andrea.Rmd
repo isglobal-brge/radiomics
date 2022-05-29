@@ -48,6 +48,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
     7.4 TRTGRP prediction
 
+    7.5 GOLDCD + TRTGRP prediction
+
 
 <br>
  
