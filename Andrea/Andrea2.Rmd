@@ -265,8 +265,11 @@ plot(mcoin, axes=1:2, sample.lab=FALSE, df.color=1:2)
 Now we will use different methods to predict *TRTGRP* with the radiomic features.\
 
 Load the radar object and convert it to a data frame:
-```{r, warning=FALSE}
+```{r, warning=FALSE, results = FALSE}
+library(rmarkdown)
 library(admisc)
+```
+```{r, warning=FALSE}
 file <- listRDA("rdr_L1_Andrea.rda")
 rdr_L1 <- file$rdr_L1
 df_rdr <- as.data.frame(assay(rdr_L1))
