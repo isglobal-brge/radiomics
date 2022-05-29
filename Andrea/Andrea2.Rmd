@@ -1,5 +1,5 @@
 ---
-title: "radar script"
+title: "continue....."
 output:
   html_document: default
   pdf_document: default
@@ -11,204 +11,6 @@ csl: apa.csl
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
-### 6.2 RaDAr object with L1
-
-In this section we will use the library *RadAR* (Radiomics Analysis with R). This is a software to perform comprehensive analysis of radiomic features. RadAR allows the users to carry out the entire processing of radiomic datasets, from data import to feature processing and visualization and implements multiple statistical methods for the analysis of these data.
-
-First we load the *RadAR* library.
-```{r, message=FALSE, results='hide', warning=FALSE}
-library(RadAR)
-```
-
-
-With *RadAR* we can import the radiomic features that we extracted before using pyradiomics.
-
-<span style="color:red">TO DO: explain normalizacion y shift, y con normalizacion.</span>
-
-We will create the *rdr* object with normalization and shift, and another one with normalization only. We use the function *import_pyradiomics(path_to_folder)* to import the results we obtained using pyradiomics, where *path_to_folder* is the path to the folder containing the pyradiomics csv files. The function filters out duplicated feature names. 
-
-```{r, eval = FALSE}
-rdr_NormShift <- import_pyradiomics(dir="/Users/andrealetaalfonso/Desktop/TFG/A_Project/results/ECLIPSE_results_ParamsNormShiftCSV")
-```
-
-```{r, eval = FALSE}
-rdr_Norm <- import_pyradiomics(dir="/Users/andrealetaalfonso/Desktop/TFG/A_Project/results/ECLIPSE_results_ParamsNormCSV")
-```
-
-We can read the rdr file once it's created:
-```{r, warning=FALSE, results='hide'}
-library(admisc)
-```
-
-```{r, warning=FALSE}
-b <- listRDA("rdr_Andrea_NormShift.rda")
-b
-```
-
-```{r, warning=FALSE}
-a <- listRDA("rdr_Andrea_Norm.rda")
-rdr <- a$rdr_Norm
-rdr
-```
-
-
-The *rdr* object is a *SummarizedExperiment*.
-
-<span style="color:red">TO DO: explain more & add image SummarizedExperiment</span>
-
-The available clinical data can be also imported in the *rdr* object.
-
-We can extract the data with the function *assay()*.
-```{r, eval = FALSE}
-data <- assay(rdr_NormShift)
-data[1:10,1:2]
-```
-
-```{r, eval = FALSE}
-data2 <- assay(rdr_Norm)
-data2[1:10,1:2]
-```
-
-We can check which image types (i.e., normal or wavelet filtered) features have been extracted from.
-```{r, eval = FALSE}
-print_image_type(rdr = rdr_NormShift)
-```
-
-The *rdr* object can be also filter by feature type.
-```{r, eval = FALSE}
-print_feature_type(rdr = rdr_NormShift)
-```
-
-To access to the elements of patients (columns) or features (rows) we can do:
-```{r, eval = FALSE}
-names(colData(rdr_NormShift)) # columns
-names(rowData(rdr_NormShift)) # rows
-```
-
-
-**Correlation matrix**
-
-Visualize the correlation matrix:
-```{r, out.width="70%", eval = FALSE}
-plot_correlation_matrix(rdr = rdr_NormShift, 
-                        method_correlation = "spearman", 
-                        view_as = "heatmap", 
-                        which_data = "normal")
-```
-
-A different way to visualize the correlation matrix is by using correlation plot:
-```{r, out.width="70%", eval = FALSE}
-plot_correlation_matrix(rdr = rdr_NormShift, 
-                        method_correlation = "pearson", 
-                        view_as = "corrplot", 
-                        which_data = "normal")
-```
-
-
-**Pre-processing and visualization of radiomic features**
-
-Scale features:
-```{r, eval = FALSE}
-rdr_scaled <- scale_feature_values(rdr = rdr_NormShift, method = "minmax")
-```
-
-Group features:
-```{r, eval = FALSE}
-rdr <- do_hierarchical_clustering(rdr = rdr_scaled, 
-                                  which_data = "scaled", 
-                                  method_dist_col = "correlation.spearman")
-
-```
-
-Heat map:
-```{r, out.width="70%", eval = FALSE}
-plot_heatmap_hcl(rdr = rdr) 
-```
-
-We can also save the rdr object to *.rda*.
-```{r, eval = FALSE}
-save(rdr_NormShift, file = "rdr_Andrea_NormShift.rda")
-```
-```{r, eval = FALSE}
-save(rdr_Norm, file = "rdr_Andrea_Norm.rda")
-```
-
-
-We can open the *.rda* file with the following code:
-```{r, warning=FALSE, eval = FALSE}
-library(admisc)
-test_NormShift <- listRDA("rdr_Andrea_NormShift.rda")
-test_NormShift
-```
-```{r, eval = FALSE}
-test_Norm <- listRDA("rdr_Andrea_Norm.rda")
-test_Norm
-```
-
-
-**Prepare only L1 radar**
-
-Now we are interested in only the time L1.
-
-Open *rdr*:
-```{r, warning=FALSE}
-a <- listRDA("rdr_Andrea_Norm.rda")
-rdr <- a$rdr_Norm
-rdr
-```
-
-Change names: eliminate the extension of the name and keep the number and separate between different times (L1, L2, L3).
-```{r}
-o <- colnames(rdr)
-oo <- sapply(o, strsplit, "_")
-id  <- unlist(lapply(oo, "[[", 1))
-time <- unlist(lapply(oo, "[[", 4)) 
-df <- data.frame(filename = o, id = id, time = time)
-```
-
-Change the names of the *id* of the *rdr*, instead of having names like *023140000001_INSP_STD_L1_ECLIPSE.nii.gz.tsv*, we change them to *023140000001*.
-```{r}
-colnames(rdr) <- id
-rdr
-```
-
-Add the time (L1, L2, L3) as a new column in our *rdr* object.
-```{r}
-colData(rdr) <- cbind(colData(rdr), time)
-```
-
-Compute how many L1, L2 and L3 we have:
-```{r}
-table(colData(rdr)$time)
-```
-
-Let's create another one but only with T1:
-```{r}
-rdr_time_L1 <- rdr[, rdr$time == "L1"]
-rdr_time_L1
-```
-
-It is done correctly because we have now 2371 patients with L1.
-
-Save the radar:
-```{r, eval=FALSE}
-save(rdr_time_L1, file = "rdr_L1_Andrea.rda")
-```
-
-Open the radar:
-```{r, warning=FALSE}
-file <- listRDA("rdr_L1_Andrea.rda")
-rdr_L1 <- file$rdr_L1
-rdr_L1
-```
-
-Data frame for rdr:
-```{r}
-data_rdr_L1 <- assay(rdr_L1)
-df_rdr <- as.data.frame(data_rdr_L1)
-df_rdr[1:10,1:2]
-```
 
 ## 7. Data analysis 
 
@@ -258,7 +60,7 @@ paged_table(clinic_data)
 ```
 
 Select variables of t1.
-```{r, warning=FALSE, results='hide'}
+```{r, warning=FALSE, include = FALSE}
 library(tidyverse)
 ```
 ```{r, warning=FALSE}
@@ -545,7 +347,7 @@ table(TRTGRP_values)
 **Random Forest**
 
 With Random Forest we can't have columns starting with numbers, so we will change them and add an A before the number:
-```{r, warning=FALSE, results='hide'}
+```{r, warning=FALSE, include = FALSE}
 library(data.table)
 ```
 
@@ -564,7 +366,7 @@ paged_table(df_rdr4)
 We create a function that takes as a parameter your entire dataset and returns the accuracy of a Random Forest model.\
 
 Load the library.
-```{r, warning=FALSE, results='hide'}
+```{r, warning=FALSE, include = FALSE}
 library(randomForest)
 ```
 
@@ -593,7 +395,7 @@ RandomForest <- function(data){
 }
 ```
 
-First we will do XgBoost *without balancing* the data:
+First we will do Random Forest *without balancing* the data:
 ```{r}
 RandomForest(df_rdr4)
 ```
@@ -606,7 +408,7 @@ table(df_rdr4$TRTGRP_values)
 
 
 Now we balance our data with *SMOTE* method, which is an oversampling technique where the  samples are generated for the minority class. 
-```{r, warning=FALSE, results='hide'}
+```{r, warning=FALSE, include = FALSE}
 # remotes::install_github("cran/DMwR")
 library(DMwR)
 ```
@@ -629,7 +431,7 @@ We get better results with an Accuracy of around 84%.\
 We create a function that takes as a parameter your entire dataset and returns the accuracy of a XgBoost model.\
 
 Load the libraries.
-```{r, warning=FALSE, results='hide'}
+```{r, warning=FALSE, include = FALSE}
 library(xgboost)
 library(caret)
 ```
@@ -660,7 +462,8 @@ XgBoost <- function(data){
   #### Train a model using our training data
   model <- xgboost(data = xgboost_train,                      
                    max.depth = 3, # max depth 
-                   nrounds = 50) # max number of boosting iterations
+                   nrounds = 50, # max number of boosting iterations
+                   verbose = 0) # omit printing 'train-rmse' for each iteration
   
   
   #### Make predictions on the test data
