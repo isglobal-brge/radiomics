@@ -348,9 +348,76 @@ table(TRTGRP_values)
 <br>
 
 
+
 **Boosting**
 
-<span style="color:red">TO DO</span>
+We create a function that takes as a parameter your entire dataset and returns the accuracy of a boosting model (GBM).\
+
+Load the libraries.
+```{r, warning=FALSE, results = FALSE}
+library(gbm)
+library(caret)    
+```
+
+Function:
+```{r}
+Boosting <- function(data){
+  
+  #### Select train 70% and test 30% randomly
+  rows <- sample(nrow(data), .7 * nrow(data))
+  train_data <- data[rows, ] # train data
+  test_data <- data[-rows, ] # test data
+  
+  
+  #### Train a model using our training data
+  model_gbm <- gbm(TRTGRP_values ~.,
+                data = train_data,
+                distribution = "multinomial",
+                cv.folds = 10,
+                shrinkage = .01,
+                n.minobsinnode = 10,
+                n.trees = 500)       # 500 tress to be built
+  
+
+  #### Make predictions on the test data
+  pred_test <- predict.gbm(object = model_gbm,
+                   newdata = test_data,
+                   n.trees = 500,           # 500 tress to be built
+                   type = "response")
+  
+  
+  #### Create a confusion matrix:
+  class_names <- colnames(pred_test)[apply(pred_test, 1, which.max)]
+  result <- data.frame(test_data$TRTGRP_values, class_names)
+  conf_mat <- confusionMatrix(test_data$TRTGRP_values, as.factor(class_names))
+  
+  return(conf_mat$overall["Accuracy"])
+  
+}
+```
+
+First we will do XgBoost *without balancing* the data:
+```{r, warning=FALSE}
+Boosting(df_rdr3)
+```
+
+We get an Accuracy of around 79%.
+
+Now we balance our data with *SMOTE* method, which is an oversampling technique where the  samples are generated for the minority class. 
+
+```{r}
+smote_data <- SMOTE(TRTGRP_values ~ ., data  = df_rdr3)                         
+table(smote_data$TRTGRP_values) 
+```
+
+```{r}
+Boosting(smote_data)
+```
+
+We get worse results with an Accuracy of 70%.
+
+
+<span style="color:red">Worse results balancing data?</span>
 
 
 
