@@ -551,7 +551,7 @@ table(down_data$Class)
 ```
 
 ```{r}
-XgBoost(down_data)
+#XgBoost(down_data)
 ```
 
 We get worse results with an Accuracy of 38%.
@@ -564,7 +564,7 @@ table(smote_data$TRTGRP_values)
 ```
 
 ```{r}
-XgBoost(smote_data)
+#XgBoost(smote_data)
 ```
 
 We get better results with an Accuracy of 70%.
