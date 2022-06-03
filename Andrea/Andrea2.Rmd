@@ -61,7 +61,7 @@ Long-term cigarette smoking is the most common cause of COPD. The more cigarette
 Before we begin with our analysis, we need to explore our clinical data and clean it.
 
 View data:
-```{r, results=}
+```{r}
 clinic_data <- read.delim("eclipse_all.txt")
 print(as_tibble(clinic_data))
 ```
