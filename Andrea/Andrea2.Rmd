@@ -381,7 +381,7 @@ Boosting <- function(data){
 
 First we will do XgBoost *without balancing* the data:
 ```{r, warning=FALSE}
-#Boosting(df_rdr3)
+Boosting(df_rdr3)
 ```
 
 We get an Accuracy of around 79%.
@@ -445,7 +445,7 @@ RandomForest <- function(data){
   
   
   #### Accuracy of our model
-  accuracy <- 100 * sum(diag(confusion_matrix)) / sum(confusion_matrix)
+  accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
   return(accuracy)
 }
 ```
@@ -533,7 +533,7 @@ XgBoost <- function(data){
 
 First we will do XgBoost *without balancing* the data:
 ```{r}
-# XgBoost(df_rdr3)
+XgBoost(df_rdr3)
 ```
 
 We get an Accuracy of around 66%.
@@ -551,7 +551,7 @@ table(down_data$Class)
 ```
 
 ```{r}
-#XgBoost(down_data)
+XgBoost(down_data)
 ```
 
 We get worse results with an Accuracy of 38%.
@@ -564,7 +564,7 @@ table(smote_data$TRTGRP_values)
 ```
 
 ```{r}
-#XgBoost(smote_data)
+XgBoost(smote_data)
 ```
 
 We get better results with an Accuracy of 70%.
