@@ -8,13 +8,30 @@ csl: apa.csl
 ---
 
 ```{r setup, results=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, dev = "png")
 ```
 
 
 ## 7. Data analysis 
 
-First of all, we will make an introduction to **Chronic obstructive pulmonary disease (COPD)**.\
+First we will load all the libraries that we will need to perform our data analysis:
+```{r, results='hide', warning=FALSE, error=FALSE, message=FALSE}
+library(tidyverse)
+library(caret)
+library(ade4) # PCA
+library(made4) # PCA
+library(scatterplot3d) # PCA
+library(admisc) # Read radar objects
+library(omicade4) # CCA
+library(gbm) # Boosting
+library(randomForest) # Random Forest
+library(xgboost) # XgBoost
+library(data.table) # for setnames (in random forest)
+library(DMwR) # SMOTE -> remotes::install_github("cran/DMwR")
+```
+
+
+We will make an introduction to **Chronic obstructive pulmonary disease (COPD)**.\
 
 Chronic obstructive pulmonary disease (COPD) is a long-term lung illness in which the lungs' small airways are damaged, making it difficult for air to enter and exit.\
 
@@ -44,10 +61,9 @@ Long-term cigarette smoking is the most common cause of COPD. The more cigarette
 Before we begin with our analysis, we need to explore our clinical data and clean it.
 
 View data:
-```{r, warning=FALSE}
+```{r, results=}
 clinic_data <- read.delim("eclipse_all.txt")
-library(rmarkdown)
-paged_table(clinic_data)
+print(as_tibble(clinic_data))
 ```
 
 Add 0 in front of index to match rdr names:
@@ -59,13 +75,10 @@ clinic_data$id <- paste0("0", clinic_data$id)
 clinic_data <- clinic_data[-1] # delete first columns (index 0,1,2...)
 row.names(clinic_data) <- clinic_data$id # id as rownames
 clinic_data$id <- NULL # delete id colum
-paged_table(clinic_data)
+print(as_tibble(clinic_data))
 ```
 
 Select variables of t1.
-```{r, warning=FALSE, results = FALSE}
-library(tidyverse)
-```
 ```{r, warning=FALSE}
 clinical_data_T1 <- dplyr::select(clinic_data, !ends_with("t3"))
 ```
@@ -125,7 +138,7 @@ write.table(clinical_data_T1, file = "eclipse_all_CLEAN.txt", sep = "\t")
 
 ```{r}
 clinic_data_clean <- read.delim("eclipse_all_CLEAN.txt")
-paged_table(clinic_data_clean) # view firsts values
+print(as_tibble(clinic_data_clean)) # view firsts values
 ```
 
 
@@ -146,29 +159,18 @@ For PCA we want only want categorical data.\
 Load the clean data set:
 ```{r}
 clinic_data_clean <- read.delim("eclipse_all_CLEAN.txt")
-paged_table(clinic_data_clean) # view firsts values
-```
-
-Load the libraries needed to perform PCA:
-```{r, message=FALSE, results = FALSE}
-library(ade4)
-library(made4)
-library(scatterplot3d)
+print(as_tibble(clinic_data_clean)) # view firsts values
 ```
 
 To do PCA, we need all columns to be numeric.
 ```{r}
 data <- mutate_all(clinic_data_clean, function(x) as.numeric(as.factor(x)))
-paged_table(data)
+print(as_tibble(data))
 ```
 
 Perform PCA:
 ```{r}
 results_PCA <- ord(data, type="coa")
-```
-
-```{r}
-names(results_PCA)
 ```
 
 
@@ -193,19 +195,17 @@ In our case, we will have 2 tables. One with the radiomics features, and another
 
 
 Load the radar object and convert it to a data frame:
-```{r, warning=FALSE, results = FALSE}
-library(rmarkdown)
-library(admisc)
+```{r}
 file <- listRDA("rdr_L1_Andrea.rda")
 rdr_L1 <- file$rdr_L1
 df_rdr <- as.data.frame(assay(rdr_L1))
-paged_table(df_rdr)
+print(as_tibble(df_rdr))
 ```
 
 Load the clean data set:
 ```{r}
 clean_data <- read.delim("eclipse_all_CLEAN.txt")
-paged_table(clean_data) # view firsts values
+print(as_tibble(clean_data)) # view firsts values
 ```
 
 To do CCA, we need all columns to be numeric.
@@ -217,7 +217,7 @@ Now we want the id as columns instead of rows.
 ```{r}
 df_clinical <- as.data.frame(t(clean_data))
 colnames(df_clinical) <- rownames(clean_data) # put id names
-paged_table(df_clinical)
+print(as_tibble(df_clinical))
 ```
 
 Now we have both data frames. But they differ int the number of id. Select in data frames only if id match the common id.
@@ -233,11 +233,6 @@ df_rdr <- select(df_rdr, one_of(common_id))
 Combine both data frames into a list.
 ```{r}
 both_tables <- list("rdr"=df_rdr, "clinical"=df_clinical)
-```
-
-Load the library to do CCA:
-```{r, warning=FALSE}
-library(omicade4)
 ```
 
 Check the dimension are correct:
@@ -265,15 +260,11 @@ plot(mcoin, axes=1:2, sample.lab=FALSE, df.color=1:2)
 Now we will use different methods to predict *TRTGRP* with the radiomic features.\
 
 Load the radar object and convert it to a data frame:
-```{r, warning=FALSE, results = FALSE}
-library(rmarkdown)
-library(admisc)
-```
 ```{r, warning=FALSE}
 file <- listRDA("rdr_L1_Andrea.rda")
 rdr_L1 <- file$rdr_L1
 df_rdr <- as.data.frame(assay(rdr_L1))
-paged_table(df_rdr)
+print(as_tibble(df_rdr))
 ```
 
 Load the clean data set and convert characters to factors:
@@ -281,7 +272,7 @@ Load the clean data set and convert characters to factors:
 clean_data <- read.delim("eclipse_all_CLEAN.txt")
 ch <- sapply(clean_data, is.character)
 clean_data[ch] <- lapply(clean_data[ch], as.factor)
-paged_table(clean_data)
+print(as_tibble(clean_data))
 ```
 
 View a summary of our variable of interest *TRTGRP.t1*:
@@ -296,8 +287,7 @@ We are interested in predicting *TRTGRP.t1* given the radiomic features. So we w
 
 Since both tables differ in the number of id, we select in data frames only if id match the common id.
 
-```{r, warning=FALSE}
-library(tidyverse)
+```{r}
 id_in_rdr <- colnames(df_rdr) # id of rdr
 id_in_clinical <- rownames(clean_data) # id of clinical
 common_id <- Reduce(intersect, list(id_in_rdr,id_in_clinical)) # common id
@@ -321,7 +311,7 @@ Now we want the id as rows instead of columns:
 ```{r}
 df_rdr3 <- as.data.frame(t(df_rdr2))
 rownames(df_rdr3) <- colnames(df_rdr2) # put id names
-paged_table(df_rdr3)
+print(as_tibble(df_rdr3))
 ```
 
 ```{r}
@@ -353,13 +343,6 @@ table(TRTGRP_values)
 
 We create a function that takes as a parameter your entire dataset and returns the accuracy of a boosting model (GBM).\
 
-Load the libraries.
-```{r, warning=FALSE, results = FALSE}
-library(gbm)
-library(caret)    
-```
-
-Function:
 ```{r}
 Boosting <- function(data){
   
@@ -398,7 +381,7 @@ Boosting <- function(data){
 
 First we will do XgBoost *without balancing* the data:
 ```{r, warning=FALSE}
-Boosting(df_rdr3)
+#Boosting(df_rdr3)
 ```
 
 We get an Accuracy of around 79%.
@@ -428,9 +411,6 @@ We get worse results with an Accuracy of 70%.
 **Random Forest**
 
 With Random Forest we can't have columns starting with numbers, so we will change them and add an A before the number:
-```{r, warning=FALSE, results = FALSE}
-library(data.table)
-```
 
 ```{r}
 df_rdr4 <- df_rdr3
@@ -440,18 +420,12 @@ names_number <- colnames(df_rdr4 %>% dplyr:: select(starts_with(c("0","1","2","3
 names_changed <- unlist(lapply(names_number, function(x) paste("A", x, sep="")))
 # Change the names
 setnames(df_rdr4, old=names_number, new = names_changed, skip_absent=TRUE)
-paged_table(df_rdr4)
+print(as_tibble(df_rdr4))
 ```
 
 
 We create a function that takes as a parameter your entire dataset and returns the accuracy of a Random Forest model.\
 
-Load the library.
-```{r, warning=FALSE, results = FALSE}
-library(randomForest)
-```
-
-Function:
 ```{r}
 RandomForest <- function(data){
   
@@ -489,10 +463,6 @@ table(df_rdr4$TRTGRP_values)
 
 
 Now we balance our data with *SMOTE* method, which is an oversampling technique where the  samples are generated for the minority class. 
-```{r, warning=FALSE, results = FALSE}
-# remotes::install_github("cran/DMwR")
-library(DMwR)
-```
 
 ```{r}
 smote_data <- SMOTE(TRTGRP_values ~ ., data  = df_rdr4)                         
@@ -516,13 +486,6 @@ We get better results with an Accuracy of around 84%.\
 
 We create a function that takes as a parameter your entire dataset and returns the accuracy of a XgBoost model.\
 
-Load the libraries.
-```{r, warning=FALSE, results = FALSE}
-library(xgboost)
-library(caret)
-```
-
-Function:
 ```{r}
 XgBoost <- function(data){
   
@@ -570,7 +533,7 @@ XgBoost <- function(data){
 
 First we will do XgBoost *without balancing* the data:
 ```{r}
-XgBoost(df_rdr3)
+# XgBoost(df_rdr3)
 ```
 
 We get an Accuracy of around 66%.
@@ -605,30 +568,6 @@ XgBoost(smote_data)
 ```
 
 We get better results with an Accuracy of 70%.
-
-
-
-<br>
-
-
-
-### 7.5 GOLDCD + TRTGRP prediction
-
-
-<span style="color:red">TO DO: finish</span>
-
-Now we will create a new variable *goldcd_trtgrp* which is a combination of the variables GOLDCD + TRTGRP, it will have levels: COPD_2, COPD_3, COPD_4, COPD_9, Non-smoke_Control, Smoke_Control).
-
-
-Summary of *GOLDCD*:
-```{r, eval=FALSE}
-table(clean_data$GOLDCD)
-```
-
-Summary of *TRTGRP.t1*:
-```{r, eval=FALSE}
-table(clean_data$TRTGRP.t1)
-```
 
 
 
