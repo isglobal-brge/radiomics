@@ -75,6 +75,11 @@ clinic_data$id <- paste0("0", clinic_data$id)
 clinic_data <- clinic_data[-1] # delete first columns (index 0,1,2...)
 row.names(clinic_data) <- clinic_data$id # id as rownames
 clinic_data$id <- NULL # delete id colum
+
+clinic_data$SUBJID.t1 <- NULL # index
+clinic_data$SCRNDT <- NULL # date
+clinic_data$SUBJID.t3 <- NULL # index
+
 print(as_tibble(clinic_data))
 ```
 
@@ -88,10 +93,10 @@ Check for missing data:
 sum(is.na(clinical_data_T1))
 ```
 
-Delete variables that have more than a 50% of missing values:
+Delete variables that have more than a 30% of missing values:
 ```{r}
-more_50_missing <- names(clinical_data_T1[ , colMeans(is.na(clinical_data_T1)) > 0.5])
-more_50_missing
+more_30_missing <- names(clinical_data_T1[ , colMeans(is.na(clinical_data_T1)) > 0.3])
+more_30_missing
 clinical_data_T1 <- clinical_data_T1[, !colnames(clinical_data_T1) %in% more_50_missing]
 ```
 
@@ -132,7 +137,7 @@ clinical_data_T1[ch] <- lapply(clinical_data_T1[ch], as.factor)
 ```
 
 Now that we have a clean data set, we will exported:
-```{r}
+```{r, eval = FALSE}
 write.table(clinical_data_T1, file = "eclipse_all_CLEAN.txt", sep = "\t")
 ```
 
