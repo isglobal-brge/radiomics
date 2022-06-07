@@ -252,7 +252,6 @@ In our case, we will have 2 tables. One with the radiomics features, and another
 
 
 Load radiomic features and clinic data. Since they differ int the number of id, we will only keep common ids.
-
 ```{r}
 ## Radar object
 file <- listRDA("rdr_L1_Andrea.rda")
@@ -308,20 +307,24 @@ plot(mcoin, axes=1:2, phenovec = class_vector, sample.lab=FALSE, df.color=1:2) #
 
 Now we will use different methods to predict *TRTGRP* with the radiomic features.\
 
-Load the radar object and convert it to a data frame:
-```{r, warning=FALSE}
+Load clinic data and radiomic features. Since they differ int the number of id, we will only keep common ids.
+```{r}
+## Radar object
 file <- listRDA("rdr_L1_Andrea.rda")
 rdr_L1 <- file$rdr_L1
 df_rdr <- as.data.frame(assay(rdr_L1))
-print(as_tibble(df_rdr))
-```
 
-Load the clean data set and convert characters to factors:
-```{r}
+## Clinic data
 clean_data <- read.delim("eclipse_all_CLEAN.txt")
-ch <- sapply(clean_data, is.character)
+ch <- sapply(clean_data, is.character) # characters to factors
 clean_data[ch] <- lapply(clean_data[ch], as.factor)
-print(as_tibble(clean_data))
+
+## Keep common ids
+id_in_rdr <- colnames(df_rdr) # id of rdr
+id_in_clinical <- rownames(clean_data) # id of clinical
+common_id <- Reduce(intersect, list(id_in_rdr,id_in_clinical)) # common id
+df_clinical <- clean_data %>% filter(row.names(clean_data) %in% common_id)
+df_rdr <- select(df_rdr, one_of(common_id))
 ```
 
 View a summary of our variable of interest *TRTGRP.t1*:
@@ -329,20 +332,10 @@ View a summary of our variable of interest *TRTGRP.t1*:
 table(clean_data$TRTGRP.t1)
 ```
 
-
 We have three different levels: COPD Subjects Non-smoker, Controls and Smoker Controls.\
 
 We are interested in predicting *TRTGRP.t1* given the radiomic features. So we will add this variable to the table of radiomic features.\
 
-Since both tables differ in the number of id, we select in data frames only if id match the common id.
-
-```{r}
-id_in_rdr <- colnames(df_rdr) # id of rdr
-id_in_clinical <- rownames(clean_data) # id of clinical
-common_id <- Reduce(intersect, list(id_in_rdr,id_in_clinical)) # common id
-df_clinical <- clean_data %>% filter(row.names(clean_data) %in% common_id)
-df_rdr <- select(df_rdr, one_of(common_id))
-```
 
 Convert *TRTGRP.t1* to numeric:
 ```{r}
