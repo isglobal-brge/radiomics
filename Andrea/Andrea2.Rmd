@@ -30,8 +30,10 @@ library(data.table) # for setnames (in random forest)
 library(DMwR) # SMOTE -> remotes::install_github("cran/DMwR")
 ```
 
+<br>
 
-We will make an introduction to **Chronic obstructive pulmonary disease (COPD)**.\
+
+###### **Chronic obstructive pulmonary disease (COPD)**
 
 Chronic obstructive pulmonary disease (COPD) is a long-term lung illness in which the lungs' small airways are damaged, making it difficult for air to enter and exit.\
 
@@ -56,7 +58,7 @@ Long-term cigarette smoking is the most common cause of COPD. The more cigarette
 <br>
 
 
-### 7.1 Clinical data
+### 7.1 Clinical data cleaning
 
 Before we begin with our analysis, we need to explore our clinical data and clean it.
 
@@ -66,24 +68,20 @@ clinic_data <- read.delim("eclipse_all.txt")
 print(as_tibble(clinic_data))
 ```
 
-Add 0 in front of index to match rdr names:
+Delete irrelevant columns:
 ```{r}
-clinic_data$id <- paste0("0", clinic_data$id)
-```
+clinic_data$id <- paste0("0", clinic_data$id) # Add 0 in front of index to match rdr names
 
-```{r}
 clinic_data <- clinic_data[-1] # delete first columns (index 0,1,2...)
 row.names(clinic_data) <- clinic_data$id # id as rownames
 clinic_data$id <- NULL # delete id colum
 
 clinic_data$SUBJID.t1 <- NULL # index
-clinic_data$SCRNDT <- NULL # date
+clinic_data$SCRNDT <- NULL # dates
 clinic_data$SUBJID.t3 <- NULL # index
-
-print(as_tibble(clinic_data))
 ```
 
-Select variables of t1.
+Select variables of t1 (data from time 1).
 ```{r, warning=FALSE}
 clinical_data_T1 <- dplyr::select(clinic_data, !ends_with("t3"))
 ```
@@ -96,13 +94,7 @@ sum(is.na(clinical_data_T1))
 Delete variables that have more than a 30% of missing values:
 ```{r}
 more_30_missing <- names(clinical_data_T1[ , colMeans(is.na(clinical_data_T1)) > 0.3])
-more_30_missing
-clinical_data_T1 <- clinical_data_T1[, !colnames(clinical_data_T1) %in% more_50_missing]
-```
-
-Check for missing data:
-```{r}
-sum(is.na(clinical_data_T1))
+clinical_data_T1 <- clinical_data_T1[, !colnames(clinical_data_T1) %in% more_30_missing]
 ```
 
 Impute missing values of double variables for the mean value:
@@ -120,8 +112,7 @@ clinical_data_T1 <- clinical_data_T1 %>%  mutate_if(is.integer,
 Impute missing values of categroical variables for the most common value:
 ```{r}
 clinical_data_T1[, sapply(clinical_data_T1, function(x) !is.numeric(x))] <- apply(clinical_data_T1[, sapply(clinical_data_T1, function(x) !is.numeric(x))], 
-                                                      2, 
-                                                      function(x) {x[is.na(x)] <- names(sort(table(x), decreasing = TRUE)[1]); x})
+                                                      2, function(x) {x[is.na(x)] <- names(sort(table(x), decreasing = TRUE)[1]); x})
 ```
 
 Check for missing data:
@@ -129,22 +120,18 @@ Check for missing data:
 sum(is.na(clinical_data_T1))
 ```
 
-
 Characters to factors:
 ```{r}
 ch <- sapply(clinical_data_T1, is.character)
 clinical_data_T1[ch] <- lapply(clinical_data_T1[ch], as.factor)
+print(as_tibble(clinical_data_T1))
 ```
 
-Now that we have a clean data set, we will exported:
+Now that we have a clean data set, we will export it:
 ```{r, eval = FALSE}
 write.table(clinical_data_T1, file = "eclipse_all_CLEAN.txt", sep = "\t")
 ```
 
-```{r}
-clinic_data_clean <- read.delim("eclipse_all_CLEAN.txt")
-print(as_tibble(clinic_data_clean)) # view firsts values
-```
 
 
 <br>
@@ -158,30 +145,89 @@ We will first start doing principal component analysis with the radiomic feature
 Recall that PCA is a statistical approach that allows you to summarize the content of big data tables using a smaller set of "summary indices" that are easier to display and study.\
 
 
-For PCA we want only want categorical data.\
+**All clinical variables**
 
-
-Load the clean data set:
+Load the clean clinic data set and convert all columns to be numeric (needed for PCA):
 ```{r}
 clinic_data_clean <- read.delim("eclipse_all_CLEAN.txt")
-print(as_tibble(clinic_data_clean)) # view firsts values
-```
-
-To do PCA, we need all columns to be numeric.
-```{r}
 data <- mutate_all(clinic_data_clean, function(x) as.numeric(as.factor(x)))
 print(as_tibble(data))
 ```
 
-Perform PCA:
+PCA:
 ```{r}
 results_PCA <- ord(data, type="coa")
+plot(results_PCA, classvec = colnames(data), genecol="grey3")
 ```
 
+**Differenciate between control (smoker vs non-smoker) and cases (COPD)**
 
+Load data:
 ```{r}
-plot(results_PCA, classvec=colnames(data), genecol="grey3")
+clinic_data_clean <- read.delim("eclipse_all_CLEAN.txt")
+clinic_data_clean <- mutate_all(clinic_data_clean, function(x) as.numeric(as.factor(x)))
+data <- as.data.frame(t(clinic_data_clean))
+colnames(data) <- rownames(clinic_data_clean) # put id names
+
+## Label for "COPD" or "Non COPD"
+class_vector <- as.numeric(data["TRTGRP.t1",])
+for(i in 1:length(class_vector)){
+  if(class_vector[i] == 1) class_vector[i] <- "COPD"
+  else class_vector[i] <- "Non COPD"
+}
+
+## Delete TRTGRP.t1 from table
+data <- data[!(row.names(data) %in% "TRTGRP.t1"), ]
+print(as_tibble(data))
 ```
+
+PCA:
+```{r}
+results_PCA <- ord(data, type="coa")
+plot(results_PCA, classvec = class_vector, genecol="grey3")
+```
+
+
+**Radiomic features: control (smoker vs non-smoker) and cases (COPD)**
+
+Load radiomic features and clinic data. Since they differ int the number of id, we will only keep common ids.
+```{r}
+## Radar object
+file <- listRDA("rdr_L1_Andrea.rda")
+rdr_L1 <- file$rdr_L1
+df_rdr <- as.data.frame(assay(rdr_L1))
+
+## Clinic data
+clean_data <- read.delim("eclipse_all_CLEAN.txt")
+clean_data <- mutate_all(clean_data, function(x) as.numeric(as.factor(x))) # convert to numeric
+df_clinical <- as.data.frame(t(clean_data)) # id as columns
+colnames(df_clinical) <- rownames(clean_data) 
+
+## Keep common ids
+id_in_rdr <- colnames(df_rdr) # id of rdr
+id_in_clinical <- colnames(df_clinical) # id of clinical
+common_id <- Reduce(intersect, list(id_in_rdr,id_in_clinical)) # common id
+
+df_clinical <- select(df_clinical, one_of(common_id))
+df_rdr <- select(df_rdr, one_of(common_id))
+
+## Label for "COPD" or "Non COPD"
+class_vector <- as.numeric(df_clinical["TRTGRP.t1",])
+for(i in 1:length(class_vector)){
+  if(class_vector[i] == 1) class_vector[i] <- "COPD"
+  else class_vector[i] <- "Non-COPD"
+}
+
+print(as_tibble(df_rdr))
+```
+
+PCA:
+```{r}
+results_PCA <- ord(df_rdr, type="coa")
+plot(results_PCA, classvec = class_vector, genecol="grey3")
+```
+
+
 
 
 <br>
@@ -199,61 +245,53 @@ Multiple correlation analysis predicts only one dependent variable from several 
 In our case, we will have 2 tables. One with the radiomics features, and another one with the clinical data. We want to have id -> columns and features -> rows.\
 
 
-Load the radar object and convert it to a data frame:
+Load radiomic features and clinic data. Since they differ int the number of id, we will only keep common ids.
+
 ```{r}
+## Radar object
 file <- listRDA("rdr_L1_Andrea.rda")
 rdr_L1 <- file$rdr_L1
 df_rdr <- as.data.frame(assay(rdr_L1))
-print(as_tibble(df_rdr))
-```
 
-Load the clean data set:
-```{r}
+## Clinic data
 clean_data <- read.delim("eclipse_all_CLEAN.txt")
-print(as_tibble(clean_data)) # view firsts values
-```
+clean_data <- mutate_all(clean_data, function(x) as.numeric(as.factor(x))) # convert to numeric
+df_clinical <- as.data.frame(t(clean_data)) # id as columns
+colnames(df_clinical) <- rownames(clean_data) 
 
-To do CCA, we need all columns to be numeric.
-```{r}
-clean_data <- mutate_all(clean_data, function(x) as.numeric(as.factor(x)))
-```
-
-Now we want the id as columns instead of rows.
-```{r}
-df_clinical <- as.data.frame(t(clean_data))
-colnames(df_clinical) <- rownames(clean_data) # put id names
-print(as_tibble(df_clinical))
-```
-
-Now we have both data frames. But they differ int the number of id. Select in data frames only if id match the common id.
-```{r}
+## Keep common ids
 id_in_rdr <- colnames(df_rdr) # id of rdr
 id_in_clinical <- colnames(df_clinical) # id of clinical
 common_id <- Reduce(intersect, list(id_in_rdr,id_in_clinical)) # common id
 
 df_clinical <- select(df_clinical, one_of(common_id))
 df_rdr <- select(df_rdr, one_of(common_id))
+
+## Label for "COPD" or "Non COPD"
+class_vector <- as.numeric(df_clinical["TRTGRP.t1",])
+for(i in 1:length(class_vector)){
+  if(class_vector[i] == 1) class_vector[i] <- "COPD"
+  else class_vector[i] <- "Non-COPD"
+}
+
+df_clinical <- df_clinical[!(row.names(df_clinical) %in% "TRTGRP.t1"), ] # delete TRTGRP.t1 from table
+
+print(as_tibble(df_clinical))
+print(as_tibble(df_rdr))
 ```
 
 Combine both data frames into a list.
 ```{r}
-both_tables <- list("rdr"=df_rdr, "clinical"=df_clinical)
-```
-
-Check the dimension are correct:
-```{r}
-sapply(both_tables, dim)
+both_tables <- list("rdr" = df_rdr, "clinical" = df_clinical)
+sapply(both_tables, dim) # check the dimension are correct
 ```
 
 Perform CCA:
 ```{r}
 mcoin <- mcia(both_tables, cia.nf=10)
+plot(mcoin, axes=1:2, phenovec = class_vector, sample.lab=FALSE, df.color=1:2) # visualize the result
 ```
 
-Visualize the result:
-```{r}
-plot(mcoin, axes=1:2, sample.lab=FALSE, df.color=1:2)
-```
 
 
 <br>
