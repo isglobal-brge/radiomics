@@ -610,7 +610,11 @@ final_results
 <br>
 
 
-### 7.1 Clinical data cleaning
+### 7.5 Classification COPD types
+
+
+
+
 
 
 
