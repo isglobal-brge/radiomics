@@ -33,7 +33,7 @@ library(DMwR) # SMOTE -> remotes::install_github("cran/DMwR")
 <br>
 
 
-###### **Chronic obstructive pulmonary disease (COPD)**
+#### **Chronic obstructive pulmonary disease (COPD)**
 
 Chronic obstructive pulmonary disease (COPD) is a long-term lung illness in which the lungs' small airways are damaged, making it difficult for air to enter and exit.\
 
@@ -124,7 +124,6 @@ Characters to factors:
 ```{r}
 ch <- sapply(clinical_data_T1, is.character)
 clinical_data_T1[ch] <- lapply(clinical_data_T1[ch], as.factor)
-print(as_tibble(clinical_data_T1))
 ```
 
 Now that we have a clean data set, we will export it:
@@ -151,7 +150,7 @@ Load the clean clinic data set and convert all columns to be numeric (needed for
 ```{r}
 clinic_data_clean <- read.delim("eclipse_all_CLEAN.txt")
 data <- mutate_all(clinic_data_clean, function(x) as.numeric(as.factor(x)))
-print(as_tibble(data))
+data[1:5, 1:8]
 ```
 
 PCA:
@@ -159,6 +158,11 @@ PCA:
 results_PCA <- ord(data, type="coa")
 plot(results_PCA, classvec = colnames(data), genecol="grey3")
 ```
+
+
+<br>
+
+
 
 **Differenciate between control (smoker vs non-smoker) and cases (COPD)**
 
@@ -178,7 +182,7 @@ for(i in 1:length(class_vector)){
 
 ## Delete TRTGRP.t1 from table
 data <- data[!(row.names(data) %in% "TRTGRP.t1"), ]
-print(as_tibble(data))
+data[1:5, 1:8]
 ```
 
 PCA:
@@ -186,6 +190,8 @@ PCA:
 results_PCA <- ord(data, type="coa")
 plot(results_PCA, classvec = class_vector, genecol="grey3")
 ```
+
+<br>
 
 
 **Radiomic features: control (smoker vs non-smoker) and cases (COPD)**
@@ -218,7 +224,7 @@ for(i in 1:length(class_vector)){
   else class_vector[i] <- "Non-COPD"
 }
 
-print(as_tibble(df_rdr))
+df_rdr[1:5, 1:8]
 ```
 
 PCA:
@@ -276,8 +282,8 @@ for(i in 1:length(class_vector)){
 
 df_clinical <- df_clinical[!(row.names(df_clinical) %in% "TRTGRP.t1"), ] # delete TRTGRP.t1 from table
 
-print(as_tibble(df_clinical))
-print(as_tibble(df_rdr))
+df_clinical[1:5, 1:8]
+df_rdr[1:5, 1:8]
 ```
 
 Combine both data frames into a list.
