@@ -596,15 +596,21 @@ table(smote_data$TRTGRP_values)
 
 We get better results with an Accuracy of 80%.\
 
+
 Summary:
 ```{r}
-final_results <- data.frame("." = c("No balancing", "SMOTE", "Down Sample"),
+final_results <- data.frame("ACCURACY" = c("No balancing", "SMOTE", "Down Sample"),
                             "Boosting" = c(boosting_not_balanced, boosting_smote, "-"),
                             "Random Forest" = c(rf_not_balanced, rf_smote, "-"),
                             "XGBoost" = c(xgboost_not_balanced, xgboost_smote, xgboost_down))
 final_results
 ```
 
+
+<br>
+
+
+### 7.1 Clinical data cleaning
 
 
 
