@@ -8,13 +8,32 @@ csl: apa.csl
 ---
 
 ```{r setup, results=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, dev = "png")
 ```
 
 
 ## 7. Data analysis 
 
-First of all, we will make an introduction to **Chronic obstructive pulmonary disease (COPD)**.\
+First we will load all the libraries that we will need to perform our data analysis:
+```{r, results='hide', warning=FALSE, error=FALSE, message=FALSE}
+library(tidyverse)
+library(caret)
+library(ade4) # PCA
+library(made4) # PCA
+library(scatterplot3d) # PCA
+library(admisc) # Read radar objects
+library(omicade4) # CCA
+library(gbm) # Boosting
+library(randomForest) # Random Forest
+library(xgboost) # XgBoost
+library(data.table) # for setnames (in random forest)
+library(DMwR) # SMOTE -> remotes::install_github("cran/DMwR")
+```
+
+<br>
+
+
+#### **Chronic obstructive pulmonary disease (COPD)**
 
 Chronic obstructive pulmonary disease (COPD) is a long-term lung illness in which the lungs' small airways are damaged, making it difficult for air to enter and exit.\
 
@@ -39,33 +58,30 @@ Long-term cigarette smoking is the most common cause of COPD. The more cigarette
 <br>
 
 
-### 7.1 Clinical data
+### 7.1 Clinical data cleaning
 
 Before we begin with our analysis, we need to explore our clinical data and clean it.
 
 View data:
-```{r, warning=FALSE}
+```{r}
 clinic_data <- read.delim("eclipse_all.txt")
-library(rmarkdown)
-paged_table(clinic_data)
+print(as_tibble(clinic_data))
 ```
 
-Add 0 in front of index to match rdr names:
+Delete irrelevant columns:
 ```{r}
-clinic_data$id <- paste0("0", clinic_data$id)
-```
+clinic_data$id <- paste0("0", clinic_data$id) # Add 0 in front of index to match rdr names
 
-```{r}
 clinic_data <- clinic_data[-1] # delete first columns (index 0,1,2...)
 row.names(clinic_data) <- clinic_data$id # id as rownames
 clinic_data$id <- NULL # delete id colum
-paged_table(clinic_data)
+
+clinic_data$SUBJID.t1 <- NULL # index
+clinic_data$SCRNDT <- NULL # dates
+clinic_data$SUBJID.t3 <- NULL # index
 ```
 
-Select variables of t1.
-```{r, warning=FALSE, results = FALSE}
-library(tidyverse)
-```
+Select variables of t1 (data from time 1).
 ```{r, warning=FALSE}
 clinical_data_T1 <- dplyr::select(clinic_data, !ends_with("t3"))
 ```
@@ -75,16 +91,10 @@ Check for missing data:
 sum(is.na(clinical_data_T1))
 ```
 
-Delete variables that have more than a 50% of missing values:
+Delete variables that have more than a 30% of missing values:
 ```{r}
-more_50_missing <- names(clinical_data_T1[ , colMeans(is.na(clinical_data_T1)) > 0.5])
-more_50_missing
-clinical_data_T1 <- clinical_data_T1[, !colnames(clinical_data_T1) %in% more_50_missing]
-```
-
-Check for missing data:
-```{r}
-sum(is.na(clinical_data_T1))
+more_30_missing <- names(clinical_data_T1[ , colMeans(is.na(clinical_data_T1)) > 0.3])
+clinical_data_T1 <- clinical_data_T1[, !colnames(clinical_data_T1) %in% more_30_missing]
 ```
 
 Impute missing values of double variables for the mean value:
@@ -102,8 +112,7 @@ clinical_data_T1 <- clinical_data_T1 %>%  mutate_if(is.integer,
 Impute missing values of categroical variables for the most common value:
 ```{r}
 clinical_data_T1[, sapply(clinical_data_T1, function(x) !is.numeric(x))] <- apply(clinical_data_T1[, sapply(clinical_data_T1, function(x) !is.numeric(x))], 
-                                                      2, 
-                                                      function(x) {x[is.na(x)] <- names(sort(table(x), decreasing = TRUE)[1]); x})
+                                                      2, function(x) {x[is.na(x)] <- names(sort(table(x), decreasing = TRUE)[1]); x})
 ```
 
 Check for missing data:
@@ -111,22 +120,17 @@ Check for missing data:
 sum(is.na(clinical_data_T1))
 ```
 
-
 Characters to factors:
 ```{r}
 ch <- sapply(clinical_data_T1, is.character)
 clinical_data_T1[ch] <- lapply(clinical_data_T1[ch], as.factor)
 ```
 
-Now that we have a clean data set, we will exported:
-```{r}
+Now that we have a clean data set, we will export it:
+```{r, eval = FALSE}
 write.table(clinical_data_T1, file = "eclipse_all_CLEAN.txt", sep = "\t")
 ```
 
-```{r}
-clinic_data_clean <- read.delim("eclipse_all_CLEAN.txt")
-paged_table(clinic_data_clean) # view firsts values
-```
 
 
 <br>
@@ -140,41 +144,96 @@ We will first start doing principal component analysis with the radiomic feature
 Recall that PCA is a statistical approach that allows you to summarize the content of big data tables using a smaller set of "summary indices" that are easier to display and study.\
 
 
-For PCA we want only want categorical data.\
+**All clinical variables**
 
-
-Load the clean data set:
+Load the clean clinic data set and convert all columns to be numeric (needed for PCA):
 ```{r}
 clinic_data_clean <- read.delim("eclipse_all_CLEAN.txt")
-paged_table(clinic_data_clean) # view firsts values
-```
-
-Load the libraries needed to perform PCA:
-```{r, message=FALSE, results = FALSE}
-library(ade4)
-library(made4)
-library(scatterplot3d)
-```
-
-To do PCA, we need all columns to be numeric.
-```{r}
 data <- mutate_all(clinic_data_clean, function(x) as.numeric(as.factor(x)))
-paged_table(data)
+data[1:5, 1:8]
 ```
 
-Perform PCA:
+PCA:
 ```{r}
 results_PCA <- ord(data, type="coa")
+plot(results_PCA, classvec = colnames(data), genecol="grey3")
 ```
 
+
+<br>
+
+
+
+**Differenciate between control (smoker vs non-smoker) and cases (COPD)**
+
+Load data:
 ```{r}
-names(results_PCA)
+clinic_data_clean <- read.delim("eclipse_all_CLEAN.txt")
+clinic_data_clean <- mutate_all(clinic_data_clean, function(x) as.numeric(as.factor(x)))
+data <- as.data.frame(t(clinic_data_clean))
+colnames(data) <- rownames(clinic_data_clean) # put id names
+
+## Label for "COPD" or "Non COPD"
+class_vector <- as.numeric(data["TRTGRP.t1",])
+for(i in 1:length(class_vector)){
+  if(class_vector[i] == 1) class_vector[i] <- "COPD"
+  else class_vector[i] <- "Non COPD"
+}
+
+## Delete TRTGRP.t1 from table
+data <- data[!(row.names(data) %in% "TRTGRP.t1"), ]
+data[1:5, 1:8]
 ```
 
-
+PCA:
 ```{r}
-plot(results_PCA, classvec=colnames(data), genecol="grey3")
+results_PCA <- ord(data, type="coa")
+plot(results_PCA, classvec = class_vector, genecol="grey3")
 ```
+
+<br>
+
+
+**Radiomic features: control (smoker vs non-smoker) and cases (COPD)**
+
+Load radiomic features and clinic data. Since they differ int the number of id, we will only keep common ids.
+```{r}
+## Radar object
+file <- listRDA("rdr_L1_Andrea.rda")
+rdr_L1 <- file$rdr_L1
+df_rdr <- as.data.frame(assay(rdr_L1))
+
+## Clinic data
+clean_data <- read.delim("eclipse_all_CLEAN.txt")
+clean_data <- mutate_all(clean_data, function(x) as.numeric(as.factor(x))) # convert to numeric
+df_clinical <- as.data.frame(t(clean_data)) # id as columns
+colnames(df_clinical) <- rownames(clean_data) 
+
+## Keep common ids
+id_in_rdr <- colnames(df_rdr) # id of rdr
+id_in_clinical <- colnames(df_clinical) # id of clinical
+common_id <- Reduce(intersect, list(id_in_rdr,id_in_clinical)) # common id
+
+df_clinical <- select(df_clinical, one_of(common_id))
+df_rdr <- select(df_rdr, one_of(common_id))
+
+## Label for "COPD" or "Non COPD"
+class_vector <- as.numeric(df_clinical["TRTGRP.t1",])
+for(i in 1:length(class_vector)){
+  if(class_vector[i] == 1) class_vector[i] <- "COPD"
+  else class_vector[i] <- "Non-COPD"
+}
+
+df_rdr[1:5, 1:8]
+```
+
+PCA:
+```{r}
+results_PCA <- ord(df_rdr, type="coa")
+plot(results_PCA, classvec = class_vector, genecol="grey3")
+```
+
+
 
 
 <br>
@@ -192,68 +251,52 @@ Multiple correlation analysis predicts only one dependent variable from several 
 In our case, we will have 2 tables. One with the radiomics features, and another one with the clinical data. We want to have id -> columns and features -> rows.\
 
 
-Load the radar object and convert it to a data frame:
-```{r, warning=FALSE, results = FALSE}
-library(rmarkdown)
-library(admisc)
+Load radiomic features and clinic data. Since they differ int the number of id, we will only keep common ids.
+```{r}
+## Radar object
 file <- listRDA("rdr_L1_Andrea.rda")
 rdr_L1 <- file$rdr_L1
 df_rdr <- as.data.frame(assay(rdr_L1))
-paged_table(df_rdr)
-```
 
-Load the clean data set:
-```{r}
+## Clinic data
 clean_data <- read.delim("eclipse_all_CLEAN.txt")
-paged_table(clean_data) # view firsts values
-```
+clean_data <- mutate_all(clean_data, function(x) as.numeric(as.factor(x))) # convert to numeric
+df_clinical <- as.data.frame(t(clean_data)) # id as columns
+colnames(df_clinical) <- rownames(clean_data) 
 
-To do CCA, we need all columns to be numeric.
-```{r}
-clean_data <- mutate_all(clean_data, function(x) as.numeric(as.factor(x)))
-```
-
-Now we want the id as columns instead of rows.
-```{r}
-df_clinical <- as.data.frame(t(clean_data))
-colnames(df_clinical) <- rownames(clean_data) # put id names
-paged_table(df_clinical)
-```
-
-Now we have both data frames. But they differ int the number of id. Select in data frames only if id match the common id.
-```{r}
+## Keep common ids
 id_in_rdr <- colnames(df_rdr) # id of rdr
 id_in_clinical <- colnames(df_clinical) # id of clinical
 common_id <- Reduce(intersect, list(id_in_rdr,id_in_clinical)) # common id
 
 df_clinical <- select(df_clinical, one_of(common_id))
 df_rdr <- select(df_rdr, one_of(common_id))
+
+## Label for "COPD" or "Non COPD"
+class_vector <- as.numeric(df_clinical["TRTGRP.t1",])
+for(i in 1:length(class_vector)){
+  if(class_vector[i] == 1) class_vector[i] <- "COPD"
+  else class_vector[i] <- "Non-COPD"
+}
+
+df_clinical <- df_clinical[!(row.names(df_clinical) %in% "TRTGRP.t1"), ] # delete TRTGRP.t1 from table
+
+df_clinical[1:5, 1:8]
+df_rdr[1:5, 1:8]
 ```
 
 Combine both data frames into a list.
 ```{r}
-both_tables <- list("rdr"=df_rdr, "clinical"=df_clinical)
-```
-
-Load the library to do CCA:
-```{r, warning=FALSE}
-library(omicade4)
-```
-
-Check the dimension are correct:
-```{r}
-sapply(both_tables, dim)
+both_tables <- list("rdr" = df_rdr, "clinical" = df_clinical)
+sapply(both_tables, dim) # check the dimension are correct
 ```
 
 Perform CCA:
 ```{r}
 mcoin <- mcia(both_tables, cia.nf=10)
+plot(mcoin, axes=1:2, phenovec = class_vector, sample.lab=FALSE, df.color=1:2) # visualize the result
 ```
 
-Visualize the result:
-```{r}
-plot(mcoin, axes=1:2, sample.lab=FALSE, df.color=1:2)
-```
 
 
 <br>
@@ -264,40 +307,19 @@ plot(mcoin, axes=1:2, sample.lab=FALSE, df.color=1:2)
 
 Now we will use different methods to predict *TRTGRP* with the radiomic features.\
 
-Load the radar object and convert it to a data frame:
-```{r, warning=FALSE, results = FALSE}
-library(rmarkdown)
-library(admisc)
-```
-```{r, warning=FALSE}
+Load clinic data and radiomic features. Since they differ int the number of id, we will only keep common ids.
+```{r}
+## Radar object
 file <- listRDA("rdr_L1_Andrea.rda")
 rdr_L1 <- file$rdr_L1
 df_rdr <- as.data.frame(assay(rdr_L1))
-paged_table(df_rdr)
-```
 
-Load the clean data set and convert characters to factors:
-```{r}
+## Clinic data
 clean_data <- read.delim("eclipse_all_CLEAN.txt")
-ch <- sapply(clean_data, is.character)
+ch <- sapply(clean_data, is.character) # characters to factors
 clean_data[ch] <- lapply(clean_data[ch], as.factor)
-paged_table(clean_data)
-```
 
-View a summary of our variable of interest *TRTGRP.t1*:
-```{r}
-table(clean_data$TRTGRP.t1)
-```
-
-
-We have three different levels: COPD Subjects Non-smoker, Controls and Smoker Controls.\
-
-We are interested in predicting *TRTGRP.t1* given the radiomic features. So we will add this variable to the table of radiomic features.\
-
-Since both tables differ in the number of id, we select in data frames only if id match the common id.
-
-```{r, warning=FALSE}
-library(tidyverse)
+## Keep common ids
 id_in_rdr <- colnames(df_rdr) # id of rdr
 id_in_clinical <- rownames(clean_data) # id of clinical
 common_id <- Reduce(intersect, list(id_in_rdr,id_in_clinical)) # common id
@@ -305,28 +327,33 @@ df_clinical <- clean_data %>% filter(row.names(clean_data) %in% common_id)
 df_rdr <- select(df_rdr, one_of(common_id))
 ```
 
-Convert *TRTGRP.t1* to numeric:
+View a summary of our variable of interest *TRTGRP.t1*:
 ```{r}
-df_clinical$TRTGRP.t1 <- as.numeric(df_clinical$TRTGRP.t1)
-TRTGRP_values <- df_clinical$TRTGRP.t1
+table(clean_data$TRTGRP.t1)
+TRTGRP_values <- as.numeric(clean_data$TRTGRP.t1)
 table(TRTGRP_values)
 ```
 
-Add the values to the data frame:
+We have three different levels: COPD Subjects Non-smoker, Controls and Smoker Controls. We will combine it into two levels: COPD (cases) and Non COPD (controls).
+```{r}
+for(i in 1:length(TRTGRP_values)){
+  if(TRTGRP_values[i] == 1) TRTGRP_values[i] <- "COPD"
+  else TRTGRP_values[i] <- "Non COPD"
+}
+table(TRTGRP_values)
+TRTGRP_values <- as.numeric(as.factor(TRTGRP_values))
+table(TRTGRP_values)
+```
+
+We are interested in predicting *TRTGRP.t1* given the radiomic features. So we will add this variable to the table of radiomic features.\
+
+
+Add the values to the data frame and put id as rows instead of columns:
 ```{r}
 df_rdr2 <- rbind(df_rdr, "TRTGRP_values" = TRTGRP_values)
-```
-
-Now we want the id as rows instead of columns:
-```{r}
 df_rdr3 <- as.data.frame(t(df_rdr2))
 rownames(df_rdr3) <- colnames(df_rdr2) # put id names
-paged_table(df_rdr3)
-```
-
-```{r}
-df_rdr3$TRTGRP_values <- as.factor(df_rdr3$TRTGRP_values)
-levels(df_rdr3$TRTGRP_values) <- c("COPD Subjects", "Non-smoker Controls", "Smoker Controls")
+print(as_tibble(df_rdr3))
 ```
 
 
@@ -334,9 +361,7 @@ With the data we have, we need to balance the data.
 
 Check how much data we have of each type:
 ```{r, out.width="50%"}
-barplot(prop.table(table(df_rdr3$TRTGRP_values)),
-        col = rainbow(3), ylim = c(0, 1),
-        main = "Class Distribution")
+barplot(prop.table(table(TRTGRP_values)), col = rainbow(2), ylim = c(0, 1), main = "TRTGRP_values Distribution")
 ```
 
 We can clearly see that we don't have balanced data, this will produce not very accurate results in our models.
@@ -353,13 +378,6 @@ table(TRTGRP_values)
 
 We create a function that takes as a parameter your entire dataset and returns the accuracy of a boosting model (GBM).\
 
-Load the libraries.
-```{r, warning=FALSE, results = FALSE}
-library(gbm)
-library(caret)    
-```
-
-Function:
 ```{r}
 Boosting <- function(data){
   
@@ -367,7 +385,6 @@ Boosting <- function(data){
   rows <- sample(nrow(data), .7 * nrow(data))
   train_data <- data[rows, ] # train data
   test_data <- data[-rows, ] # test data
-  
   
   #### Train a model using our training data
   model_gbm <- gbm(TRTGRP_values ~.,
@@ -378,27 +395,24 @@ Boosting <- function(data){
                 n.minobsinnode = 10,
                 n.trees = 500)       # 500 tress to be built
   
-
   #### Make predictions on the test data
   pred_test <- predict.gbm(object = model_gbm,
                    newdata = test_data,
                    n.trees = 500,           # 500 tress to be built
                    type = "response")
   
-  
   #### Create a confusion matrix:
   class_names <- colnames(pred_test)[apply(pred_test, 1, which.max)]
   result <- data.frame(test_data$TRTGRP_values, class_names)
-  conf_mat <- confusionMatrix(test_data$TRTGRP_values, as.factor(class_names))
+  conf_mat <- confusionMatrix(as.factor(test_data$TRTGRP_values), as.factor(class_names))
   
-  return(conf_mat$overall["Accuracy"])
-  
+  return(conf_mat$overall["Accuracy"]) # return Accuracy
 }
 ```
 
-First we will do XgBoost *without balancing* the data:
+First we will do Boosting *without balancing* the data:
 ```{r, warning=FALSE}
-Boosting(df_rdr3)
+(boosting_not_balanced <- Boosting(df_rdr3))
 ```
 
 We get an Accuracy of around 79%.
@@ -406,19 +420,16 @@ We get an Accuracy of around 79%.
 Now we balance our data with *SMOTE* method, which is an oversampling technique where the  samples are generated for the minority class. 
 
 ```{r}
+df_rdr3$TRTGRP_values <- as.factor(df_rdr3$TRTGRP_values)
 smote_data <- SMOTE(TRTGRP_values ~ ., data  = df_rdr3)                         
 table(smote_data$TRTGRP_values) 
 ```
 
 ```{r}
-Boosting(smote_data)
+(boosting_smote <- Boosting(smote_data))
 ```
 
 We get worse results with an Accuracy of 70%.
-
-
-<span style="color:red">Worse results balancing data?</span>
-
 
 
 <br>
@@ -428,9 +439,6 @@ We get worse results with an Accuracy of 70%.
 **Random Forest**
 
 With Random Forest we can't have columns starting with numbers, so we will change them and add an A before the number:
-```{r, warning=FALSE, results = FALSE}
-library(data.table)
-```
 
 ```{r}
 df_rdr4 <- df_rdr3
@@ -440,18 +448,11 @@ names_number <- colnames(df_rdr4 %>% dplyr:: select(starts_with(c("0","1","2","3
 names_changed <- unlist(lapply(names_number, function(x) paste("A", x, sep="")))
 # Change the names
 setnames(df_rdr4, old=names_number, new = names_changed, skip_absent=TRUE)
-paged_table(df_rdr4)
 ```
 
 
 We create a function that takes as a parameter your entire dataset and returns the accuracy of a Random Forest model.\
 
-Load the library.
-```{r, warning=FALSE, results = FALSE}
-library(randomForest)
-```
-
-Function:
 ```{r}
 RandomForest <- function(data){
   
@@ -471,14 +472,14 @@ RandomForest <- function(data){
   
   
   #### Accuracy of our model
-  accuracy <- 100 * sum(diag(confusion_matrix)) / sum(confusion_matrix)
+  accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
   return(accuracy)
 }
 ```
 
 First we will do Random Forest *without balancing* the data:
 ```{r}
-RandomForest(df_rdr4)
+(rf_not_balanced <- RandomForest(df_rdr4))
 ```
 
 We get an Accuracy of around 79%.
@@ -489,10 +490,6 @@ table(df_rdr4$TRTGRP_values)
 
 
 Now we balance our data with *SMOTE* method, which is an oversampling technique where the  samples are generated for the minority class. 
-```{r, warning=FALSE, results = FALSE}
-# remotes::install_github("cran/DMwR")
-library(DMwR)
-```
 
 ```{r}
 smote_data <- SMOTE(TRTGRP_values ~ ., data  = df_rdr4)                         
@@ -500,10 +497,10 @@ table(smote_data$TRTGRP_values)
 ```
 
 ```{r}
-RandomForest(smote_data)
+(rf_smote <- RandomForest(smote_data))
 ```
 
-We get better results with an Accuracy of around 84%.\
+We get better results with an Accuracy of around 88%.\
 
 
 
@@ -516,13 +513,6 @@ We get better results with an Accuracy of around 84%.\
 
 We create a function that takes as a parameter your entire dataset and returns the accuracy of a XgBoost model.\
 
-Load the libraries.
-```{r, warning=FALSE, results = FALSE}
-library(xgboost)
-library(caret)
-```
-
-Function:
 ```{r}
 XgBoost <- function(data){
   
@@ -570,10 +560,10 @@ XgBoost <- function(data){
 
 First we will do XgBoost *without balancing* the data:
 ```{r}
-XgBoost(df_rdr3)
+(xgboost_not_balanced <- XgBoost(df_rdr3))
 ```
 
-We get an Accuracy of around 66%.
+We get an Accuracy of around 76%.
 
 ```{r}
 table(df_rdr3$TRTGRP_values)
@@ -588,10 +578,10 @@ table(down_data$Class)
 ```
 
 ```{r}
-XgBoost(down_data)
+(xgboost_down <- XgBoost(down_data))
 ```
 
-We get worse results with an Accuracy of 38%.
+We get worse results with an Accuracy of 60%.
 
 Now we balance our data with *SMOTE* method, which is an oversampling technique where the  samples are generated for the minority class. 
 
@@ -601,34 +591,29 @@ table(smote_data$TRTGRP_values)
 ```
 
 ```{r}
-XgBoost(smote_data)
+(xgboost_smote <- XgBoost(smote_data))
 ```
 
-We get better results with an Accuracy of 70%.
+We get better results with an Accuracy of 80%.\
 
+
+Summary:
+```{r}
+final_results <- data.frame("ACCURACY" = c("No balancing", "SMOTE", "Down Sample"),
+                            "Boosting" = c(boosting_not_balanced, boosting_smote, "-"),
+                            "Random Forest" = c(rf_not_balanced, rf_smote, "-"),
+                            "XGBoost" = c(xgboost_not_balanced, xgboost_smote, xgboost_down))
+final_results
+```
 
 
 <br>
 
 
-
-### 7.5 GOLDCD + TRTGRP prediction
-
-
-<span style="color:red">TO DO: finish</span>
-
-Now we will create a new variable *goldcd_trtgrp* which is a combination of the variables GOLDCD + TRTGRP, it will have levels: COPD_2, COPD_3, COPD_4, COPD_9, Non-smoke_Control, Smoke_Control).
+### 7.5 Classification COPD types
 
 
-Summary of *GOLDCD*:
-```{r, eval=FALSE}
-table(clean_data$GOLDCD)
-```
 
-Summary of *TRTGRP.t1*:
-```{r, eval=FALSE}
-table(clean_data$TRTGRP.t1)
-```
 
 
 
