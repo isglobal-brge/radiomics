@@ -196,7 +196,7 @@ plot(results_PCA, classvec = class_vector, genecol="grey3")
 
 **Radiomic features: control (smoker vs non-smoker) and cases (COPD)**
 
-Load radiomic features and clinic data. Since they differ int the number of id, we will only keep common ids.
+Load radiomic features and clinic data. Since they differ in the number of id, we will only keep common ids.
 ```{r}
 ## Radar object
 file <- listRDA("rdr_L1_Andrea.rda")
@@ -251,7 +251,7 @@ Multiple correlation analysis predicts only one dependent variable from several 
 In our case, we will have 2 tables. One with the radiomics features, and another one with the clinical data. We want to have id -> columns and features -> rows.\
 
 
-Load radiomic features and clinic data. Since they differ int the number of id, we will only keep common ids.
+Load radiomic features and clinic data. Since they differ in the number of id, we will only keep common ids.
 ```{r}
 ## Radar object
 file <- listRDA("rdr_L1_Andrea.rda")
@@ -307,7 +307,7 @@ plot(mcoin, axes=1:2, phenovec = class_vector, sample.lab=FALSE, df.color=1:2) #
 
 Now we will use different methods to predict *TRTGRP* with the radiomic features.\
 
-Load clinic data and radiomic features. Since they differ int the number of id, we will only keep common ids.
+Load clinic data and radiomic features. Since they differ in the number of id, we will only keep common ids.
 ```{r}
 ## Radar object
 file <- listRDA("rdr_L1_Andrea.rda")
