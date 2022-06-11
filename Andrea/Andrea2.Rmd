@@ -878,7 +878,7 @@ final_results2
 ```
 
 
-####### Final results
+###### Final results
 
 ```{r}
 print(list("Predict COPD vs Non COPD" = final_results, "Predict types of COPD" = final_results2))
