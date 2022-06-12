@@ -369,6 +369,15 @@ We can clearly see that we don't have balanced data, this will produce not very 
 table(TRTGRP_values)
 ```
 
+**Balancing data**
+
+We will use different techniques for balancing data.
+
+- <u>Upsampling</u>: refers to the technique to create artificial or duplicate data points or of the minority class sample to balance the class label. 
+- <u>SMOTE method</u> (Synthetic Minority Oversampling TEchnique): which is an oversampling technique that aims to balance class distribution by randomly increasing minority class examples by replicating them, generates synthetic data points of minority samples
+- <u>Downsampling method</u>: removes or reduces the majority of class samples to balance the class label.
+
+
 
 <br>
 
@@ -415,21 +424,34 @@ First we will do Boosting *without balancing* the data:
 (boosting_not_balanced <- Boosting(df_rdr3))
 ```
 
-We get an Accuracy of around 79%.
+Balancing our data with *upsampling* method:
+```{r}
+up_data <- upSample(x = df_rdr3[, -ncol(df_rdr3)], y = df_rdr3$TRTGRP_values)                         
+table(up_data$Class) 
+```
+```{r, warning=FALSE}
+(boosting_up <- Boosting(up_data))
+```
 
-Now we balance our data with *SMOTE* method, which is an oversampling technique where the  samples are generated for the minority class. 
-
+Balancing our data with *SMOTE* method:
 ```{r}
 df_rdr3$TRTGRP_values <- as.factor(df_rdr3$TRTGRP_values)
 smote_data <- SMOTE(TRTGRP_values ~ ., data  = df_rdr3)                         
 table(smote_data$TRTGRP_values) 
 ```
-
 ```{r}
 (boosting_smote <- Boosting(smote_data))
 ```
 
-We get worse results with an Accuracy of 70%.
+Balancing our data with *downsampling* method:
+```{r}
+down_data <- downSample(x = df_rdr3[, -ncol(df_rdr3)], y = df_rdr3$TRTGRP_values)
+table(down_data$Class) 
+```
+```{r, warning=FALSE}
+(boosting_down <- Boosting(down_data))
+```
+
 
 
 <br>
@@ -482,30 +504,35 @@ First we will do Random Forest *without balancing* the data:
 (rf_not_balanced <- RandomForest(df_rdr4))
 ```
 
-We get an Accuracy of around 79%.
-
+Balancing our data with *upsampling* method:
 ```{r}
-table(df_rdr4$TRTGRP_values)
+up_data <- upSample(x = df_rdr4[, -ncol(df_rdr4)], y = df_rdr4$TRTGRP_values)                         
+table(up_data$Class) 
+```
+```{r, warning=FALSE}
+(rf_up <- RandomForest(df_rdr4))
 ```
 
-
-Now we balance our data with *SMOTE* method, which is an oversampling technique where the  samples are generated for the minority class. 
-
+Now we balance our data with *SMOTE* method:
 ```{r}
 smote_data <- SMOTE(TRTGRP_values ~ ., data  = df_rdr4)                         
 table(smote_data$TRTGRP_values) 
 ```
-
 ```{r}
 (rf_smote <- RandomForest(smote_data))
 ```
 
-We get better results with an Accuracy of around 88%.\
-
+Balancing our data with *downsampling* method:
+```{r}
+down_data <- downSample(x = df_rdr4[, -ncol(df_rdr4)], y = df_rdr4$TRTGRP_values)
+table(down_data$Class) 
+```
+```{r, warning=FALSE}
+(rf_down <- RandomForest(down_data))
+```
 
 
 <br>
-
 
 
 
@@ -563,46 +590,42 @@ First we will do XgBoost *without balancing* the data:
 (xgboost_not_balanced <- XgBoost(df_rdr3))
 ```
 
-We get an Accuracy of around 76%.
-
+Balancing our data with *upsampling* method:
 ```{r}
-table(df_rdr3$TRTGRP_values)
+up_data <- upSample(x = df_rdr3[, -ncol(df_rdr3)], y = df_rdr3$TRTGRP_values)                         
+table(up_data$Class) 
+```
+```{r, warning=FALSE}
+(xgboost_up <- XgBoost(df_rdr3))
+```
+
+Now we balance our data with *SMOTE* method:
+```{r}
+smote_data <- SMOTE(TRTGRP_values ~ ., data  = df_rdr3)                         
+table(smote_data$TRTGRP_values) 
+```
+```{r}
+(xgboost_smote <- XgBoost(smote_data))
 ```
 
 
-Now we balance our data with *Downsampling* method, which takes the lowest value (in our case Non-smoker Controls = 193) and makes all classes have the same amount of values:
+Balancing our data with *downsampling* method:
 ```{r}
 down_data <- downSample(x = df_rdr3[, -ncol(df_rdr3)],
                          y = df_rdr3$TRTGRP_values)
 table(down_data$Class) 
 ```
-
 ```{r}
 (xgboost_down <- XgBoost(down_data))
 ```
 
-We get worse results with an Accuracy of 60%.
-
-Now we balance our data with *SMOTE* method, which is an oversampling technique where the  samples are generated for the minority class. 
-
-```{r}
-smote_data <- SMOTE(TRTGRP_values ~ ., data  = df_rdr3)                         
-table(smote_data$TRTGRP_values) 
-```
-
-```{r}
-(xgboost_smote <- XgBoost(smote_data))
-```
-
-We get better results with an Accuracy of 80%.\
-
 
 Summary:
 ```{r}
-final_results <- data.frame("ACCURACY" = c("No balancing", "SMOTE", "Down Sample"),
-                            "Boosting" = c(boosting_not_balanced, boosting_smote, "-"),
-                            "Random Forest" = c(rf_not_balanced, rf_smote, "-"),
-                            "XGBoost" = c(xgboost_not_balanced, xgboost_smote, xgboost_down))
+final_results <- data.frame("ACCURACY" = c("No balancing", "SMOTE", "Down Sample", "Up Sample"),
+                            "Boosting" = c(boosting_not_balanced, boosting_smote, boosting_down, boosting_up),
+                            "Random Forest" = c(rf_not_balanced, rf_smote, rf_down, rf_up),
+                            "XGBoost" = c(xgboost_not_balanced, xgboost_smote, xgboost_down, xgboost_up))
 final_results
 ```
 
@@ -715,21 +738,39 @@ Boosting2 <- function(data){
 }
 ```
 
-Without balancing the data:
+First we will do Boosting *without balancing* the data:
 ```{r, warning=FALSE}
 (boosting_not_balanced2 <- Boosting2(df_rdr5))
 ```
 
-With *SMOTE* method:
+Balancing our data with *upsampling* method:
+```{r}
+up_data <- upSample(x = df_rdr5[, -ncol(df_rdr5)], y = df_rdr5$COPD_values)                         
+table(up_data$Class) 
+```
+```{r, warning=FALSE}
+(boosting_up2 <- Boosting2(up_data))
+```
+
+Balancing our data with *SMOTE* method:
 ```{r}
 df_rdr5$COPD_values <- as.factor(df_rdr5$COPD_values)
 smote_data <- SMOTE(COPD_values ~ ., data  = df_rdr5)                         
 table(smote_data$COPD_values) 
 ```
-
 ```{r}
 (boosting_smote2 <- Boosting2(smote_data))
 ```
+
+Balancing our data with *downsampling* method:
+```{r}
+down_data <- downSample(x = df_rdr5[, -ncol(df_rdr5)], y = df_rdr5$COPD_values)
+table(down_data$Class) 
+```
+```{r, warning=FALSE}
+(boosting_down2 <- Boosting2(down_data))
+```
+
 
 
 <br>
@@ -772,22 +813,41 @@ RandomForest2 <- function(data){
 }
 ```
 
-Without balancing the data:
+First we will do Random Forest *without balancing* the data:
 ```{r}
 (rf_not_balanced2 <- RandomForest2(df_rdr6))
 ```
 
-With *SMOTE* method:
+Balancing our data with *upsampling* method:
+```{r}
+up_data <- upSample(x = df_rdr6[, -ncol(df_rdr6)], y = df_rdr6$COPD_values)                         
+table(up_data$Class) 
+```
+```{r, warning=FALSE}
+(rf_up2 <- RandomForest2(df_rdr6))
+```
+
+
+Now we balance our data with *SMOTE* method:
 ```{r}
 df_rdr7 <- df_rdr6
 df_rdr7$COPD_values <- as.factor(df_rdr7$COPD_values)
 smote_data <- SMOTE(COPD_values ~ ., data = df_rdr7)                          
 table(smote_data$COPD_values) 
 ```
-
 ```{r}
 (rf_smote2 <- RandomForest2(smote_data))
 ```
+
+Balancing our data with *downsampling* method:
+```{r}
+down_data <- downSample(x = df_rdr6[, -ncol(df_rdr6)], y = df_rdr6$COPD_values)
+table(down_data$Class) 
+```
+```{r, warning=FALSE}
+(rf_down2 <- RandomForest2(down_data))
+```
+
 
 
 <br>
@@ -840,12 +900,31 @@ XgBoost2 <- function(data){
 }
 ```
 
-Without balancing the data:
+First we will do XgBoost *without balancing* the data:
 ```{r}
 (xgboost_not_balanced2 <- XgBoost2(df_rdr5))
 ```
 
-With *Downsampling* method:
+Balancing our data with *upsampling* method:
+```{r}
+up_data <- upSample(x = df_rdr5[, -ncol(df_rdr5)], y = df_rdr5$COPD_values)                         
+table(up_data$Class) 
+```
+```{r, warning=FALSE}
+(xgboost_up2 <- XgBoost2(df_rdr5))
+```
+
+Now we balance our data with *SMOTE* method:
+```{r}
+smote_data <- SMOTE(COPD_values ~ ., data  = df_rdr5)                         
+table(smote_data$COPD_values) 
+```
+```{r}
+(xgboost_smote2 <- XgBoost2(smote_data))
+```
+
+
+Balancing our data with *downsampling* method:
 ```{r}
 down_data <- downSample(x = df_rdr5[, -ncol(df_rdr5)], y = df_rdr5$COPD_values)
 table(down_data$Class) 
@@ -854,15 +933,7 @@ table(down_data$Class)
 (xgboost_down2 <- XgBoost2(down_data))
 ```
 
-With *SMOTE* method:
-```{r}
-smote_data <- SMOTE(COPD_values ~ ., data  = df_rdr5)                         
-table(smote_data$COPD_values) 
-```
 
-```{r}
-(xgboost_smote2 <- XgBoost2(smote_data))
-```
 
 
 <br>
@@ -870,10 +941,10 @@ table(smote_data$COPD_values)
 
 Summary of the final results:
 ```{r}
-final_results2 <- data.frame("ACCURACY" = c("No balancing", "SMOTE", "Down Sample"),
-                            "Boosting" = c(boosting_not_balanced2, boosting_smote2, "-"),
-                            "Random Forest" = c(rf_not_balanced2, rf_smote2, "-"),
-                            "XGBoost" = c(xgboost_not_balanced2, xgboost_smote2, xgboost_down2))
+final_results2 <- data.frame("ACCURACY" = c("No balancing", "SMOTE", "Down Sample", "Up Sample"),
+                            "Boosting" = c(boosting_not_balanced2, boosting_smote2, boosting_down2, boosting_up2),
+                            "Random Forest" = c(rf_not_balanced2, rf_smote2, rf_down2, rf_up2),
+                            "XGBoost" = c(xgboost_not_balanced2, xgboost_smote2, xgboost_down2, xgboost_up2))
 final_results2
 ```
 
