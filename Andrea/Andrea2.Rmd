@@ -782,8 +782,7 @@ table(smote_data$COPD_values)
 Balancing our data with *downsampling* method:
 ```{r}
 down_data <- downSample(x = df_rdr5[, -ncol(df_rdr5)], y = df_rdr5$COPD_values)
-down_data <- cbind(data.frame(down_data$x), data.frame(down_data$y))
-names(down_data)[names(down_data) == 'down_data.y'] <- 'COPD_values'
+names(down_data)[names(down_data) == 'Class'] <- 'COPD_values'
 table(down_data$COPD_values)
 ```
 ```{r, warning=FALSE}
