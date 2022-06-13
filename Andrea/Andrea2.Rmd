@@ -442,7 +442,7 @@ df_rdr3$TRTGRP_values <- as.factor(df_rdr3$TRTGRP_values)
 smote_data <- SMOTE(TRTGRP_values ~ ., data  = df_rdr3)                         
 table(smote_data$TRTGRP_values) 
 ```
-```{r}
+```{r, warning=FALSE}
 (boosting_smote <- Boosting(smote_data))
 ```
 
@@ -629,11 +629,19 @@ table(down_data$TRTGRP_values)
 
 Summary:
 ```{r}
-final_results <- data.frame("ACCURACY" = c("No balancing", "SMOTE", "Down Sample", "Up Sample"),
-                            "Boosting" = c(boosting_not_balanced, boosting_smote, boosting_down, boosting_up),
+final_results <- data.frame("Boosting" = c(boosting_not_balanced, boosting_smote, boosting_down, boosting_up),
                             "Random Forest" = c(rf_not_balanced, rf_smote, rf_down, rf_up),
                             "XGBoost" = c(xgboost_not_balanced, xgboost_smote, xgboost_down, xgboost_up))
+rownames(final_results) <- c("No balancing", "SMOTE", "Down Sample", "Up Sample")
 final_results
+```
+
+Best result:
+```{r}
+value <- max(final_results[1:4,1:3])
+method <- names(final_results)[which(final_results == max(value), arr.ind=T)[, "col"]]
+balancing <- rownames(final_results)[which(final_results == max(value), arr.ind=T)[, "row"]]
+print(list(" Maximum Accuracy" = value, " Method" = method, "Balancing" = balancing))
 ```
 
 
@@ -767,7 +775,7 @@ df_rdr5$COPD_values <- as.factor(df_rdr5$COPD_values)
 smote_data <- SMOTE(COPD_values ~ ., data  = df_rdr5)                         
 table(smote_data$COPD_values) 
 ```
-```{r}
+```{r, warning=FALSE}
 (boosting_smote2 <- Boosting2(smote_data))
 ```
 
@@ -776,7 +784,7 @@ Balancing our data with *downsampling* method:
 down_data <- downSample(x = df_rdr5[, -ncol(df_rdr5)], y = df_rdr5$COPD_values)
 down_data <- cbind(data.frame(down_data$x), data.frame(down_data$y))
 names(down_data)[names(down_data) == 'down_data.y'] <- 'COPD_values'
-table(down_data$COPD_values) 
+table(down_data$COPD_values)
 ```
 ```{r, warning=FALSE}
 (boosting_down2 <- Boosting2(down_data))
@@ -927,27 +935,18 @@ names(up_data)[names(up_data) == 'Class'] <- 'COPD_values'
 table(up_data$COPD_values) 
 ```
 ```{r, warning=FALSE}
-# (xgboost_up2 <- XgBoost2(df_rdr5))
+df_rdr5$COPD_values <- as.factor(df_rdr5$COPD_values)
+(xgboost_up2 <- XgBoost2(df_rdr5))
 ```
 
 Now we balance our data with *SMOTE* method:
 ```{r}
-# smote_data <- SMOTE(COPD_values ~ ., data  = df_rdr5)                         
-# table(smote_data$COPD_values) 
+df_rdr5$COPD_values <- as.factor(df_rdr5$COPD_values)
+smote_data <- SMOTE(COPD_values ~ ., data  = df_rdr5)                         
+table(smote_data$COPD_values) 
 ```
 ```{r}
-# (xgboost_smote2 <- XgBoost2(smote_data))
-```
-
-
-Balancing our data with *downsampling* method:
-```{r}
-down_data <- downSample(x = df_rdr5[, -ncol(df_rdr5)], y = df_rdr5$COPD_values)
-names(down_data)[names(down_data) == 'Class'] <- 'COPD_values'
-table(down_data$COPD_values) 
-```
-```{r}
-(xgboost_down2 <- XgBoost2(down_data))
+(xgboost_smote2 <- XgBoost2(smote_data))
 ```
 
 
@@ -958,12 +957,21 @@ table(down_data$COPD_values)
 
 Summary of the final results:
 ```{r}
-final_results2 <- data.frame("ACCURACY" = c("No balancing", "SMOTE", "Down Sample", "Up Sample"),
-                            "Boosting" = c(boosting_not_balanced2, boosting_smote2, boosting_down2, boosting_up2),
+final_results2 <- data.frame("Boosting" = c(boosting_not_balanced2, boosting_smote2, boosting_down2, boosting_up2),
                             "Random Forest" = c(rf_not_balanced2, rf_smote2, rf_down2, rf_up2),
-                            "XGBoost" = c(xgboost_not_balanced2, xgboost_smote2, xgboost_down2, xgboost_up2))
+                            "XGBoost" = c(xgboost_not_balanced2, xgboost_smote2, 0, xgboost_up2))
+rownames(final_results2) <- c("No balancing", "SMOTE", "Down Sample", "Up Sample")                          
 final_results2
 ```
+
+Best result:
+```{r}
+value2 <- max(final_results2[1:4,1:3])
+method2 <- names(final_results2)[which(final_results2 == max(value2), arr.ind=T)[, "col"]]
+balancing2 <- rownames(final_results2)[which(final_results2 == max(value2), arr.ind=T)[, "row"]]
+print(list(" Maximum Accuracy" = value2, " Method" = method2, "Balancing" = balancing2))
+```
+
 
 
 ###### Final results
