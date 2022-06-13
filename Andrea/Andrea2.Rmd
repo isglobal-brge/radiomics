@@ -832,12 +832,12 @@ RandomForest2 <- function(data){
 ```
 
 First we will do Random Forest *without balancing* the data:
-```{r}
+```{r, warning=FALSE}
 (rf_not_balanced2 <- RandomForest2(df_rdr6))
 ```
 
 Balancing our data with *upsampling* method:
-```{r}
+```{r, warning=FALSE}
 up_data <- upSample(x = df_rdr6[, -ncol(df_rdr6)], y = df_rdr6$COPD_values)
 up_data <- cbind(data.frame(up_data$x), data.frame(up_data$y))
 names(up_data)[names(up_data) == 'up_data.y'] <- 'COPD_values'
@@ -862,7 +862,7 @@ table(smote_data$COPD_values)
 Balancing our data with *downsampling* method:
 ```{r}
 down_data <- downSample(x = df_rdr6[, -ncol(df_rdr6)], y = df_rdr6$COPD_values)
-down_data <- cbind(data.frame(down_data$x), data.frame(down_data$y))
+down_data <- cbind(data.frame(down_data), data.frame(down_data$y))
 names(down_data)[names(down_data) == 'down_data.y'] <- 'COPD_values'
 table(down_data$COPD_values) 
 ```
