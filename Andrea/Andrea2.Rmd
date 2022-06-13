@@ -426,9 +426,11 @@ First we will do Boosting *without balancing* the data:
 ```
 
 Balancing our data with *upsampling* method:
-```{r}
-up_data <- upSample(x = df_rdr3[, -ncol(df_rdr3)], y = df_rdr3$TRTGRP_values)                         
-table(up_data$Class) 
+```{r, warning=FALSE}
+up_data <- upSample(x = df_rdr3[, -ncol(df_rdr3)], y = df_rdr3$TRTGRP_values)
+up_data <- cbind(data.frame(up_data$x), data.frame(up_data$y))
+names(up_data)[names(up_data) == 'up_data.y'] <- 'TRTGRP_values'
+table(up_data$TRTGRP_values) 
 ```
 ```{r, warning=FALSE}
 (boosting_up <- Boosting(up_data))
@@ -447,7 +449,8 @@ table(smote_data$TRTGRP_values)
 Balancing our data with *downsampling* method:
 ```{r}
 down_data <- downSample(x = df_rdr3[, -ncol(df_rdr3)], y = df_rdr3$TRTGRP_values)
-table(down_data$Class) 
+names(down_data)[names(down_data) == 'Class'] <- 'TRTGRP_values'
+table(down_data$TRTGRP_values) 
 ```
 ```{r, warning=FALSE}
 (boosting_down <- Boosting(down_data))
@@ -507,8 +510,9 @@ First we will do Random Forest *without balancing* the data:
 
 Balancing our data with *upsampling* method:
 ```{r}
-up_data <- upSample(x = df_rdr4[, -ncol(df_rdr4)], y = df_rdr4$TRTGRP_values)                         
-table(up_data$Class) 
+up_data <- upSample(x = df_rdr4[, -ncol(df_rdr4)], y = df_rdr4$TRTGRP_values)  
+names(up_data)[names(up_data) == 'Class'] <- 'TRTGRP_values'
+table(up_data$TRTGRP_values) 
 ```
 ```{r, warning=FALSE}
 (rf_up <- RandomForest(df_rdr4))
@@ -526,7 +530,8 @@ table(smote_data$TRTGRP_values)
 Balancing our data with *downsampling* method:
 ```{r}
 down_data <- downSample(x = df_rdr4[, -ncol(df_rdr4)], y = df_rdr4$TRTGRP_values)
-table(down_data$Class) 
+names(down_data)[names(down_data) == 'Class'] <- 'TRTGRP_values'
+table(down_data$TRTGRP_values) 
 ```
 ```{r, warning=FALSE}
 (rf_down <- RandomForest(down_data))
@@ -593,8 +598,9 @@ First we will do XgBoost *without balancing* the data:
 
 Balancing our data with *upsampling* method:
 ```{r}
-up_data <- upSample(x = df_rdr3[, -ncol(df_rdr3)], y = df_rdr3$TRTGRP_values)                         
-table(up_data$Class) 
+up_data <- upSample(x = df_rdr3[, -ncol(df_rdr3)], y = df_rdr3$TRTGRP_values)         
+names(up_data)[names(up_data) == 'Class'] <- 'TRTGRP_values'
+table(up_data$TRTGRP_values) 
 ```
 ```{r, warning=FALSE}
 (xgboost_up <- XgBoost(df_rdr3))
@@ -612,9 +618,9 @@ table(smote_data$TRTGRP_values)
 
 Balancing our data with *downsampling* method:
 ```{r}
-down_data <- downSample(x = df_rdr3[, -ncol(df_rdr3)],
-                         y = df_rdr3$TRTGRP_values)
-table(down_data$Class) 
+down_data <- downSample(x = df_rdr3[, -ncol(df_rdr3)], y = df_rdr3$TRTGRP_values)
+names(down_data)[names(down_data) == 'Class'] <- 'TRTGRP_values'
+table(down_data$TRTGRP_values) 
 ```
 ```{r}
 (xgboost_down <- XgBoost(down_data))
@@ -745,9 +751,11 @@ First we will do Boosting *without balancing* the data:
 ```
 
 Balancing our data with *upsampling* method:
-```{r}
-up_data <- upSample(x = df_rdr5[, -ncol(df_rdr5)], y = df_rdr5$COPD_values)                         
-table(up_data$Class) 
+```{r, warning=FALSE}
+up_data <- upSample(x = df_rdr5[, -ncol(df_rdr5)], y = df_rdr5$COPD_values)     
+up_data <- cbind(data.frame(up_data$x), data.frame(up_data$y))
+names(up_data)[names(up_data) == 'up_data.y'] <- 'COPD_values'
+table(up_data$COPD_values) 
 ```
 ```{r, warning=FALSE}
 (boosting_up2 <- Boosting2(up_data))
@@ -766,7 +774,9 @@ table(smote_data$COPD_values)
 Balancing our data with *downsampling* method:
 ```{r}
 down_data <- downSample(x = df_rdr5[, -ncol(df_rdr5)], y = df_rdr5$COPD_values)
-table(down_data$Class) 
+down_data <- cbind(data.frame(down_data$x), data.frame(down_data$y))
+names(down_data)[names(down_data) == 'down_data.y'] <- 'COPD_values'
+table(down_data$COPD_values) 
 ```
 ```{r, warning=FALSE}
 (boosting_down2 <- Boosting2(down_data))
@@ -821,8 +831,10 @@ First we will do Random Forest *without balancing* the data:
 
 Balancing our data with *upsampling* method:
 ```{r}
-up_data <- upSample(x = df_rdr6[, -ncol(df_rdr6)], y = df_rdr6$COPD_values)                         
-table(up_data$Class) 
+up_data <- upSample(x = df_rdr6[, -ncol(df_rdr6)], y = df_rdr6$COPD_values)
+up_data <- cbind(data.frame(up_data$x), data.frame(up_data$y))
+names(up_data)[names(up_data) == 'up_data.y'] <- 'COPD_values'
+table(up_data$COPD_values) 
 ```
 ```{r, warning=FALSE}
 (rf_up2 <- RandomForest2(df_rdr6))
@@ -843,7 +855,9 @@ table(smote_data$COPD_values)
 Balancing our data with *downsampling* method:
 ```{r}
 down_data <- downSample(x = df_rdr6[, -ncol(df_rdr6)], y = df_rdr6$COPD_values)
-table(down_data$Class) 
+down_data <- cbind(data.frame(down_data$x), data.frame(down_data$y))
+names(down_data)[names(down_data) == 'down_data.y'] <- 'COPD_values'
+table(down_data$COPD_values) 
 ```
 ```{r, warning=FALSE}
 (rf_down2 <- RandomForest2(down_data))
@@ -908,27 +922,29 @@ First we will do XgBoost *without balancing* the data:
 
 Balancing our data with *upsampling* method:
 ```{r}
-up_data <- upSample(x = df_rdr5[, -ncol(df_rdr5)], y = df_rdr5$COPD_values)                         
-table(up_data$Class) 
+up_data <- upSample(x = df_rdr5[, -ncol(df_rdr5)], y = as.factor(df_rdr5$COPD_values))
+names(up_data)[names(up_data) == 'Class'] <- 'COPD_values'
+table(up_data$COPD_values) 
 ```
 ```{r, warning=FALSE}
-(xgboost_up2 <- XgBoost2(df_rdr5))
+# (xgboost_up2 <- XgBoost2(df_rdr5))
 ```
 
 Now we balance our data with *SMOTE* method:
 ```{r}
-smote_data <- SMOTE(COPD_values ~ ., data  = df_rdr5)                         
-table(smote_data$COPD_values) 
+# smote_data <- SMOTE(COPD_values ~ ., data  = df_rdr5)                         
+# table(smote_data$COPD_values) 
 ```
 ```{r}
-(xgboost_smote2 <- XgBoost2(smote_data))
+# (xgboost_smote2 <- XgBoost2(smote_data))
 ```
 
 
 Balancing our data with *downsampling* method:
 ```{r}
 down_data <- downSample(x = df_rdr5[, -ncol(df_rdr5)], y = df_rdr5$COPD_values)
-table(down_data$Class) 
+names(down_data)[names(down_data) == 'Class'] <- 'COPD_values'
+table(down_data$COPD_values) 
 ```
 ```{r}
 (xgboost_down2 <- XgBoost2(down_data))
