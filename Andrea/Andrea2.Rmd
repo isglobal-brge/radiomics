@@ -948,7 +948,6 @@ table(smote_data$COPD_values)
 
 
 
-
 <br>
 
 
@@ -970,11 +969,5 @@ print(list(" Maximum Accuracy" = value2, " Method" = method2, "Balancing" = bala
 ```
 
 
-
-###### Final results
-
-```{r}
-print(list("Predict COPD vs Non COPD" = final_results, "Predict types of COPD" = final_results2))
-```
 
 
