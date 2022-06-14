@@ -839,8 +839,7 @@ First we will do Random Forest *without balancing* the data:
 Balancing our data with *upsampling* method:
 ```{r, warning=FALSE}
 up_data <- upSample(x = df_rdr6[, -ncol(df_rdr6)], y = df_rdr6$COPD_values)
-up_data <- cbind(data.frame(up_data$x), data.frame(up_data$y))
-names(up_data)[names(up_data) == 'up_data.y'] <- 'COPD_values'
+names(up_data)[names(up_data) == 'Class'] <- 'COPD_values'
 table(up_data$COPD_values) 
 ```
 ```{r, warning=FALSE}
