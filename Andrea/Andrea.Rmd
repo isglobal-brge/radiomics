@@ -121,7 +121,7 @@ image(t(image_example$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
 To obtain these images, we emit x-rays through an x-ray tube. The rays pass through the lungs and reach a detector. Depending on the tissue it passes through, it absorbs more or less x-rays. The scanner uses the different levels of absorption to create the image.
 To make the images, several slices of the lung are made (horizontal slices), if we combine these slices, we can obtain the image of the lung in 3 dimensions.
 
-```{r , echo=FALSE, out.width="35%", out.height=="40%", fig.align="center"}
+```{r , echo=FALSE, out.width="35%", out.height="40%", fig.align="center"}
 knitr::include_graphics("./img/ct_scan.png")
 ```
 
