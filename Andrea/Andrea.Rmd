@@ -46,7 +46,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
     7.3. Canonical correlation analysis (CCA)
 
-    7.4 TRTGRP prediction (COPD vs Non COPD)
+    7.4 COPD vs controls classification
 
     7.5 Classification COPD types
 
