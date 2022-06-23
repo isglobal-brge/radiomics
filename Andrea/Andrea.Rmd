@@ -8,7 +8,7 @@ csl: apa.csl
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, dev = "png")
 ```
 
 
@@ -130,23 +130,15 @@ knitr::include_graphics("./img/ct_scan.png")
 ##### **DICOM (.dcm) images**
 The R package *oro.dicom* is a collection of input/output functions for medical imaging data that conform to the Digital Imaging and Communications in Medicine (DICOM) standard. The R package *RIA* is another package that was developed to facilitate radiomic analysis of medical images. 
 
-First we load the libraries oro.dicom and RIA.
-```{r, message=FALSE}
-library(oro.dicom)
-library(RIA)
-```
 
-Now we will display 3 images from the same patient (that is three slices of a person's lung). To read the images we use the function: *readDICOMFile(path_to_the_image)*.
+Now we will display 2 images from the same patient (that is three slices of a person's lung). To read the images we use the function: *readDICOMFile(path_to_the_image)*.
 
-```{r, out.width = "250px", out.height = "350px"}
+```{r, out.width = "200px", out.height = "300px"}
 image1 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00007637202177411956430/11.dcm")
 image(t(image1$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
 
 image2 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00007637202177411956430/12.dcm")
 image(t(image2$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
-
-image3 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00007637202177411956430/13.dcm")
-image(t(image3$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
 ```
 
 
@@ -277,8 +269,6 @@ print(as_tibble(results))
  
 ## 4. Segmentation
 
-<span style="color:red">TO DO: Explain better segmentation process</span>
-
 As we explained in the introduction, segmentation refers to delineating the areas of interest in the image in terms of pixels or voxels, in our case, the lung. Lung segmentation refers to the computer-based process of identifying the boundaries of lungs from surrounding thoracic tissue on the scan images. Once we have the segmented images, we can start our analysis.
 
 Now we will discuss different software to do lung segmentation.
@@ -324,21 +314,6 @@ And finally, we plot some of the masks.
 plot(mask2$lung_mask)
 ```
 
-
-
-#### **Radiomic features with masks (lungct)**
-In this section we will compute the radiomic features of the images with masks, obtained with lungct.
-
-```{r eval = FALSE, results = FALSE, message=FALSE}
-RIA_lung(
-  image, mask$lung_mask, 
-  sides = c("right", "left"), 
-  features = c("fo"), 
-  bins_in = 16, equal_prob = FALSE, distance = 1, 
-  statistic = "mean(X, na.rm = TRUE)")
-```
-
-<span style="color:red">ERROR, IT DOES NOT WORK</span>
 
 ##### **Radiomic features with masks with multiple patients (RIA, lungct)**
 Now we will create multiple .txt files with the results of the radiomic features of different patients, using a mask.
@@ -433,8 +408,6 @@ lung = pydicom.read_file("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID0
 slice = lung.pixel_array
 plt.axis('off')
 slice[slice == -2000] = 0
-plt.imshow(slice, cmap=plt.cm.gray)
-plt.show()
 ```
 
 We create a function *file_is_hidden()* to read only .dcm files and not hidden files in the folder that we cannot see in our computers.
@@ -966,7 +939,7 @@ def get_and_save_masks(series_path):
 ```
 
 Plot one image.
-```{python, out.width = "400"}
+```{python, out.width = "300"}
 ds = pydicom.dcmread("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1/std_38.dcm")
 plt.imshow(ds.pixel_array, cmap='gray')
 plt.show()
@@ -978,18 +951,18 @@ image1 = get_img_sitk("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1/std_38.d
 mask_filter_single, masked_lung_single = generate_mask(image1)
 ```
 
-```{python, out.width = "400"}
+```{python, out.width = "300"}
 plt.imshow(mask_filter_single, cmap='gray')
 plt.show()
 ```
 
-```{python, out.width = "400"}
+```{python, out.width = "300"}
 plt.imshow(masked_lung_single, cmap='gray')
 plt.show()
 ```
 
 We can visualize it all in one panel.
-```{python, results = FALSE, out.width = "600"}
+```{python, results = FALSE, out.width = "500"}
 fig, ax = plt.subplots(1,3)
 ax[0].set_title("Original", fontsize='small')
 ax[0].imshow(ds.pixel_array, cmap='gray')
@@ -1015,12 +988,6 @@ get_and_save_masks("/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1")
 ```
 
 
-
-<span style="color:red">TO DO: explain final segmenation used</span>
-
-
-
-
 <br>
 
 
@@ -1034,7 +1001,6 @@ Load the images and the masks with the funcion *load_dicom()*.
 
 
 ```{r, message=FALSE, results = FALSE, warnings = FALSE,  echo = T, results = 'hide'}
-library(RIA)
 images = load_dicom(filename = "/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1", 
                     mask_filename = "/Users/andrealetaalfonso/Desktop/TFG/DICOMS/id_1_mask")
  
@@ -1046,10 +1012,6 @@ images = first_order(RIA_data_in = images)
 results <- RIA:::list_to_df(images$stat_fo$orig)
 name_characteristics <- rownames(results)
 ```
-```{r, message=FALSE}
-print(as_tibble(results))
-```
-
 
 
 **Multiple patients at the same time**
@@ -1071,8 +1033,6 @@ for i in patients: # for loop through all the patients
 Now we compute the radiomic features.
 
 ```{r, message=FALSE, warnings = FALSE, results = FALSE, eval = FALSE}
-library(RIA)
-
 res <- c()
 
 images_folder_names <- grep(list.files(path="/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle"), pattern='mask', invert=TRUE, value=TRUE)
@@ -1158,7 +1118,7 @@ We computed all these metrics with the images. Let's load the radiomic features 
 ```{r}
 example <- read.table("/Users/andrealetaalfonso/Desktop/TFG/A_Project/results/ECLIPSE_results_ParamsNorm/023140000001_INSP_STD_L1_ECLIPSE.nii.gz.tsv", sep="\t")
 colnames(example) <- c("Features", "Values")
-example[20:30,]
+example[10:20,]
 ```
 
 To perform data analysis, we will use *RaDAr* objects, we will explain it in the next section.
@@ -1175,9 +1135,7 @@ To perform data analysis, we will use *RaDAr* objects, we will explain it in the
 Now we will study multiple radiomic features with multiple patients. We will use the *RaDAr* to manipulate the results.
 
 
-Load the libraries.
 ```{r, message=FALSE, results=FALSE}
-library(RIA)
 library(RNifti)
 ```
 
@@ -1322,8 +1280,6 @@ library(RadAR)
 
 With *RadAR* we can import the radiomic features that we extracted before using pyradiomics.
 
-<span style="color:red">TO DO: explain normalizacion y shift, y con normalizacion.</span>
-
 We will create the *rdr* object with normalization and shift, and another one with normalization only. We use the function *import_pyradiomics(path_to_folder)* to import the results we obtained using pyradiomics, where *path_to_folder* is the path to the folder containing the pyradiomics csv files. The function filters out duplicated feature names. 
 
 ```{r, eval = FALSE}
@@ -1453,7 +1409,6 @@ Open *rdr*:
 ```{r, warning=FALSE}
 a <- listRDA("rdr_Andrea_Norm.rda")
 rdr <- a$rdr_Norm
-rdr
 ```
 
 Change names: eliminate the extension of the name and keep the number and separate between different times (L1, L2, L3).
