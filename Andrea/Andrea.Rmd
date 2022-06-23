@@ -111,7 +111,7 @@ In this section we will display a few images with different extensions. But firs
 
 We will be working with images that look like this:
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, out.height = "300px"}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, out.width = "200px", out.height = "300px"}
 library(oro.dicom)
 library(RIA)
 image_example <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00007637202177411956430/11.dcm")
@@ -133,7 +133,7 @@ The R package *oro.dicom* is a collection of input/output functions for medical 
 
 Now we will display 2 images from the same patient (that is three slices of a person's lung). To read the images we use the function: *readDICOMFile(path_to_the_image)*.
 
-```{r, out.height = "300px"}
+```{r, out.width = "250px", out.height = "350px"}
 image1 <- readDICOMFile("/Users/andrealetaalfonso/Desktop/TFG/images/Kaggle/ID00007637202177411956430/11.dcm")
 image(t(image1$img), col=grey(0:64/64), axes=FALSE, xlab="", ylab="")
 
@@ -296,7 +296,7 @@ checked2 <- check_dcm2nii(res2) # Manipulating the output
 ```
 
 Next we plot some images.
-```{r, out.height = "300px"}
+```{r, out.width = "700px", out.height = "400px"}
 image2 <- antsImageRead(checked2)
 plot(image2)
 ```
@@ -309,7 +309,7 @@ mask2 <- segment_lung(image2)
 
 And finally, we plot some of the masks.
 
-```{r, message=FALSE,  out.height = "300px"}
+```{r, message=FALSE,  out.width = "700px", out.height = "400px"}
 plot(mask2$lung_mask)
 ```
 
@@ -1306,7 +1306,6 @@ rdr
 
 The *rdr* object is a *SummarizedExperiment*.
 
-<span style="color:red">TO DO: explain more & add image SummarizedExperiment</span>
 
 The available clinical data can be also imported in the *rdr* object.
 
