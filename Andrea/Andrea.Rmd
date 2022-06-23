@@ -215,6 +215,7 @@ first_order <- RIA:::list_to_df(data$stat_fo$orig) # list of first order statist
 name_characteristics <- rownames(first_order) # names of the first order statistics
 ```
 ```{r, message=FALSE}
+library(tidyverse)
 print(as_tibble(first_order))
 ```
 
