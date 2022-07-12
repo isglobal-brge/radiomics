@@ -362,7 +362,8 @@ With the data we have, we need to balance the data.
 
 Check how much data we have of each type:
 ```{r, out.width="50%"}
-barplot(prop.table(table(TRTGRP_values)), col = rainbow(2), ylim = c(0, 1), main = "TRTGRP_values Distribution")
+barplot(prop.table(table(TRTGRP_values)), col = c("#a1e9f0", "#d9b1f0"), ylim = c(0, 1), main = "Data COPD patients", 
+         names = c('Patients with COPD','Patients without COPD'))
 ```
 
 We can clearly see that we don't have balanced data, this will produce not very accurate results in our models.
@@ -708,7 +709,8 @@ table(df_rdr5$COPD_values)
 
 Check how much data we have of each type:
 ```{r, out.width="50%"}
-barplot(prop.table(table(COPD_values)), col = rainbow(3), ylim = c(0, 1), main = "COPD_df_types Distribution")
+barplot(prop.table(table(COPD_values)), col = c("#a1e9f0", "#d9b1f0","#b9e38d"), ylim = c(0, 1), main = "Data 3 types COPD patients",
+         names = c('Patients with COPD2','Patients with COPD3', 'Patients with COPD4'))
 ```
 
 We don't have balanced data, specially for *COPD_4*.\
